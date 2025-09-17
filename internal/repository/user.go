@@ -22,6 +22,7 @@ type UserRepository interface {
 	FindByID(ctx context.Context, ID uuid.UUID) (*domain.User, error)
 	UpdatePassword(ctx context.Context, ID uuid.UUID, newPasswordHash string) error
 	UpdateEmail(ctx context.Context, ID uuid.UUID, newEmail string) error
+	UpdateName(ctx context.Context, ID uuid.UUID, name string) error
 }
 
 type userRepository struct {
@@ -134,3 +135,26 @@ func (r *userRepository) UpdateEmail(ctx context.Context, ID uuid.UUID, newEmail
 
 	return nil
 }
+
+func (r *userRepository) UpdateName(ctx context.Context, ID uuid.UUID, name string) error {
+	updates := map[string]any{
+		"name":      name,
+		"updated_at": time.Now().UTC(),
+	}
+
+	result := r.db.WithContext(ctx).Model(&domain.User{}).
+		Where("id = ?", ID).
+		Updates(updates)
+
+	if result.Error != nil {
+		return result.Error
+	}
+
+	if result.RowsAffected == 0 {
+		return ErrUserNotFound
+	}
+
+	return nil
+}
+
+

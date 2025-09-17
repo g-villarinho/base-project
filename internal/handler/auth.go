@@ -28,7 +28,6 @@ func NewAuthHandler(
 
 func (h *AuthHandler) RegisterAccount(c echo.Context) error {
 	logger := h.logger.With(
-		slog.String("handler", "auth"),
 		slog.String("method", "RegisterAccount"),
 		slog.String("path", c.Request().URL.Path),
 	)

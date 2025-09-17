@@ -114,3 +114,9 @@ func registerAuthRoutes(e *echo.Group, h *handler.AuthHandler, m *middleware.Aut
 	auth.POST("/change-email", h.RequestChangeEmail, m.EnsuredAuthenticated)
 	auth.GET("/change-email/confirm", h.ConfirmChangeEmail, m.EnsuredAuthenticated)
 }
+
+func registerUserRoutes(e *echo.Group, h *handler.UserHandler, m *middleware.AuthMiddleware) {
+	user := e.Group("/user", m.EnsuredAuthenticated)
+
+	user.PATCH("/profile", h.UpdateProfile)
+}
