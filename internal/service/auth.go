@@ -30,7 +30,6 @@ type AuthService interface {
 	ChangeEmail(ctx context.Context, token uuid.UUID) error
 	RequestPasswordReset(ctx context.Context, email string) error
 	ResetPassword(ctx context.Context, token uuid.UUID, newPassword string) (*model.AccessToken, error)
-	SendVerifyEmail(ctx context.Context, userID uuid.UUID) error
 }
 
 type authService struct {
@@ -157,7 +156,7 @@ func (s *authService) Login(ctx context.Context, email string, password string) 
 	}
 
 	if !user.IsEmailVerified() {
-		if err := s.handleUnverifiedEmail(ctx, user.ID); err != nil {
+		if err := s.sendVerificationEmail(ctx, user); err != nil {
 			return nil, fmt.Errorf("handle unverified email: %w", err)
 		}
 
@@ -333,31 +332,7 @@ func (s *authService) ResetPassword(ctx context.Context, token uuid.UUID, newPas
 	return nil, nil
 }
 
-func (s *authService) SendVerifyEmail(ctx context.Context, userID uuid.UUID) error {
-	user, err := s.userRepo.FindByID(ctx, userID)
-	if err != nil {
-		if errors.Is(err, repository.ErrUserNotFound) {
-			return domain.ErrUserNotFound
-		}
-		return fmt.Errorf("find user by id %s: %w", userID, err)
-	}
-
-	if user.IsEmailVerified() {
-		return domain.ErrEmailAlreadyVerified
-	}
-
-	return s.sendVerificationEmail(ctx, user)
-}
-
 // Private methods
-func (s *authService) handleUnverifiedEmail(ctx context.Context, userID uuid.UUID) error {
-	user, err := s.userRepo.FindByID(ctx, userID)
-	if err != nil {
-		return fmt.Errorf("find user by id: %w", err)
-	}
-
-	return s.sendVerificationEmail(ctx, user)
-}
 
 func (s *authService) getVerificationTokenURL(token uuid.UUID, flow domain.VerificationTokenFlow) string {
 	var baseURL string
