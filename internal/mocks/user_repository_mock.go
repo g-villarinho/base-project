@@ -294,6 +294,54 @@ func (_c *UserRepositoryMock_UpdateEmail_Call) RunAndReturn(run func(context.Con
 	return _c
 }
 
+// UpdateName provides a mock function with given fields: ctx, ID, name
+func (_m *UserRepositoryMock) UpdateName(ctx context.Context, ID uuid.UUID, name string) error {
+	ret := _m.Called(ctx, ID, name)
+
+	if len(ret) == 0 {
+		panic("no return value specified for UpdateName")
+	}
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context, uuid.UUID, string) error); ok {
+		r0 = rf(ctx, ID, name)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
+// UserRepositoryMock_UpdateName_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'UpdateName'
+type UserRepositoryMock_UpdateName_Call struct {
+	*mock.Call
+}
+
+// UpdateName is a helper method to define mock.On call
+//   - ctx context.Context
+//   - ID uuid.UUID
+//   - name string
+func (_e *UserRepositoryMock_Expecter) UpdateName(ctx interface{}, ID interface{}, name interface{}) *UserRepositoryMock_UpdateName_Call {
+	return &UserRepositoryMock_UpdateName_Call{Call: _e.mock.On("UpdateName", ctx, ID, name)}
+}
+
+func (_c *UserRepositoryMock_UpdateName_Call) Run(run func(ctx context.Context, ID uuid.UUID, name string)) *UserRepositoryMock_UpdateName_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(uuid.UUID), args[2].(string))
+	})
+	return _c
+}
+
+func (_c *UserRepositoryMock_UpdateName_Call) Return(_a0 error) *UserRepositoryMock_UpdateName_Call {
+	_c.Call.Return(_a0)
+	return _c
+}
+
+func (_c *UserRepositoryMock_UpdateName_Call) RunAndReturn(run func(context.Context, uuid.UUID, string) error) *UserRepositoryMock_UpdateName_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // UpdatePassword provides a mock function with given fields: ctx, ID, newPasswordHash
 func (_m *UserRepositoryMock) UpdatePassword(ctx context.Context, ID uuid.UUID, newPasswordHash string) error {
 	ret := _m.Called(ctx, ID, newPasswordHash)
