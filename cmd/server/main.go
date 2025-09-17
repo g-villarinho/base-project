@@ -66,7 +66,12 @@ func provideDependecies() *dig.Container {
 	return container
 }
 
-func NewServer(config *config.Config, authHandler *handler.AuthHandler, authMiddleware *middleware.AuthMiddleware) *echo.Echo {
+func NewServer(
+	config *config.Config, 
+	authHandler *handler.AuthHandler, 
+	userHandler *handler.UserHandler,
+	authMiddleware *middleware.AuthMiddleware,
+) *echo.Echo {
 	e := echo.New()
 
 	e.Validator = validation.NewValidator()
@@ -78,18 +83,17 @@ func NewServer(config *config.Config, authHandler *handler.AuthHandler, authMidd
 	e.Use(middleware.Cors(config))
 	e.Use(middleware.RateLimiter(config))
 
-	v1Group := e.Group("/api/v1")
-
 	if config.IsDevelopment() {
-		registerDevRoutes(v1Group, config)
+		registerDevRoutes(e, config)
 	}
 
-	registerAuthRoutes(v1Group, authHandler, authMiddleware)
+	registerAuthRoutes(e, authHandler, authMiddleware)
+  registerUserRoutes(e, userHandler, authMiddleware)
 
 	return e
 }
 
-func registerDevRoutes(e *echo.Group, config *config.Config) {
+func registerDevRoutes(e *echo.Echo, config *config.Config) {
 	dev := e.Group("/dev")
 
 	dev.GET("/health", func(c echo.Context) error {
@@ -101,7 +105,7 @@ func registerDevRoutes(e *echo.Group, config *config.Config) {
 	})
 }
 
-func registerAuthRoutes(e *echo.Group, h *handler.AuthHandler, m *middleware.AuthMiddleware) {
+func registerAuthRoutes(e *echo.Echo, h *handler.AuthHandler, m *middleware.AuthMiddleware) {
 	auth := e.Group("/auth")
 
 	auth.POST("/register", h.RegisterAccount)
@@ -115,7 +119,7 @@ func registerAuthRoutes(e *echo.Group, h *handler.AuthHandler, m *middleware.Aut
 	auth.GET("/change-email/confirm", h.ConfirmChangeEmail, m.EnsuredAuthenticated)
 }
 
-func registerUserRoutes(e *echo.Group, h *handler.UserHandler, m *middleware.AuthMiddleware) {
+func registerUserRoutes(e *echo.Echo, h *handler.UserHandler, m *middleware.AuthMiddleware) {
 	user := e.Group("/user", m.EnsuredAuthenticated)
 
 	user.PATCH("/profile", h.UpdateProfile)
