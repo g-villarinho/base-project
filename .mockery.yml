@@ -1,0 +1,23 @@
+with-expecter: True
+disable-version-string: True
+filename: "{{ .InterfaceName | snakecase }}_mock.go"
+mockname: "{{ .InterfaceName }}Mock"
+dir: "internal/mocks"
+outpkg: "mocks"
+packages:
+  github.com/g-villarinho/user-demo/internal/service:
+    config:
+      all: True
+      recursive: True
+  github.com/g-villarinho/user-demo/internal/repository:
+    config:
+      all: True
+      recursive: True
+  github.com/g-villarinho/user-demo/pkg/keyparser:
+    config:
+      all: True
+      recursive: True
+  github.com/g-villarinho/user-demo/infra/notification:
+    config:
+      all: True
+      recursive: True

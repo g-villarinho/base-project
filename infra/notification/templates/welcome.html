@@ -1,0 +1,130 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Email Confirmation</title>
+        <style>
+            body {
+                margin: 0;
+                padding: 40px;
+                font-family: Arial, sans-serif;
+                background-color: #f4f4f4;
+                color: #333;
+            }
+
+            .card {
+                max-width: 500px;
+                margin: 0 auto;
+                border: 2px solid #ddd;
+                border-radius: 8px;
+                padding: 30px;
+                background-color: #ffffff;
+                box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            }
+
+            .greeting {
+                font-size: 20px;
+                margin-bottom: 20px;
+                color: #333;
+                font-weight: bold;
+            }
+
+            .message {
+                margin: 20px 0;
+                line-height: 1.6;
+                color: #666;
+            }
+
+            .button-container {
+                text-align: center;
+                margin: 30px 0;
+            }
+
+            .confirm-button {
+                background-color: #333;
+                color: white;
+                padding: 12px 30px;
+                text-decoration: none;
+                border-radius: 5px;
+                font-size: 16px;
+                font-weight: bold;
+                display: inline-block;
+            }
+
+            .confirm-button:hover {
+                background-color: #555;
+            }
+
+            .link-text {
+                word-break: break-all;
+                color: #666;
+                margin: 10px 0;
+                font-size: 14px;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="card">
+            <div class="greeting">Hello, {{.UserName}}!</div>
+
+            <div class="message">
+                Welcome to our platform! We're excited to have you join our
+                community. Thank you for signing up for our services. To
+                complete your registration and ensure the security of your
+                account, we need to verify your email address.
+            </div>
+
+            <div class="message">
+                <strong>Registration Details:</strong><br />
+                Account created on: <strong>{{.RegistrationDate}}</strong><br />
+            </div>
+
+            <div class="message">
+                Click the button below to confirm your email:
+            </div>
+
+            <!-- Confirmation Button -->
+            <div class="button-container">
+                <a href="{{.ConfirmationLink}}" class="confirm-button">
+                    Confirm Email
+                </a>
+            </div>
+
+            <div class="message">
+                <strong>Important Security Information:</strong><br />
+                • This verification link expires in 10 minutes for your
+                security<br />
+                • If you didn't create this account, please ignore this email<br />
+                • Never share this link with anyone
+            </div>
+
+            <div class="message">
+                <strong>Need Help?</strong><br />
+                If you're having trouble with the confirmation button, you can
+                copy and paste this link into your browser:
+            </div>
+
+            <div class="link-text">{{.ConfirmationLink}}</div>
+
+            <div
+                class="message"
+                style="
+                    margin-top: 30px;
+                    padding-top: 20px;
+                    border-top: 1px solid #eee;
+                    font-size: 12px;
+                    color: #888;
+                "
+            >
+                <strong>Our Company</strong><br />
+                This is an automated message from our secure system. Please do
+                not reply to this email.<br />
+                If you need assistance, please contact our support team.<br /><br />
+                © {{.CurrentYear}} Our Company. All rights reserved.<br />
+                This email was sent to {{.UserEmail}} as part of our account
+                verification process.
+            </div>
+        </div>
+    </body>
+</html>
