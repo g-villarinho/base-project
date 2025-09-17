@@ -125,4 +125,5 @@ func registerUserRoutes(e *echo.Echo, h *handler.UserHandler, m *middleware.Auth
 	user := e.Group("/user", m.EnsuredAuthenticated)
 
 	user.PATCH("/profile", h.UpdateProfile)
+	user.GET("/profile", h.GetProfile)
 }

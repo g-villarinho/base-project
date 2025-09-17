@@ -10,7 +10,8 @@ import (
 )
 
 type UserService interface {
-	UpdateProfile(ctx context.Context, userID uuid.UUID, name string) error
+	UpdateUser(ctx context.Context, userID uuid.UUID, name string) error
+  GetUser(ctx context.Context, userID uuid.UUID) (*domain.User, error)
 }
 
 type userService struct {
@@ -24,7 +25,7 @@ func NewUserService(userRepo repository.UserRepository) UserService {
 	}
 }
 
-func (s *userService) UpdateProfile(ctx context.Context, userID uuid.UUID, name string) error {
+func (s *userService) UpdateUser(ctx context.Context, userID uuid.UUID, name string) error {
 	if err := s.userRepo.UpdateName(ctx, userID, name); err != nil {
 		if err == repository.ErrUserNotFound {
 			return domain.ErrUserNotFound
@@ -35,4 +36,18 @@ func (s *userService) UpdateProfile(ctx context.Context, userID uuid.UUID, name 
 
 
 	return nil
+}
+
+func (s *userService) GetUser(ctx context.Context, userID uuid.UUID) (*domain.User, error) {
+	user, err := s.userRepo.FindByID(ctx, userID)
+	if err != nil {
+		if err == repository.ErrUserNotFound {
+			return nil, domain.ErrUserNotFound
+		}
+
+		return nil, fmt.Errorf("find user by id %s: %w", userID.String(), err)
+	}
+
+
+	return user, nil
 }

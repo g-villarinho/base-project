@@ -41,7 +41,7 @@ func (h *UserHandler) UpdateProfile(c echo.Context) error {
 		return err
 	}
 
-	if err := h.userService.UpdateProfile(c.Request().Context(), GetUserID(c), payload.Name); err != nil {
+	if err := h.userService.UpdateUser(c.Request().Context(), GetUserID(c), payload.Name); err != nil {
 		logger.Error("update profile", "error", err)
 
 		if errors.Is(err, domain.ErrUserNotFound) {
@@ -52,4 +52,30 @@ func (h *UserHandler) UpdateProfile(c echo.Context) error {
 	}
 
 	return c.NoContent(http.StatusOK)
+}
+
+func (h *UserHandler) GetProfile(c echo.Context) error {
+	logger := h.logger.With(
+		slog.String("method", "GetProfile"),
+		slog.String("path", c.Request().URL.Path),
+	)
+ 
+	user, err := h.userService.GetUser(c.Request().Context(), GetUserID(c))
+	if err != nil {
+		logger .Error("get profile", "error", err)
+		
+		if errors.Is(err, domain.ErrUserNotFound) {
+			return echo.NewHTTPError(http.StatusNotFound, err.Error())
+		}
+
+		return echo.ErrInternalServerError
+	}
+
+	response := model.ProfileResponse{
+		ID: user.ID,
+		Name: user.Name,
+		Email: user.Email,
+	}
+
+	return c.JSON(http.StatusOK, response)
 }
