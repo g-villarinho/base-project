@@ -57,5 +57,5 @@ func (vt *VerificationToken) IsChangeEmailFlow() bool {
 }
 
 func (vt *VerificationToken) IsExpired() bool {
-	return time.Now().After(vt.ExpiresAt)
+	return time.Now().UTC().After(vt.ExpiresAt)
 }
