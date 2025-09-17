@@ -49,6 +49,7 @@ func provideDependecies() *dig.Container {
 	// Service
 	injector.Provide(container, service.NewAuthService)
 	injector.Provide(container, service.NewJwtService)
+  injector.Provide(container, service.NewUserService)
 
 	// Repository
 	injector.Provide(container, repository.NewUserRepository)
@@ -56,6 +57,7 @@ func provideDependecies() *dig.Container {
 
 	//Handler
 	injector.Provide(container, handler.NewAuthHandler)
+	injector.Provide(container, handler.NewUserHandler)
 
 	//Middleware
 	injector.Provide(container, middleware.NewAuthMiddleware)
