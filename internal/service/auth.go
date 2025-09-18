@@ -39,6 +39,7 @@ type authService struct {
 	config                *config.Config
 	logger                *slog.Logger
 	emailNotification     notification.EmailNotification
+	sessionService        SessionService
 }
 
 func NewAuthService(
@@ -48,6 +49,7 @@ func NewAuthService(
 	config *config.Config,
 	logger *slog.Logger,
 	emailNotification notification.EmailNotification,
+	sessionService SessionService,
 ) AuthService {
 	return &authService{
 		userRepo:              userRepo,
@@ -56,6 +58,7 @@ func NewAuthService(
 		config:                config,
 		logger:                logger.With(slog.String("service", "auth")),
 		emailNotification:     emailNotification,
+	  sessionService:        sessionService,
 	}
 }
 
@@ -101,6 +104,7 @@ func (s *authService) RegisterAccount(ctx context.Context, name string, email st
 				slog.String("error", err.Error()),
 			)
 		}
+
 		logger.Debug("email sent successfully")
 	}()
 
@@ -127,6 +131,11 @@ func (s *authService) VerifyEmail(ctx context.Context, token uuid.UUID) (*model.
 
 	if err := s.verificationTokenRepo.Delete(ctx, verificationToken.ID); err != nil {
 		return nil, fmt.Errorf("delete verificationCode with id %s: %w", verificationToken.ID, err)
+	}
+
+	session, err := s.sessionService.CreateSession(ctx, verificationToken.UserID, "", "", "")
+	if err != nil {
+		return nil, err
 	}
 
 	accessToken, err := s.jwtService.GenerateAccessTokenJWT(ctx, verificationToken.UserID)
