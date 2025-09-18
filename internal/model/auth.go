@@ -38,3 +38,18 @@ type RequestEmailChangePayload struct {
 type ConfirmEmailChangePayload struct {
 	Token uuid.UUID `query:"token" validate:"required,uuid"`
 }
+
+type LoginInput struct {
+	Email      string
+  Password   string
+	IPAddress  string
+	UserAgent  string
+	DeviceName string
+}
+
+type VerifyEmailInput struct {
+	 Token      uuid.UUID
+	 IPAddress  string
+	 UserAgent  string
+	 DeviceName string
+}

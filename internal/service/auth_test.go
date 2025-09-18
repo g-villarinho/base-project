@@ -42,6 +42,7 @@ func TestAuthService_RegisterAccount(t *testing.T) {
 			config,
 			slog.New(slog.NewTextHandler(os.Stdout, nil)),
 			mockEmailNotification,
+			mocks.NewSessionServiceMock(t),
 		)
 
 		ctx := context.Background()
@@ -77,6 +78,7 @@ func TestAuthService_RegisterAccount(t *testing.T) {
 			config,
 			slog.New(slog.NewTextHandler(os.Stdout, nil)),
 			mocks.NewEmailNotificationMock(t),
+			mocks.NewSessionServiceMock(t),
 		)
 
 		ctx := context.Background()
@@ -109,6 +111,7 @@ func TestAuthService_RegisterAccount(t *testing.T) {
 			config,
 			slog.New(slog.NewTextHandler(os.Stdout, nil)),
 			mocks.NewEmailNotificationMock(t),
+			mocks.NewSessionServiceMock(t),
 		)
 
 		ctx := context.Background()
@@ -142,6 +145,7 @@ func TestAuthService_RegisterAccount(t *testing.T) {
 			config,
 			slog.New(slog.NewTextHandler(os.Stdout, nil)),
 			mocks.NewEmailNotificationMock(t),
+			mocks.NewSessionServiceMock(t),
 		)
 
 		ctx := context.Background()
@@ -176,6 +180,7 @@ func TestAuthService_RegisterAccount(t *testing.T) {
 			config,
 			slog.New(slog.NewTextHandler(os.Stdout, nil)),
 			mocks.NewEmailNotificationMock(t),
+			mocks.NewSessionServiceMock(t),
 		)
 
 		ctx := context.Background()
@@ -218,6 +223,7 @@ func TestAuthService_RegisterAccount(t *testing.T) {
 			config,
 			slog.New(slog.NewTextHandler(os.Stdout, nil)),
 			mockEmailNotification,
+			mocks.NewSessionServiceMock(t),
 		)
 
 		ctx := context.Background()
@@ -265,6 +271,7 @@ func TestAuthService_UpdatePassword(t *testing.T) {
 			config,
 			slog.New(slog.NewTextHandler(os.Stdout, nil)),
 			mocks.NewEmailNotificationMock(t),
+			mocks.NewSessionServiceMock(t),
 		)
 
 		ctx := context.Background()
@@ -307,6 +314,7 @@ func TestAuthService_UpdatePassword(t *testing.T) {
 			config,
 			slog.New(slog.NewTextHandler(os.Stdout, nil)),
 			mocks.NewEmailNotificationMock(t),
+			mocks.NewSessionServiceMock(t),
 		)
 
 		ctx := context.Background()
@@ -339,6 +347,7 @@ func TestAuthService_UpdatePassword(t *testing.T) {
 			config,
 			slog.New(slog.NewTextHandler(os.Stdout, nil)),
 			mocks.NewEmailNotificationMock(t),
+			mocks.NewSessionServiceMock(t),
 		)
 
 		ctx := context.Background()
@@ -377,6 +386,7 @@ func TestAuthService_UpdatePassword(t *testing.T) {
 			config,
 			slog.New(slog.NewTextHandler(os.Stdout, nil)),
 			mocks.NewEmailNotificationMock(t),
+			mocks.NewSessionServiceMock(t),
 		)
 
 		ctx := context.Background()
@@ -410,6 +420,7 @@ func TestAuthService_UpdatePassword(t *testing.T) {
 			config,
 			slog.New(slog.NewTextHandler(os.Stdout, nil)),
 			mocks.NewEmailNotificationMock(t),
+			mocks.NewSessionServiceMock(t),
 		)
 
 		ctx := context.Background()
@@ -450,6 +461,7 @@ func TestAuthService_UpdatePassword(t *testing.T) {
 			config,
 			slog.New(slog.NewTextHandler(os.Stdout, nil)),
 			mocks.NewEmailNotificationMock(t),
+			mocks.NewSessionServiceMock(t),
 		)
 
 		ctx := context.Background()
@@ -488,6 +500,7 @@ func TestAuthService_UpdatePassword(t *testing.T) {
 			config,
 			slog.New(slog.NewTextHandler(os.Stdout, nil)),
 			mocks.NewEmailNotificationMock(t),
+			mocks.NewSessionServiceMock(t),
 		)
 
 		ctx := context.Background()
@@ -531,6 +544,7 @@ func TestAuthService_RequestChangeEmail(t *testing.T) {
 			config,
 			slog.New(slog.NewTextHandler(os.Stdout, nil)),
 			mocks.NewEmailNotificationMock(t),
+			mocks.NewSessionServiceMock(t),
 		)
 
 		ctx := context.Background()
@@ -576,6 +590,7 @@ func TestAuthService_RequestChangeEmail(t *testing.T) {
 			config,
 			slog.New(slog.NewTextHandler(os.Stdout, nil)),
 			mocks.NewEmailNotificationMock(t),
+			mocks.NewSessionServiceMock(t),
 		)
 
 		ctx := context.Background()
@@ -607,6 +622,7 @@ func TestAuthService_RequestChangeEmail(t *testing.T) {
 			config,
 			slog.New(slog.NewTextHandler(os.Stdout, nil)),
 			mocks.NewEmailNotificationMock(t),
+			mocks.NewSessionServiceMock(t),
 		)
 
 		ctx := context.Background()
@@ -643,6 +659,7 @@ func TestAuthService_RequestChangeEmail(t *testing.T) {
 			config,
 			slog.New(slog.NewTextHandler(os.Stdout, nil)),
 			mocks.NewEmailNotificationMock(t),
+			mocks.NewSessionServiceMock(t),
 		)
 
 		ctx := context.Background()
@@ -681,6 +698,7 @@ func TestAuthService_RequestChangeEmail(t *testing.T) {
 			config,
 			slog.New(slog.NewTextHandler(os.Stdout, nil)),
 			mocks.NewEmailNotificationMock(t),
+			mocks.NewSessionServiceMock(t),
 		)
 
 		ctx := context.Background()
@@ -713,6 +731,7 @@ func TestAuthService_RequestChangeEmail(t *testing.T) {
 			config,
 			slog.New(slog.NewTextHandler(os.Stdout, nil)),
 			mocks.NewEmailNotificationMock(t),
+			mocks.NewSessionServiceMock(t),
 		)
 
 		ctx := context.Background()
@@ -753,6 +772,7 @@ func TestAuthService_RequestChangeEmail(t *testing.T) {
 			config,
 			slog.New(slog.NewTextHandler(os.Stdout, nil)),
 			mocks.NewEmailNotificationMock(t),
+			mocks.NewSessionServiceMock(t),
 		)
 
 		ctx := context.Background()
@@ -798,6 +818,7 @@ func TestAuthService_RequestChangeEmail(t *testing.T) {
 			config,
 			slog.New(slog.NewTextHandler(os.Stdout, nil)),
 			mocks.NewEmailNotificationMock(t),
+			mocks.NewSessionServiceMock(t),
 		)
 
 		ctx := context.Background()
@@ -841,6 +862,7 @@ func TestAuthService_RequestChangeEmail(t *testing.T) {
 			config,
 			slog.New(slog.NewTextHandler(os.Stdout, nil)),
 			mocks.NewEmailNotificationMock(t),
+			mocks.NewSessionServiceMock(t),
 		)
 
 		ctx := context.Background()
@@ -896,6 +918,7 @@ func TestAuthService_ChangeEmail(t *testing.T) {
 			config,
 			slog.New(slog.NewTextHandler(os.Stdout, nil)),
 			mocks.NewEmailNotificationMock(t),
+			mocks.NewSessionServiceMock(t),
 		)
 
 		ctx := context.Background()
@@ -938,6 +961,7 @@ func TestAuthService_ChangeEmail(t *testing.T) {
 			config,
 			slog.New(slog.NewTextHandler(os.Stdout, nil)),
 			mocks.NewEmailNotificationMock(t),
+			mocks.NewSessionServiceMock(t),
 		)
 
 		ctx := context.Background()
@@ -968,6 +992,7 @@ func TestAuthService_ChangeEmail(t *testing.T) {
 			config,
 			slog.New(slog.NewTextHandler(os.Stdout, nil)),
 			mocks.NewEmailNotificationMock(t),
+			mocks.NewSessionServiceMock(t),
 		)
 
 		ctx := context.Background()
@@ -1008,6 +1033,7 @@ func TestAuthService_ChangeEmail(t *testing.T) {
 			config,
 			slog.New(slog.NewTextHandler(os.Stdout, nil)),
 			mocks.NewEmailNotificationMock(t),
+			mocks.NewSessionServiceMock(t),
 		)
 
 		ctx := context.Background()
@@ -1048,6 +1074,7 @@ func TestAuthService_ChangeEmail(t *testing.T) {
 			config,
 			slog.New(slog.NewTextHandler(os.Stdout, nil)),
 			mocks.NewEmailNotificationMock(t),
+			mocks.NewSessionServiceMock(t),
 		)
 
 		ctx := context.Background()
@@ -1087,6 +1114,7 @@ func TestAuthService_ChangeEmail(t *testing.T) {
 			config,
 			slog.New(slog.NewTextHandler(os.Stdout, nil)),
 			mocks.NewEmailNotificationMock(t),
+			mocks.NewSessionServiceMock(t),
 		)
 
 		ctx := context.Background()
@@ -1130,6 +1158,7 @@ func TestAuthService_ChangeEmail(t *testing.T) {
 			config,
 			slog.New(slog.NewTextHandler(os.Stdout, nil)),
 			mocks.NewEmailNotificationMock(t),
+			mocks.NewSessionServiceMock(t),
 		)
 
 		ctx := context.Background()
@@ -1174,6 +1203,7 @@ func TestAuthService_ChangeEmail(t *testing.T) {
 			config,
 			slog.New(slog.NewTextHandler(os.Stdout, nil)),
 			mocks.NewEmailNotificationMock(t),
+			mocks.NewSessionServiceMock(t),
 		)
 
 		ctx := context.Background()
@@ -1205,6 +1235,7 @@ func TestAuthService_ChangeEmail(t *testing.T) {
 			config,
 			slog.New(slog.NewTextHandler(os.Stdout, nil)),
 			mocks.NewEmailNotificationMock(t),
+			mocks.NewSessionServiceMock(t),
 		)
 
 		ctx := context.Background()
@@ -1246,6 +1277,7 @@ func TestAuthService_ChangeEmail(t *testing.T) {
 			config,
 			slog.New(slog.NewTextHandler(os.Stdout, nil)),
 			mocks.NewEmailNotificationMock(t),
+			mocks.NewSessionServiceMock(t),
 		)
 
 		ctx := context.Background()
@@ -1281,6 +1313,7 @@ func TestAuthService_VerifyEmail(t *testing.T) {
 		mockUserRepo := mocks.NewUserRepositoryMock(t)
 		mockVerificationTokenRepo := mocks.NewVerificationTokenRepositoryMock(t)
 		mockJwtService := mocks.NewJwtServiceMock(t)
+		mockSessionService := mocks.NewSessionServiceMock(t)
 		config := &config.Config{}
 
 		authService := service.NewAuthService(
@@ -1290,6 +1323,7 @@ func TestAuthService_VerifyEmail(t *testing.T) {
 			config,
 			slog.New(slog.NewTextHandler(os.Stdout, nil)),
 			mocks.NewEmailNotificationMock(t),
+			mockSessionService,
 		)
 
 		ctx := context.Background()
@@ -1308,13 +1342,26 @@ func TestAuthService_VerifyEmail(t *testing.T) {
 			ExpiresAt: time.Now().Add(2 * time.Hour),
 		}
 
+		expectedSession := &domain.Session{
+			ID:         uuid.New(),
+			DeviceName: "test-device",
+			IPAddress:  "127.0.0.1",
+			UserAgent:  "test-agent",
+		}
+
 		mockVerificationTokenRepo.On("FindByID", ctx, tokenID).Return(verificationToken, nil)
 		mockUserRepo.On("VerifyEmail", ctx, userID).Return(nil)
 		mockVerificationTokenRepo.On("Delete", ctx, tokenID).Return(nil)
-		mockJwtService.On("GenerateAccessTokenJWT", ctx, userID).Return(expectedAccessToken, nil)
+		mockSessionService.On("CreateSession", ctx, userID, "127.0.0.1", "test-device", "test-agent").Return(expectedSession, nil)
+		mockJwtService.On("GenerateAccessTokenJWT", ctx, userID, expectedSession.ID).Return(expectedAccessToken, nil)
 
 		// Act
-		result, err := authService.VerifyEmail(ctx, tokenID)
+		result, err := authService.VerifyEmail(ctx, model.VerifyEmailInput{
+			Token:      tokenID,
+			IPAddress:  "127.0.0.1",
+			UserAgent:  "test-agent",
+			DeviceName: "test-device",
+		})
 
 		// Assert
 		assert.NoError(t, err)
@@ -1322,6 +1369,7 @@ func TestAuthService_VerifyEmail(t *testing.T) {
 		mockVerificationTokenRepo.AssertExpectations(t)
 		mockUserRepo.AssertExpectations(t)
 		mockJwtService.AssertExpectations(t)
+		mockSessionService.AssertExpectations(t)
 	})
 
 	t.Run("should return error when verification token not found", func(t *testing.T) {
@@ -1338,6 +1386,7 @@ func TestAuthService_VerifyEmail(t *testing.T) {
 			config,
 			slog.New(slog.NewTextHandler(os.Stdout, nil)),
 			mocks.NewEmailNotificationMock(t),
+			mocks.NewSessionServiceMock(t),
 		)
 
 		ctx := context.Background()
@@ -1346,7 +1395,12 @@ func TestAuthService_VerifyEmail(t *testing.T) {
 		mockVerificationTokenRepo.On("FindByID", ctx, tokenID).Return(nil, repository.ErrVerificationCodeNotFound)
 
 		// Act
-		result, err := authService.VerifyEmail(ctx, tokenID)
+		result, err := authService.VerifyEmail(ctx, model.VerifyEmailInput{
+			Token:      tokenID,
+			IPAddress:  "127.0.0.1",
+			UserAgent:  "test-agent",
+			DeviceName: "test-device",
+		})
 
 		// Assert
 		assert.Error(t, err)
@@ -1369,6 +1423,7 @@ func TestAuthService_VerifyEmail(t *testing.T) {
 			config,
 			slog.New(slog.NewTextHandler(os.Stdout, nil)),
 			mocks.NewEmailNotificationMock(t),
+			mocks.NewSessionServiceMock(t),
 		)
 
 		ctx := context.Background()
@@ -1385,7 +1440,12 @@ func TestAuthService_VerifyEmail(t *testing.T) {
 		mockVerificationTokenRepo.On("FindByID", ctx, tokenID).Return(expiredomainken, nil)
 
 		// Act
-		result, err := authService.VerifyEmail(ctx, tokenID)
+		result, err := authService.VerifyEmail(ctx, model.VerifyEmailInput{
+			Token:      tokenID,
+			IPAddress:  "127.0.0.1",
+			UserAgent:  "test-agent",
+			DeviceName: "test-device",
+		})
 
 		// Assert
 		assert.Error(t, err)
@@ -1408,6 +1468,7 @@ func TestAuthService_VerifyEmail(t *testing.T) {
 			config,
 			slog.New(slog.NewTextHandler(os.Stdout, nil)),
 			mocks.NewEmailNotificationMock(t),
+			mocks.NewSessionServiceMock(t),
 		)
 
 		ctx := context.Background()
@@ -1424,7 +1485,12 @@ func TestAuthService_VerifyEmail(t *testing.T) {
 		mockVerificationTokenRepo.On("FindByID", ctx, tokenID).Return(wrongFlowToken, nil)
 
 		// Act
-		result, err := authService.VerifyEmail(ctx, tokenID)
+		result, err := authService.VerifyEmail(ctx, model.VerifyEmailInput{
+			Token:      tokenID,
+			IPAddress:  "127.0.0.1",
+			UserAgent:  "test-agent",
+			DeviceName: "test-device",
+		})
 
 		// Assert
 		assert.Error(t, err)
@@ -1447,6 +1513,7 @@ func TestAuthService_VerifyEmail(t *testing.T) {
 			config,
 			slog.New(slog.NewTextHandler(os.Stdout, nil)),
 			mocks.NewEmailNotificationMock(t),
+			mocks.NewSessionServiceMock(t),
 		)
 
 		ctx := context.Background()
@@ -1465,7 +1532,12 @@ func TestAuthService_VerifyEmail(t *testing.T) {
 		mockUserRepo.On("VerifyEmail", ctx, userID).Return(expectedError)
 
 		// Act
-		result, err := authService.VerifyEmail(ctx, tokenID)
+		result, err := authService.VerifyEmail(ctx, model.VerifyEmailInput{
+			Token:      tokenID,
+			IPAddress:  "127.0.0.1",
+			UserAgent:  "test-agent",
+			DeviceName: "test-device",
+		})
 
 		// Assert
 		assert.Error(t, err)
@@ -1489,6 +1561,7 @@ func TestAuthService_VerifyEmail(t *testing.T) {
 			config,
 			slog.New(slog.NewTextHandler(os.Stdout, nil)),
 			mocks.NewEmailNotificationMock(t),
+			mocks.NewSessionServiceMock(t),
 		)
 
 		ctx := context.Background()
@@ -1508,7 +1581,12 @@ func TestAuthService_VerifyEmail(t *testing.T) {
 		mockVerificationTokenRepo.On("Delete", ctx, tokenID).Return(expectedError)
 
 		// Act
-		result, err := authService.VerifyEmail(ctx, tokenID)
+		result, err := authService.VerifyEmail(ctx, model.VerifyEmailInput{
+			Token:      tokenID,
+			IPAddress:  "127.0.0.1",
+			UserAgent:  "test-agent",
+			DeviceName: "test-device",
+		})
 
 		// Assert
 		assert.Error(t, err)
@@ -1523,6 +1601,7 @@ func TestAuthService_VerifyEmail(t *testing.T) {
 		mockUserRepo := mocks.NewUserRepositoryMock(t)
 		mockVerificationTokenRepo := mocks.NewVerificationTokenRepositoryMock(t)
 		mockJwtService := mocks.NewJwtServiceMock(t)
+		mockSessionService := mocks.NewSessionServiceMock(t)
 		config := &config.Config{}
 
 		authService := service.NewAuthService(
@@ -1532,6 +1611,7 @@ func TestAuthService_VerifyEmail(t *testing.T) {
 			config,
 			slog.New(slog.NewTextHandler(os.Stdout, nil)),
 			mocks.NewEmailNotificationMock(t),
+			mockSessionService,
 		)
 
 		ctx := context.Background()
@@ -1545,14 +1625,27 @@ func TestAuthService_VerifyEmail(t *testing.T) {
 			ExpiresAt: time.Now().Add(time.Hour),
 		}
 
+		expectedSession := &domain.Session{
+			ID:         uuid.New(),
+			DeviceName: "test-device",
+			IPAddress:  "127.0.0.1",
+			UserAgent:  "test-agent",
+		}
+
 		expectedError := errors.New("jwt error")
 		mockVerificationTokenRepo.On("FindByID", ctx, tokenID).Return(verificationToken, nil)
 		mockUserRepo.On("VerifyEmail", ctx, userID).Return(nil)
 		mockVerificationTokenRepo.On("Delete", ctx, tokenID).Return(nil)
-		mockJwtService.On("GenerateAccessTokenJWT", ctx, userID).Return(nil, expectedError)
+		mockSessionService.On("CreateSession", ctx, userID, "127.0.0.1", "test-device", "test-agent").Return(expectedSession, nil)
+		mockJwtService.On("GenerateAccessTokenJWT", ctx, userID, expectedSession.ID).Return(nil, expectedError)
 
 		// Act
-		result, err := authService.VerifyEmail(ctx, tokenID)
+		result, err := authService.VerifyEmail(ctx, model.VerifyEmailInput{
+			Token:      tokenID,
+			IPAddress:  "127.0.0.1",
+			UserAgent:  "test-agent",
+			DeviceName: "test-device",
+		})
 
 		// Assert
 		assert.Error(t, err)
@@ -1561,6 +1654,7 @@ func TestAuthService_VerifyEmail(t *testing.T) {
 		mockVerificationTokenRepo.AssertExpectations(t)
 		mockUserRepo.AssertExpectations(t)
 		mockJwtService.AssertExpectations(t)
+		mockSessionService.AssertExpectations(t)
 	})
 
 	t.Run("should return error when repository FindByID fails with other error", func(t *testing.T) {
@@ -1577,6 +1671,7 @@ func TestAuthService_VerifyEmail(t *testing.T) {
 			config,
 			slog.New(slog.NewTextHandler(os.Stdout, nil)),
 			mocks.NewEmailNotificationMock(t),
+			mocks.NewSessionServiceMock(t),
 		)
 
 		ctx := context.Background()
@@ -1586,7 +1681,12 @@ func TestAuthService_VerifyEmail(t *testing.T) {
 		mockVerificationTokenRepo.On("FindByID", ctx, tokenID).Return(nil, expectedError)
 
 		// Act
-		result, err := authService.VerifyEmail(ctx, tokenID)
+		result, err := authService.VerifyEmail(ctx, model.VerifyEmailInput{
+			Token:      tokenID,
+			IPAddress:  "127.0.0.1",
+			UserAgent:  "test-agent",
+			DeviceName: "test-device",
+		})
 
 		// Assert
 		assert.Error(t, err)
@@ -1602,6 +1702,7 @@ func TestAuthService_Login(t *testing.T) {
 		mockUserRepo := mocks.NewUserRepositoryMock(t)
 		mockVerificationTokenRepo := mocks.NewVerificationTokenRepositoryMock(t)
 		mockJwtService := mocks.NewJwtServiceMock(t)
+		mockSessionService := mocks.NewSessionServiceMock(t)
 		config := &config.Config{}
 
 		authService := service.NewAuthService(
@@ -1611,6 +1712,7 @@ func TestAuthService_Login(t *testing.T) {
 			config,
 			slog.New(slog.NewTextHandler(os.Stdout, nil)),
 			mocks.NewEmailNotificationMock(t),
+			mockSessionService,
 		)
 
 		ctx := context.Background()
@@ -1632,17 +1734,32 @@ func TestAuthService_Login(t *testing.T) {
 			ExpiresAt: time.Now().Add(2 * time.Hour),
 		}
 
+		expectedSession := &domain.Session{
+			ID:         uuid.New(),
+			DeviceName: "test-device",
+			IPAddress:  "127.0.0.1",
+			UserAgent:  "test-agent",
+		}
+
 		mockUserRepo.On("FindByEmail", ctx, email).Return(user, nil)
-		mockJwtService.On("GenerateAccessTokenJWT", ctx, userID).Return(expectedAccessToken, nil)
+		mockSessionService.On("CreateSession", ctx, userID, "127.0.0.1", "test-device", "test-agent").Return(expectedSession, nil)
+		mockJwtService.On("GenerateAccessTokenJWT", ctx, userID, expectedSession.ID).Return(expectedAccessToken, nil)
 
 		// Act
-		result, err := authService.Login(ctx, email, password)
+		result, err := authService.Login(ctx, model.LoginInput{
+			Email:      email,
+			Password:   password,
+			IPAddress:  "127.0.0.1",
+			UserAgent:  "test-agent",
+			DeviceName: "test-device",
+		})
 
 		// Assert
 		assert.NoError(t, err)
 		assert.Equal(t, expectedAccessToken, result)
 		mockUserRepo.AssertExpectations(t)
 		mockJwtService.AssertExpectations(t)
+		mockSessionService.AssertExpectations(t)
 	})
 
 	t.Run("should return error when user not found", func(t *testing.T) {
@@ -1659,6 +1776,7 @@ func TestAuthService_Login(t *testing.T) {
 			config,
 			slog.New(slog.NewTextHandler(os.Stdout, nil)),
 			mocks.NewEmailNotificationMock(t),
+			mocks.NewSessionServiceMock(t),
 		)
 
 		ctx := context.Background()
@@ -1668,7 +1786,13 @@ func TestAuthService_Login(t *testing.T) {
 		mockUserRepo.On("FindByEmail", ctx, email).Return(nil, repository.ErrUserNotFound)
 
 		// Act
-		result, err := authService.Login(ctx, email, password)
+		result, err := authService.Login(ctx, model.LoginInput{
+			Email:      email,
+			Password:   password,
+			IPAddress:  "127.0.0.1",
+			UserAgent:  "test-agent",
+			DeviceName: "test-device",
+		})
 
 		// Assert
 		assert.Error(t, err)
@@ -1691,6 +1815,7 @@ func TestAuthService_Login(t *testing.T) {
 			config,
 			slog.New(slog.NewTextHandler(os.Stdout, nil)),
 			mocks.NewEmailNotificationMock(t),
+			mocks.NewSessionServiceMock(t),
 		)
 
 		ctx := context.Background()
@@ -1708,7 +1833,13 @@ func TestAuthService_Login(t *testing.T) {
 		mockUserRepo.On("FindByEmail", ctx, email).Return(user, nil)
 
 		// Act
-		result, err := authService.Login(ctx, email, password)
+		result, err := authService.Login(ctx, model.LoginInput{
+			Email:      email,
+			Password:   password,
+			IPAddress:  "127.0.0.1",
+			UserAgent:  "test-agent",
+			DeviceName: "test-device",
+		})
 
 		// Assert
 		assert.Error(t, err)
@@ -1731,6 +1862,7 @@ func TestAuthService_Login(t *testing.T) {
 			config,
 			slog.New(slog.NewTextHandler(os.Stdout, nil)),
 			mocks.NewEmailNotificationMock(t),
+			mocks.NewSessionServiceMock(t),
 		)
 
 		ctx := context.Background()
@@ -1749,7 +1881,13 @@ func TestAuthService_Login(t *testing.T) {
 		mockUserRepo.On("FindByEmail", ctx, email).Return(user, nil)
 
 		// Act
-		result, err := authService.Login(ctx, email, password)
+		result, err := authService.Login(ctx, model.LoginInput{
+			Email:      email,
+			Password:   password,
+			IPAddress:  "127.0.0.1",
+			UserAgent:  "test-agent",
+			DeviceName: "test-device",
+		})
 
 		// Assert
 		assert.Error(t, err)
@@ -1779,6 +1917,7 @@ func TestAuthService_Login(t *testing.T) {
 			config,
 			slog.New(slog.NewTextHandler(os.Stdout, nil)),
 			mockEmailNotification,
+			mocks.NewSessionServiceMock(t),
 		)
 
 		ctx := context.Background()
@@ -1797,13 +1936,18 @@ func TestAuthService_Login(t *testing.T) {
 
 		// Mock handleUnverifiedEmail behavior - no existing token
 		mockUserRepo.On("FindByEmail", ctx, email).Return(user, nil)
-		mockUserRepo.On("FindByID", ctx, userID).Return(user, nil)
 		mockVerificationTokenRepo.On("FindValidByUserIDAndFlow", ctx, userID, domain.VerificationEmailFlow).Return(nil, repository.ErrVerificationCodeNotFound)
 		mockVerificationTokenRepo.On("InvalidateByUserIDAndFlow", ctx, userID, domain.VerificationEmailFlow).Return(nil)
 		mockVerificationTokenRepo.On("Create", ctx, mock.AnythingOfType("*domain.VerificationToken")).Return(nil)
 
 		// Act
-		result, err := authService.Login(ctx, email, password)
+		result, err := authService.Login(ctx, model.LoginInput{
+			Email:      email,
+			Password:   password,
+			IPAddress:  "127.0.0.1",
+			UserAgent:  "test-agent",
+			DeviceName: "test-device",
+		})
 
 		// Assert
 		assert.Error(t, err)
@@ -1818,6 +1962,7 @@ func TestAuthService_Login(t *testing.T) {
 		mockUserRepo := mocks.NewUserRepositoryMock(t)
 		mockVerificationTokenRepo := mocks.NewVerificationTokenRepositoryMock(t)
 		mockJwtService := mocks.NewJwtServiceMock(t)
+		mockSessionService := mocks.NewSessionServiceMock(t)
 		config := &config.Config{}
 
 		authService := service.NewAuthService(
@@ -1827,6 +1972,7 @@ func TestAuthService_Login(t *testing.T) {
 			config,
 			slog.New(slog.NewTextHandler(os.Stdout, nil)),
 			mocks.NewEmailNotificationMock(t),
+			mockSessionService,
 		)
 
 		ctx := context.Background()
@@ -1843,12 +1989,26 @@ func TestAuthService_Login(t *testing.T) {
 			EmailConfirmedAt: sql.NullTime{Time: time.Now(), Valid: true},
 		}
 
+		expectedSession := &domain.Session{
+			ID:         uuid.New(),
+			DeviceName: "test-device",
+			IPAddress:  "127.0.0.1",
+			UserAgent:  "test-agent",
+		}
+
 		expectedError := errors.New("jwt generation failed")
 		mockUserRepo.On("FindByEmail", ctx, email).Return(user, nil)
-		mockJwtService.On("GenerateAccessTokenJWT", ctx, userID).Return(nil, expectedError)
+		mockSessionService.On("CreateSession", ctx, userID, "127.0.0.1", "test-device", "test-agent").Return(expectedSession, nil)
+		mockJwtService.On("GenerateAccessTokenJWT", ctx, userID, expectedSession.ID).Return(nil, expectedError)
 
 		// Act
-		result, err := authService.Login(ctx, email, password)
+		result, err := authService.Login(ctx, model.LoginInput{
+			Email:      email,
+			Password:   password,
+			IPAddress:  "127.0.0.1",
+			UserAgent:  "test-agent",
+			DeviceName: "test-device",
+		})
 
 		// Assert
 		assert.Error(t, err)
@@ -1856,6 +2016,7 @@ func TestAuthService_Login(t *testing.T) {
 		assert.Contains(t, err.Error(), "generate access token")
 		mockUserRepo.AssertExpectations(t)
 		mockJwtService.AssertExpectations(t)
+		mockSessionService.AssertExpectations(t)
 	})
 
 	t.Run("should return error when repository FindByEmail fails with database error", func(t *testing.T) {
@@ -1872,6 +2033,7 @@ func TestAuthService_Login(t *testing.T) {
 			config,
 			slog.New(slog.NewTextHandler(os.Stdout, nil)),
 			mocks.NewEmailNotificationMock(t),
+			mocks.NewSessionServiceMock(t),
 		)
 
 		ctx := context.Background()
@@ -1882,7 +2044,13 @@ func TestAuthService_Login(t *testing.T) {
 		mockUserRepo.On("FindByEmail", ctx, email).Return(nil, expectedError)
 
 		// Act
-		result, err := authService.Login(ctx, email, password)
+		result, err := authService.Login(ctx, model.LoginInput{
+			Email:      email,
+			Password:   password,
+			IPAddress:  "127.0.0.1",
+			UserAgent:  "test-agent",
+			DeviceName: "test-device",
+		})
 
 		// Assert
 		assert.Error(t, err)
@@ -1908,6 +2076,7 @@ func TestAuthService_Login(t *testing.T) {
 			config,
 			slog.New(slog.NewTextHandler(os.Stdout, nil)),
 			mockEmailNotification,
+			mocks.NewSessionServiceMock(t),
 		)
 
 		ctx := context.Background()
@@ -1926,13 +2095,18 @@ func TestAuthService_Login(t *testing.T) {
 
 		expectedError := errors.New("verification token creation failed")
 		mockUserRepo.On("FindByEmail", ctx, email).Return(user, nil)
-		mockUserRepo.On("FindByID", ctx, userID).Return(user, nil)
 		mockVerificationTokenRepo.On("FindValidByUserIDAndFlow", ctx, userID, domain.VerificationEmailFlow).Return(nil, repository.ErrVerificationCodeNotFound)
 		mockVerificationTokenRepo.On("InvalidateByUserIDAndFlow", ctx, userID, domain.VerificationEmailFlow).Return(nil)
 		mockVerificationTokenRepo.On("Create", ctx, mock.AnythingOfType("*domain.VerificationToken")).Return(expectedError)
 
 		// Act
-		result, err := authService.Login(ctx, email, password)
+		result, err := authService.Login(ctx, model.LoginInput{
+			Email:      email,
+			Password:   password,
+			IPAddress:  "127.0.0.1",
+			UserAgent:  "test-agent",
+			DeviceName: "test-device",
+		})
 
 		// Assert
 		assert.Error(t, err)
@@ -1957,7 +2131,7 @@ func TestAuthService_RequestPasswordReset(t *testing.T) {
 		mockEmailNotification := mocks.NewEmailNotificationMock(t)
 		// Allow the goroutine to call SendResetPasswordEmail without strict expectations
 		mockEmailNotification.On("SendResetPasswordEmail", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil).Maybe()
-		authService := service.NewAuthService(mockUserRepo, mockVerificationTokenRepo, mockJwtService, mockConfig, slog.New(slog.NewTextHandler(os.Stdout, nil)), mockEmailNotification)
+		authService := service.NewAuthService(mockUserRepo, mockVerificationTokenRepo, mockJwtService, mockConfig, slog.New(slog.NewTextHandler(os.Stdout, nil)), mockEmailNotification, mocks.NewSessionServiceMock(t))
 
 		email := "test@example.com"
 		userID := uuid.New()
@@ -1986,7 +2160,7 @@ func TestAuthService_RequestPasswordReset(t *testing.T) {
 			},
 		}
 
-		authService := service.NewAuthService(mockUserRepo, mockVerificationTokenRepo, mockJwtService, mockConfig, slog.New(slog.NewTextHandler(os.Stdout, nil)), mocks.NewEmailNotificationMock(t))
+		authService := service.NewAuthService(mockUserRepo, mockVerificationTokenRepo, mockJwtService, mockConfig, slog.New(slog.NewTextHandler(os.Stdout, nil)), mocks.NewEmailNotificationMock(t), mocks.NewSessionServiceMock(t))
 
 		email := "nonexistent@example.com"
 
@@ -2006,7 +2180,7 @@ func TestAuthService_ResetPassword(t *testing.T) {
 		mockJwtService := mocks.NewJwtServiceMock(t)
 		mockConfig := &config.Config{}
 
-		authService := service.NewAuthService(mockUserRepo, mockVerificationTokenRepo, mockJwtService, mockConfig, slog.New(slog.NewTextHandler(os.Stdout, nil)), mocks.NewEmailNotificationMock(t))
+		authService := service.NewAuthService(mockUserRepo, mockVerificationTokenRepo, mockJwtService, mockConfig, slog.New(slog.NewTextHandler(os.Stdout, nil)), mocks.NewEmailNotificationMock(t), mocks.NewSessionServiceMock(t))
 
 		token := uuid.New()
 		newPassword := "newSecurePassword"
@@ -2036,7 +2210,7 @@ func TestAuthService_ResetPassword(t *testing.T) {
 		mockJwtService := mocks.NewJwtServiceMock(t)
 		mockConfig := &config.Config{}
 
-		authService := service.NewAuthService(mockUserRepo, mockVerificationTokenRepo, mockJwtService, mockConfig, slog.New(slog.NewTextHandler(os.Stdout, nil)), mocks.NewEmailNotificationMock(t))
+		authService := service.NewAuthService(mockUserRepo, mockVerificationTokenRepo, mockJwtService, mockConfig, slog.New(slog.NewTextHandler(os.Stdout, nil)), mocks.NewEmailNotificationMock(t), mocks.NewSessionServiceMock(t))
 
 		token := uuid.New()
 		mockVerificationToken := &domain.VerificationToken{
@@ -2061,7 +2235,7 @@ func TestAuthService_ResetPassword(t *testing.T) {
 		mockJwtService := mocks.NewJwtServiceMock(t)
 		mockConfig := &config.Config{}
 
-		authService := service.NewAuthService(mockUserRepo, mockVerificationTokenRepo, mockJwtService, mockConfig, slog.New(slog.NewTextHandler(os.Stdout, nil)), mocks.NewEmailNotificationMock(t))
+		authService := service.NewAuthService(mockUserRepo, mockVerificationTokenRepo, mockJwtService, mockConfig, slog.New(slog.NewTextHandler(os.Stdout, nil)), mocks.NewEmailNotificationMock(t), mocks.NewSessionServiceMock(t))
 
 		token := uuid.New()
 		newPassword := "newSecurePassword"
@@ -2090,7 +2264,7 @@ func TestAuthService_ResetPassword(t *testing.T) {
 		mockJwtService := mocks.NewJwtServiceMock(t)
 		mockConfig := &config.Config{}
 
-		authService := service.NewAuthService(mockUserRepo, mockVerificationTokenRepo, mockJwtService, mockConfig, slog.New(slog.NewTextHandler(os.Stdout, nil)), mocks.NewEmailNotificationMock(t))
+		authService := service.NewAuthService(mockUserRepo, mockVerificationTokenRepo, mockJwtService, mockConfig, slog.New(slog.NewTextHandler(os.Stdout, nil)), mocks.NewEmailNotificationMock(t), mocks.NewSessionServiceMock(t))
 
 		token := uuid.New()
 		newPassword := "newSecurePassword"

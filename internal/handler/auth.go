@@ -74,7 +74,14 @@ func (h *AuthHandler) VerifyEmail(c echo.Context) error {
 		return err
 	}
 
-	accessToken, err := h.authService.VerifyEmail(c.Request().Context(), payload.Token)
+	input := model.VerifyEmailInput{
+		Token:      payload.Token,
+		IPAddress:  c.Request().Header.Get("X-Real-IP"),
+		DeviceName: c.Request().Header.Get("X-Device-Name"),
+		UserAgent:  c.Request().Header.Get("User-Agent"),
+	}
+
+	accessToken, err := h.authService.VerifyEmail(c.Request().Context(), input)
 	if err != nil {
 		logger.Error("verify email", "error", err)
 
@@ -110,7 +117,15 @@ func (h *AuthHandler) Login(c echo.Context) error {
 		return err
 	}
 
-	accessToken, err := h.authService.Login(c.Request().Context(), payload.Email, payload.Password)
+	input := model.LoginInput{
+		Email:      payload.Email,
+		Password:   payload.Password,
+		IPAddress:  c.Request().Header.Get("X-Real-IP"),
+		DeviceName: c.Request().Header.Get("X-Device-Name"),
+		UserAgent:  c.Request().Header.Get("User-Agent"),
+	}
+
+	accessToken, err := h.authService.Login(c.Request().Context(), input)
 	if err != nil {
 		logger.Error("login", "error", err)
 

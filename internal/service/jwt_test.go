@@ -52,7 +52,8 @@ func TestJwtService_GenerateAccessTokenJWT(t *testing.T) {
 		assert.NoError(t, err)
 
 		// Act
-		result, err := jwtService.GenerateAccessTokenJWT(ctx, userID)
+		sessionID := uuid.New()
+		result, err := jwtService.GenerateAccessTokenJWT(ctx, userID, sessionID)
 
 		// Assert
 		assert.NoError(t, err)
@@ -145,7 +146,8 @@ func TestJwtService_GenerateAccessTokenJWT(t *testing.T) {
 		beforeGeneration := time.Now()
 
 		// Act
-		result, err := jwtService.GenerateAccessTokenJWT(ctx, userID)
+		sessionID := uuid.New()
+		result, err := jwtService.GenerateAccessTokenJWT(ctx, userID, sessionID)
 
 		// Assert
 		assert.NoError(t, err)
@@ -187,7 +189,8 @@ func TestJwtService_GenerateAccessTokenJWT(t *testing.T) {
 		assert.NoError(t, err)
 
 		// Act
-		result, err := jwtService.GenerateAccessTokenJWT(ctx, userID)
+		sessionID := uuid.New()
+		result, err := jwtService.GenerateAccessTokenJWT(ctx, userID, sessionID)
 
 		// Assert
 		assert.NoError(t, err)
@@ -239,8 +242,10 @@ func TestJwtService_GenerateAccessTokenJWT(t *testing.T) {
 		assert.NoError(t, err)
 
 		// Act
-		result1, err1 := jwtService.GenerateAccessTokenJWT(ctx, userID1)
-		result2, err2 := jwtService.GenerateAccessTokenJWT(ctx, userID2)
+		sessionID1 := uuid.New()
+		sessionID2 := uuid.New()
+		result1, err1 := jwtService.GenerateAccessTokenJWT(ctx, userID1, sessionID1)
+		result2, err2 := jwtService.GenerateAccessTokenJWT(ctx, userID2, sessionID2)
 
 		// Assert
 		assert.NoError(t, err1)
@@ -296,7 +301,8 @@ func TestJwtService_GenerateAccessTokenJWT(t *testing.T) {
 		assert.NoError(t, err)
 
 		// Act - passing nil context
-		result, err := jwtService.GenerateAccessTokenJWT(context.Background(), userID)
+		sessionID := uuid.New()
+		result, err := jwtService.GenerateAccessTokenJWT(context.Background(), userID, sessionID)
 
 		// Assert
 		// The method should handle nil context without panicking
@@ -333,7 +339,8 @@ func TestJwtService_GenerateAccessTokenJWT(t *testing.T) {
 		assert.NoError(t, err)
 
 		// Act
-		result, err := jwtService.GenerateAccessTokenJWT(ctx, emptyUserID)
+		sessionID := uuid.New()
+		result, err := jwtService.GenerateAccessTokenJWT(ctx, emptyUserID, sessionID)
 
 		// Assert
 		assert.NoError(t, err)

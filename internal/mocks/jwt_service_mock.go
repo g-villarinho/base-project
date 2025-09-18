@@ -26,9 +26,9 @@ func (_m *JwtServiceMock) EXPECT() *JwtServiceMock_Expecter {
 	return &JwtServiceMock_Expecter{mock: &_m.Mock}
 }
 
-// GenerateAccessTokenJWT provides a mock function with given fields: ctx, userID
-func (_m *JwtServiceMock) GenerateAccessTokenJWT(ctx context.Context, userID uuid.UUID) (*model.AccessToken, error) {
-	ret := _m.Called(ctx, userID)
+// GenerateAccessTokenJWT provides a mock function with given fields: ctx, userID, sessionID
+func (_m *JwtServiceMock) GenerateAccessTokenJWT(ctx context.Context, userID uuid.UUID, sessionID uuid.UUID) (*model.AccessToken, error) {
+	ret := _m.Called(ctx, userID, sessionID)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GenerateAccessTokenJWT")
@@ -36,19 +36,19 @@ func (_m *JwtServiceMock) GenerateAccessTokenJWT(ctx context.Context, userID uui
 
 	var r0 *model.AccessToken
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, uuid.UUID) (*model.AccessToken, error)); ok {
-		return rf(ctx, userID)
+	if rf, ok := ret.Get(0).(func(context.Context, uuid.UUID, uuid.UUID) (*model.AccessToken, error)); ok {
+		return rf(ctx, userID, sessionID)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, uuid.UUID) *model.AccessToken); ok {
-		r0 = rf(ctx, userID)
+	if rf, ok := ret.Get(0).(func(context.Context, uuid.UUID, uuid.UUID) *model.AccessToken); ok {
+		r0 = rf(ctx, userID, sessionID)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*model.AccessToken)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, uuid.UUID) error); ok {
-		r1 = rf(ctx, userID)
+	if rf, ok := ret.Get(1).(func(context.Context, uuid.UUID, uuid.UUID) error); ok {
+		r1 = rf(ctx, userID, sessionID)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -64,13 +64,14 @@ type JwtServiceMock_GenerateAccessTokenJWT_Call struct {
 // GenerateAccessTokenJWT is a helper method to define mock.On call
 //   - ctx context.Context
 //   - userID uuid.UUID
-func (_e *JwtServiceMock_Expecter) GenerateAccessTokenJWT(ctx interface{}, userID interface{}) *JwtServiceMock_GenerateAccessTokenJWT_Call {
-	return &JwtServiceMock_GenerateAccessTokenJWT_Call{Call: _e.mock.On("GenerateAccessTokenJWT", ctx, userID)}
+//   - sessionID uuid.UUID
+func (_e *JwtServiceMock_Expecter) GenerateAccessTokenJWT(ctx interface{}, userID interface{}, sessionID interface{}) *JwtServiceMock_GenerateAccessTokenJWT_Call {
+	return &JwtServiceMock_GenerateAccessTokenJWT_Call{Call: _e.mock.On("GenerateAccessTokenJWT", ctx, userID, sessionID)}
 }
 
-func (_c *JwtServiceMock_GenerateAccessTokenJWT_Call) Run(run func(ctx context.Context, userID uuid.UUID)) *JwtServiceMock_GenerateAccessTokenJWT_Call {
+func (_c *JwtServiceMock_GenerateAccessTokenJWT_Call) Run(run func(ctx context.Context, userID uuid.UUID, sessionID uuid.UUID)) *JwtServiceMock_GenerateAccessTokenJWT_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(uuid.UUID))
+		run(args[0].(context.Context), args[1].(uuid.UUID), args[2].(uuid.UUID))
 	})
 	return _c
 }
@@ -80,7 +81,7 @@ func (_c *JwtServiceMock_GenerateAccessTokenJWT_Call) Return(_a0 *model.AccessTo
 	return _c
 }
 
-func (_c *JwtServiceMock_GenerateAccessTokenJWT_Call) RunAndReturn(run func(context.Context, uuid.UUID) (*model.AccessToken, error)) *JwtServiceMock_GenerateAccessTokenJWT_Call {
+func (_c *JwtServiceMock_GenerateAccessTokenJWT_Call) RunAndReturn(run func(context.Context, uuid.UUID, uuid.UUID) (*model.AccessToken, error)) *JwtServiceMock_GenerateAccessTokenJWT_Call {
 	_c.Call.Return(run)
 	return _c
 }

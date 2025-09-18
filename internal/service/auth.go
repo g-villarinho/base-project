@@ -14,7 +14,6 @@ import (
 	"github.com/g-villarinho/user-demo/internal/model"
 	"github.com/g-villarinho/user-demo/internal/repository"
 	"github.com/google/uuid"
-	"go.mongodb.org/mongo-driver/x/mongo/driver/session"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -24,8 +23,8 @@ const (
 
 type AuthService interface {
 	RegisterAccount(ctx context.Context, name, email, password string) error
-	VerifyEmail(ctx context.Context, token uuid.UUID) (*model.AccessToken, error)
-	Login(ctx context.Context, email, password string) (*model.AccessToken, error)
+	VerifyEmail(ctx context.Context, input model.VerifyEmailInput) (*model.AccessToken, error)
+	Login(ctx context.Context, input model.LoginInput) (*model.AccessToken, error)
 	UpdatePassword(ctx context.Context, userID uuid.UUID, currentPassword, newPassword string) error
 	RequestChangeEmail(ctx context.Context, userID uuid.UUID, newEmail string) error
 	ChangeEmail(ctx context.Context, token uuid.UUID) error
@@ -59,7 +58,7 @@ func NewAuthService(
 		config:                config,
 		logger:                logger.With(slog.String("service", "auth")),
 		emailNotification:     emailNotification,
-	  sessionService:        sessionService,
+		sessionService:        sessionService,
 	}
 }
 
@@ -101,7 +100,7 @@ func (s *authService) RegisterAccount(ctx context.Context, name string, email st
 		err := s.emailNotification.SendWelcomeEmail(context.Background(), user.CreatedAt, user.Name, url, user.Email)
 		if err != nil {
 			logger.Error("failed to send welcome email",
-			slog.String("userId", user.ID.String()),
+				slog.String("userId", user.ID.String()),
 				slog.String("error", err.Error()),
 			)
 		}
@@ -112,14 +111,14 @@ func (s *authService) RegisterAccount(ctx context.Context, name string, email st
 	return nil
 }
 
-func (s *authService) VerifyEmail(ctx context.Context, token uuid.UUID) (*model.AccessToken, error) {
-	verificationToken, err := s.verificationTokenRepo.FindByID(ctx, token)
+func (s *authService) VerifyEmail(ctx context.Context, input model.VerifyEmailInput) (*model.AccessToken, error) {
+	verificationToken, err := s.verificationTokenRepo.FindByID(ctx, input.Token)
 	if err != nil {
 		if errors.Is(err, repository.ErrVerificationCodeNotFound) {
 			return nil, domain.ErrVerificationTokenNotFound
 		}
 
-		return nil, fmt.Errorf("find verification token by id %s: %w", token, err)
+		return nil, fmt.Errorf("find verification token by id %s: %w", input.Token, err)
 	}
 
 	if verificationToken.IsExpired() || !verificationToken.IsVerificationEmailFlow() {
@@ -134,7 +133,7 @@ func (s *authService) VerifyEmail(ctx context.Context, token uuid.UUID) (*model.
 		return nil, fmt.Errorf("delete verificationCode with id %s: %w", verificationToken.ID, err)
 	}
 
-	session, err := s.sessionService.CreateSession(ctx, verificationToken.UserID, "", "", "")
+	session, err := s.sessionService.CreateSession(ctx, verificationToken.UserID, input.IPAddress, input.DeviceName, input.UserAgent)
 	if err != nil {
 		return nil, err
 	}
@@ -147,8 +146,8 @@ func (s *authService) VerifyEmail(ctx context.Context, token uuid.UUID) (*model.
 	return accessToken, nil
 }
 
-func (s *authService) Login(ctx context.Context, email string, password string) (*model.AccessToken, error) {
-	user, err := s.userRepo.FindByEmail(ctx, email)
+func (s *authService) Login(ctx context.Context, input model.LoginInput) (*model.AccessToken, error) {
+	user, err := s.userRepo.FindByEmail(ctx, input.Email)
 	if err != nil {
 		if errors.Is(err, repository.ErrUserNotFound) {
 			return nil, domain.ErrInvalidCredentials
@@ -157,7 +156,7 @@ func (s *authService) Login(ctx context.Context, email string, password string) 
 		return nil, fmt.Errorf("find user by email: %w", err)
 	}
 
-	if err := bcrypt.CompareHashAndPassword([]byte(user.PasswordHash), []byte(password)); err != nil {
+	if err := bcrypt.CompareHashAndPassword([]byte(user.PasswordHash), []byte(input.Password)); err != nil {
 		return nil, domain.ErrInvalidCredentials
 	}
 
@@ -173,7 +172,12 @@ func (s *authService) Login(ctx context.Context, email string, password string) 
 		return nil, domain.ErrEmailNotVerified
 	}
 
-	accessToken, err := s.jwtService.GenerateAccessTokenJWT(ctx, user.ID)
+	session, err := s.sessionService.CreateSession(ctx, user.ID, input.IPAddress, input.DeviceName, input.UserAgent)
+	if err != nil {
+		return nil, fmt.Errorf("create session: %w", err)
+	}
+
+	accessToken, err := s.jwtService.GenerateAccessTokenJWT(ctx, user.ID, session.ID)
 	if err != nil {
 		return nil, fmt.Errorf("generate access token for userId %s: %w", user.ID, err)
 	}
