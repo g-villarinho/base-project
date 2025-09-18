@@ -14,7 +14,7 @@ import (
 )
 
 type JwtService interface {
-	GenerateAccessTokenJWT(ctx context.Context, userID uuid.UUID) (*model.AccessToken, error)
+	GenerateAccessTokenJWT(ctx context.Context, userID uuid.UUID, sessionID uuid.UUID) (*model.AccessToken, error)
 	VerifyAccessToken(ctx context.Context, token string) (*jwt.RegisteredClaims, error)
 }
 
@@ -42,7 +42,7 @@ func NewJwtService(config *config.Config, keyParser keyparser.EcdsaKeyPair) (Jwt
 	}, nil
 }
 
-func (j *jwtService) GenerateAccessTokenJWT(ctx context.Context, userID uuid.UUID) (*model.AccessToken, error) {
+func (j *jwtService) GenerateAccessTokenJWT(ctx context.Context, userID uuid.UUID, sessionID uuid.UUID) (*model.AccessToken, error) {
 	now := time.Now()
 	expiresAt := now.Add(j.config.Security.AccessTokenExpirationHours)
 
@@ -55,7 +55,12 @@ func (j *jwtService) GenerateAccessTokenJWT(ctx context.Context, userID uuid.UUI
 		ID:        uuid.New().String(),
 	}
 
-	token, err := jwt.NewWithClaims(jwt.SigningMethodES256, claims).SignedString(j.privateKey)
+	customClaims := model.CustomClaims {
+    RegisteredClaims: claims,
+		SessionID: sessionID.String(),
+	}
+
+	token, err := jwt.NewWithClaims(jwt.SigningMethodES256, customClaims).SignedString(j.privateKey)
 	if err != nil {
 		return nil, fmt.Errorf("sign token: %w", err)
 	}

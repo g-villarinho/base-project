@@ -14,6 +14,7 @@ import (
 	"github.com/g-villarinho/user-demo/internal/model"
 	"github.com/g-villarinho/user-demo/internal/repository"
 	"github.com/google/uuid"
+	"go.mongodb.org/mongo-driver/x/mongo/driver/session"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -100,7 +101,7 @@ func (s *authService) RegisterAccount(ctx context.Context, name string, email st
 		err := s.emailNotification.SendWelcomeEmail(context.Background(), user.CreatedAt, user.Name, url, user.Email)
 		if err != nil {
 			logger.Error("failed to send welcome email",
-				slog.String("userId", user.ID.String()),
+			slog.String("userId", user.ID.String()),
 				slog.String("error", err.Error()),
 			)
 		}
@@ -138,7 +139,7 @@ func (s *authService) VerifyEmail(ctx context.Context, token uuid.UUID) (*model.
 		return nil, err
 	}
 
-	accessToken, err := s.jwtService.GenerateAccessTokenJWT(ctx, verificationToken.UserID)
+	accessToken, err := s.jwtService.GenerateAccessTokenJWT(ctx, verificationToken.UserID, session.ID)
 	if err != nil {
 		return nil, fmt.Errorf("generate accessToken for userId %s: %w", verificationToken.UserID, err)
 	}
