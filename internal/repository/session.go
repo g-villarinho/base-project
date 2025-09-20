@@ -16,6 +16,7 @@ var (
 type SessionRepository interface {
 	Create(ctx context.Context, session *domain.Session) error
 	FindByID(ctx context.Context, ID uuid.UUID) (*domain.Session, error)
+	FindByToken(ctx context.Context, token string) (*domain.Session, error)
 	DeleteByID(ctx context.Context, ID uuid.UUID) error
 	DeleteByUserID(ctx context.Context, userID uuid.UUID) error
 }
@@ -42,6 +43,20 @@ func (r *sessionRepository) FindByID(ctx context.Context, ID uuid.UUID) (*domain
 	var session domain.Session
 
 	if err := r.db.WithContext(ctx).First(&session, "id = ?", ID).Error; err != nil {
+		if err == gorm.ErrRecordNotFound {
+			return nil, ErrSessionNotFound
+		}
+
+		return nil, err
+	}
+
+	return &session, nil
+}
+
+func (r *sessionRepository) FindByToken(ctx context.Context, token string) (*domain.Session, error) {
+	var session domain.Session
+
+	if err := r.db.WithContext(ctx).First(&session, "token = ?", token).Error; err != nil {
 		if err == gorm.ErrRecordNotFound {
 			return nil, ErrSessionNotFound
 		}

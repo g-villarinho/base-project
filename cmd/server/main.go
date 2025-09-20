@@ -5,8 +5,8 @@ import (
 	"net/http"
 
 	"github.com/g-villarinho/user-demo/config"
-	"github.com/g-villarinho/user-demo/infra"
 	"github.com/g-villarinho/user-demo/infra/client"
+	"github.com/g-villarinho/user-demo/infra/database"
 	"github.com/g-villarinho/user-demo/infra/notification"
 	"github.com/g-villarinho/user-demo/internal/handler"
 	"github.com/g-villarinho/user-demo/internal/handler/middleware"
@@ -34,9 +34,9 @@ func main() {
 func provideDependecies() *dig.Container {
 	container := dig.New()
 
-	// Infra
+	// General
 	injector.Provide(container, config.NewConfig)
-	injector.Provide(container, infra.NewSqliteDbConnection)
+	injector.Provide(container, database.NewSqliteDbConnection)
 	injector.Provide(container, keyparser.NewEcdsaKeyPair)
 	injector.Provide(container, logger.NewLogger)
 

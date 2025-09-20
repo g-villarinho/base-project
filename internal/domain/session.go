@@ -2,9 +2,15 @@ package domain
 
 import (
 	"crypto/rand"
+	"errors"
 	"time"
 
 	"github.com/google/uuid"
+)
+
+var (
+	ErrSessionNotFound = errors.New("Session not found to perform the operation")
+	ErrSessionExpired  = errors.New("Session is expired")
 )
 
 const (

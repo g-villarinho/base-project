@@ -13,6 +13,7 @@ import (
 
 type SessionService interface {
 	CreateSession(ctx context.Context, userID uuid.UUID, ipAddress, deviceName, userAgent string) (*domain.Session, error)
+	FindByToken(ctx context.Context, token string) (*domain.Session, error)
 }
 
 type sessionService struct {
@@ -38,6 +39,23 @@ func (s *sessionService) CreateSession(ctx context.Context, userID uuid.UUID, ip
 
 	if err := s.sessionRepo.Create(ctx, session); err != nil {
 		return nil, fmt.Errorf("create session for userID %s: %w", userID, err)
+	}
+
+	return session, nil
+}
+
+func (s *sessionService) FindByToken(ctx context.Context, token string) (*domain.Session, error) {
+	session, err := s.sessionRepo.FindByToken(ctx, token)
+	if err != nil {
+		if err == repository.ErrSessionNotFound {
+			return nil, domain.ErrSessionNotFound
+		}
+
+		return nil, fmt.Errorf("find session by token: %w", err)
+	}
+
+	if session.IsExpired() {
+		return nil, domain.ErrSessionExpired
 	}
 
 	return session, nil

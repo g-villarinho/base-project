@@ -4,27 +4,32 @@ import (
 	"log/slog"
 
 	"github.com/g-villarinho/user-demo/internal/handler"
-	"github.com/google/uuid"
+	"github.com/g-villarinho/user-demo/internal/service"
 	"github.com/labstack/echo/v4"
 )
 
 type AuthMiddleware struct {
-	logger        *slog.Logger
-	cookieHandler handler.CookieHandler
+	logger         *slog.Logger
+	cookieHandler  handler.CookieHandler
+	sessionService service.SessionService
 }
 
-func NewAuthMiddleware(logger *slog.Logger, cookieHandler handler.CookieHandler) *AuthMiddleware {
+func NewAuthMiddleware(
+	logger *slog.Logger,
+	cookieHandler handler.CookieHandler,
+	sessionService service.SessionService) *AuthMiddleware {
 	return &AuthMiddleware{
-		logger:        logger,
-		cookieHandler: cookieHandler,
+		logger:         logger.With(slog.String("middleware", "auth")),
+		cookieHandler:  cookieHandler,
+		sessionService: sessionService,
 	}
 }
 
 func (m *AuthMiddleware) EnsuredAuthenticated(next echo.HandlerFunc) echo.HandlerFunc {
 	return func(c echo.Context) error {
 		logger := m.logger.With(
+			slog.String("method", "EnsuredAuthenticated"),
 			slog.String("path", c.Request().URL.Path),
-			slog.String("method", c.Request().Method),
 		)
 
 		cookie, err := m.cookieHandler.Get(c)
@@ -39,14 +44,14 @@ func (m *AuthMiddleware) EnsuredAuthenticated(next echo.HandlerFunc) echo.Handle
 			return echo.ErrUnauthorized
 		}
 
-		// userID, err := uuid.Parse(claims.Subject)
-		// if err != nil {
-		// 	logger.Error("authentication failed: invalid user ID in token", "subject", claims.Subject, "error", err)
-		// 	m.cookieHandler.Delete(c)
-		// 	return echo.ErrUnauthorized
-		// }
+		session, err := m.sessionService.FindByToken(c.Request().Context(), cookie.Value)
+		if err != nil {
+			logger.Warn("authentication failed: invalid session token", slog.String("token", cookie.Value), slog.String("error", err.Error()))
+			m.cookieHandler.Delete(c)
+			return echo.ErrUnauthorized
+		}
 
-		handler.SetUserID(c, uuid.New())
+		handler.SetUserID(c, session.UserID)
 		return next(c)
 	}
 }

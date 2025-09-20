@@ -70,7 +70,7 @@ func (h *cookieHandler) Set(ectx echo.Context, value string, expiresAt time.Time
 		Value:    signedValue,
 		Path:     "/",
 		HttpOnly: true,
-		Secure:   false,
+		Secure:   h.isSecure,
 		SameSite: http.SameSiteStrictMode,
 		MaxAge:   maxAge,
 	}
@@ -84,7 +84,7 @@ func (h *cookieHandler) Delete(ectx echo.Context) {
 		Value:    "",
 		Path:     "/",
 		HttpOnly: true,
-		Secure:   false,
+		Secure:   h.isSecure,
 		SameSite: http.SameSiteStrictMode,
 		MaxAge:   -1,
 	}
