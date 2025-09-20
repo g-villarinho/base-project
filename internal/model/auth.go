@@ -1,6 +1,8 @@
 package model
 
-import "github.com/google/uuid"
+import (
+	"github.com/google/uuid"
+)
 
 type RegisterAccountPayload struct {
 	Name     string `json:"name" validate:"required,max=255" example:"João Silva"`
@@ -41,15 +43,15 @@ type ConfirmEmailChangePayload struct {
 
 type LoginInput struct {
 	Email      string
-  Password   string
+	Password   string
 	IPAddress  string
 	UserAgent  string
 	DeviceName string
 }
 
 type VerifyEmailInput struct {
-	 Token      uuid.UUID
-	 IPAddress  string
-	 UserAgent  string
-	 DeviceName string
+	Token      uuid.UUID
+	IPAddress  string
+	UserAgent  string
+	DeviceName string
 }

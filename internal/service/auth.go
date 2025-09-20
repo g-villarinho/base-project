@@ -23,7 +23,7 @@ const (
 
 type AuthService interface {
 	RegisterAccount(ctx context.Context, name, email, password string) error
-	VerifyEmail(ctx context.Context, input model.VerifyEmailInput) (*model.AccessToken, error)
+	VerifyEmail(ctx context.Context, input model.VerifyEmailInput) (*domain.Session, error)
 	Login(ctx context.Context, input model.LoginInput) (*model.AccessToken, error)
 	UpdatePassword(ctx context.Context, userID uuid.UUID, currentPassword, newPassword string) error
 	RequestChangeEmail(ctx context.Context, userID uuid.UUID, newEmail string) error
@@ -111,7 +111,7 @@ func (s *authService) RegisterAccount(ctx context.Context, name string, email st
 	return nil
 }
 
-func (s *authService) VerifyEmail(ctx context.Context, input model.VerifyEmailInput) (*model.AccessToken, error) {
+func (s *authService) VerifyEmail(ctx context.Context, input model.VerifyEmailInput) (*domain.Session, error) {
 	verificationToken, err := s.verificationTokenRepo.FindByID(ctx, input.Token)
 	if err != nil {
 		if errors.Is(err, repository.ErrVerificationCodeNotFound) {
@@ -138,12 +138,7 @@ func (s *authService) VerifyEmail(ctx context.Context, input model.VerifyEmailIn
 		return nil, err
 	}
 
-	accessToken, err := s.jwtService.GenerateAccessTokenJWT(ctx, verificationToken.UserID, session.ID)
-	if err != nil {
-		return nil, fmt.Errorf("generate accessToken for userId %s: %w", verificationToken.UserID, err)
-	}
-
-	return accessToken, nil
+	return session, nil
 }
 
 func (s *authService) Login(ctx context.Context, input model.LoginInput) (*model.AccessToken, error) {

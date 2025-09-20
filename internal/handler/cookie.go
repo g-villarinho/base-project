@@ -4,15 +4,42 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/g-villarinho/user-demo/config"
 	"github.com/labstack/echo/v4"
 )
 
-const (
-	cookieName = "user:token"
-)
+type CookieHandler interface {
+	Get(ectx echo.Context) (*http.Cookie, error)
+	Set(ectx echo.Context, value string, expiresAt time.Time)
+	Delete(ectx echo.Context)
+}
 
-func GetCookie(ectx echo.Context) (*http.Cookie, error) {
-	cookie, err := ectx.Cookie(cookieName)
+type cookieHandler struct {
+	cookieName    string
+	isSecure      bool
+	sameSite      http.SameSite
+	sessionSecret string
+}
+
+func NewCookieHandler(config config.Config) CookieHandler {
+	sameSite := http.SameSiteStrictMode
+	switch config.Session.CookieSameSite {
+	case "lax":
+		sameSite = http.SameSiteLaxMode
+	default:
+		sameSite = http.SameSiteStrictMode
+	}
+
+	return &cookieHandler{
+		cookieName:    config.Session.CookieName,
+		isSecure:      config.Session.CookieSecure,
+		sameSite:      sameSite,
+		sessionSecret: config.Session.Secret,
+	}
+}
+
+func (h *cookieHandler) Get(ectx echo.Context) (*http.Cookie, error) {
+	cookie, err := ectx.Cookie(h.cookieName)
 	if err != nil {
 		return nil, err
 	}
@@ -20,11 +47,11 @@ func GetCookie(ectx echo.Context) (*http.Cookie, error) {
 	return cookie, nil
 }
 
-func SetCookie(ectx echo.Context, value string, expiresAt time.Time) {
+func (h *cookieHandler) Set(ectx echo.Context, value string, expiresAt time.Time) {
 	maxAge := int(time.Until(expiresAt).Seconds())
 
 	cookie := &http.Cookie{
-		Name:     cookieName,
+		Name:     h.cookieName,
 		Value:    value,
 		Path:     "/",
 		HttpOnly: true,
@@ -36,9 +63,9 @@ func SetCookie(ectx echo.Context, value string, expiresAt time.Time) {
 	ectx.SetCookie(cookie)
 }
 
-func DeleteCookie(ectx echo.Context) {
+func (h *cookieHandler) Delete(ectx echo.Context) {
 	cookie := &http.Cookie{
-		Name:     cookieName,
+		Name:     h.cookieName,
 		Value:    "",
 		Path:     "/",
 		HttpOnly: true,

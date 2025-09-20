@@ -16,9 +16,9 @@ type Config struct {
 	Cors        Cors
 	URL         URL
 	SqlLite     SqlLite
-	Mailgun     Mailgun
 	Resend      Resend
 	Key         Key
+	Session     Session
 	ShowSQLLogs bool `env:"SHOW_SQL_LOGS,default=false"`
 }
 
@@ -61,17 +61,19 @@ type URL struct {
 	APPBaseURL string `env:"APP_BASE_URL,default=http://localhost:5173"`
 }
 
-type Mailgun struct {
-	Domain  string        `env:"MAILGUN_DOMAIN,required=true"`
-	APIKey  string        `env:"MAILGUN_API_KEY,required=true"`
-	Timeout time.Duration `env:"MAILGUN_TIMEOUT_SECONDS,default=10s"`
-}
-
-// RESEND_TIMEOUT_SECONDS
 type Resend struct {
 	APIKey  string        `env:"RESEND_API_KEY,required=true"`
 	Domain  string        `env:"RESEND_DOMAIN,required=true"`
 	Timeout time.Duration `env:"RESEND_TIMEOUT_SECONDS,default=10s"`
+}
+
+type Session struct {
+	Secret         string        `env:"SESSION_SECRET,default=cjQ6A2CJ2V5g2StB6DPYA3rxfvOlKm3m"`
+	Duration       time.Duration `env:"SESSION_DURATION,default=168h"`
+	TokenSize      int           `env:"SESSION_TOKEN_SIZE,default=32"`
+	CookieName     string        `env:"SESSION_COOKIE_NAME,default=base-project:session"`
+	CookieSecure   bool          `env:"SESSION_COOKIE_SECURE,default=false"`
+	CookieSameSite string        `env:"SESSION_COOKIE_SAME_SITE,default=strict"`
 }
 
 func (e *Config) IsDevelopment() bool {

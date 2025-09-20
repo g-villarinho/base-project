@@ -12,17 +12,20 @@ import (
 )
 
 type AuthHandler struct {
-	authService service.AuthService
-	logger      *slog.Logger
+	authService   service.AuthService
+	logger        *slog.Logger
+	cookieHandler CookieHandler
 }
 
 func NewAuthHandler(
 	authService service.AuthService,
 	logger *slog.Logger,
+	cookieHandler CookieHandler,
 ) *AuthHandler {
 	return &AuthHandler{
-		authService: authService,
-		logger:      logger.With(slog.String("handler", "auth")),
+		authService:   authService,
+		logger:        logger.With(slog.String("handler", "auth")),
+		cookieHandler: cookieHandler,
 	}
 }
 
@@ -81,7 +84,7 @@ func (h *AuthHandler) VerifyEmail(c echo.Context) error {
 		UserAgent:  c.Request().Header.Get("User-Agent"),
 	}
 
-	accessToken, err := h.authService.VerifyEmail(c.Request().Context(), input)
+	session, err := h.authService.VerifyEmail(c.Request().Context(), input)
 	if err != nil {
 		logger.Error("verify email", "error", err)
 
@@ -96,7 +99,7 @@ func (h *AuthHandler) VerifyEmail(c echo.Context) error {
 		return echo.ErrInternalServerError
 	}
 
-	SetCookie(c, accessToken.Value, accessToken.ExpiresAt)
+	h.cookieHandler.Set(c, session.Token, session.ExpiresAt)
 	return c.NoContent(http.StatusOK)
 }
 
@@ -144,12 +147,12 @@ func (h *AuthHandler) Login(c echo.Context) error {
 		return echo.ErrInternalServerError
 	}
 
-	SetCookie(c, accessToken.Value, accessToken.ExpiresAt)
+	h.cookieHandler.Set(c, accessToken.Value, accessToken.ExpiresAt)
 	return c.NoContent(http.StatusOK)
 }
 
 func (h *AuthHandler) Logout(c echo.Context) error {
-	DeleteCookie(c)
+	h.cookieHandler.Delete(c)
 	return c.NoContent(http.StatusOK)
 }
 
@@ -251,7 +254,7 @@ func (h *AuthHandler) ConfirmResetPassword(c echo.Context) error {
 		return echo.ErrInternalServerError
 	}
 
-	SetCookie(c, accessToken.Value, accessToken.ExpiresAt)
+	h.cookieHandler.Set(c, accessToken.Value, accessToken.ExpiresAt)
 	return c.NoContent(http.StatusOK)
 }
 

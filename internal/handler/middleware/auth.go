@@ -10,14 +10,16 @@ import (
 )
 
 type AuthMiddleware struct {
-	jwtService service.JwtService
-	logger     *slog.Logger
+	jwtService    service.JwtService
+	logger        *slog.Logger
+	cookieHandler handler.CookieHandler
 }
 
-func NewAuthMiddleware(jwtService service.JwtService, logger *slog.Logger) *AuthMiddleware {
+func NewAuthMiddleware(jwtService service.JwtService, logger *slog.Logger, cookieHandler handler.CookieHandler) *AuthMiddleware {
 	return &AuthMiddleware{
-		jwtService: jwtService,
-		logger:     logger.With(slog.String("middleware", "auth")),
+		jwtService:    jwtService,
+		logger:        logger,
+		cookieHandler: cookieHandler,
 	}
 }
 
@@ -28,7 +30,7 @@ func (m *AuthMiddleware) EnsuredAuthenticated(next echo.HandlerFunc) echo.Handle
 			slog.String("method", c.Request().Method),
 		)
 
-		cookie, err := handler.GetCookie(c)
+		cookie, err := m.cookieHandler.Get(c)
 		if err != nil {
 			logger.Warn("authentication failed: no cookie found")
 			return echo.ErrUnauthorized
@@ -36,21 +38,21 @@ func (m *AuthMiddleware) EnsuredAuthenticated(next echo.HandlerFunc) echo.Handle
 
 		if cookie.Value == "" {
 			logger.Warn("authentication failed: empty cookie value")
-			handler.DeleteCookie(c)
+			m.cookieHandler.Delete(c)
 			return echo.ErrUnauthorized
 		}
 
 		claims, err := m.jwtService.VerifyAccessToken(c.Request().Context(), cookie.Value)
 		if err != nil {
 			logger.Warn("authentication failed: invalid token", "error", err)
-			handler.DeleteCookie(c)
+			m.cookieHandler.Delete(c)
 			return echo.ErrUnauthorized
 		}
 
 		userID, err := uuid.Parse(claims.Subject)
 		if err != nil {
 			logger.Error("authentication failed: invalid user ID in token", "subject", claims.Subject, "error", err)
-			handler.DeleteCookie(c)
+			m.cookieHandler.Delete(c)
 			return echo.ErrUnauthorized
 		}
 

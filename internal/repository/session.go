@@ -3,7 +3,6 @@ package repository
 import (
 	"context"
 	"errors"
-	"time"
 
 	"github.com/g-villarinho/user-demo/internal/domain"
 	"github.com/google/uuid"
@@ -16,9 +15,9 @@ var (
 
 type SessionRepository interface {
 	Create(ctx context.Context, session *domain.Session) error
-  FindByID(ctx context.Context, ID uuid.UUID) (*domain.Session, error)
-	RevokeByUserID(ctx context.Context, userID uuid.UUID) error
-	Revoke(ctx context.Context, ID uuid.UUID) error
+	FindByID(ctx context.Context, ID uuid.UUID) (*domain.Session, error)
+	DeleteByID(ctx context.Context, ID uuid.UUID) error
+	DeleteByUserID(ctx context.Context, userID uuid.UUID) error
 }
 
 type sessionRepository struct {
@@ -53,47 +52,21 @@ func (r *sessionRepository) FindByID(ctx context.Context, ID uuid.UUID) (*domain
 	return &session, nil
 }
 
-func (r *sessionRepository) RevokeByUserID(ctx context.Context, userID uuid.UUID) error {
-	now := time.Now().UTC()
-
-	updates := map[string]any{
-		"revoked_at": now,
-		"updated_at": now,
-	}
-
-	err := r.db.WithContext(ctx).
-	  Model(&domain.Session{}).
-		Where("user_id = ? AND revoked_at IS NOT NULL", userID).
-		Updates(updates).Error
-
-	if err != nil {
+func (r *sessionRepository) DeleteByID(ctx context.Context, ID uuid.UUID) error {
+	if err := r.db.WithContext(ctx).Delete(&domain.Session{}, ID).Error; err != nil {
 		return err
 	}
 
-	return nil	
+	return nil
 }
 
-func (r *sessionRepository) Revoke(ctx context.Context, ID uuid.UUID) error {
-	now := time.Now().UTC()
-
-	updates := map[string]any{
-		"revoked_at": now,
-		"updated_at": now,
+func (r *sessionRepository) DeleteByUserID(ctx context.Context, userID uuid.UUID) error {
+	if err := r.db.WithContext(ctx).
+		Where("user_id = ?", userID).
+		Delete(&domain.Session{}).
+		Error; err != nil {
+		return err
 	}
 
-	result := r.db.WithContext(ctx).
-	  Model(&domain.Session{}).
-		Where("id = ? AND revoked_at IS NOT NULL", ID).
-		Updates(updates)
-
-	if result.Error != nil {
-		return result.Error
-	}
-
-	if result.RowsAffected == 0 {
-		return ErrSessionNotFound
-	}
-
-	return nil	
+	return nil
 }
-
