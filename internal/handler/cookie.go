@@ -1,7 +1,11 @@
 package handler
 
 import (
+	"crypto/hmac"
+	"crypto/sha256"
+	"encoding/hex"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/g-villarinho/user-demo/config"
@@ -44,15 +48,26 @@ func (h *cookieHandler) Get(ectx echo.Context) (*http.Cookie, error) {
 		return nil, err
 	}
 
+	if !h.verifyCookie(cookie.Value) {
+		return nil, echo.NewHTTPError(http.StatusUnauthorized, "invalid cookie signature")
+	}
+
+	parts := strings.Split(cookie.Value, ".")
+	if len(parts) == 2 {
+		cookie.Value = parts[0]
+	}
+
 	return cookie, nil
 }
 
 func (h *cookieHandler) Set(ectx echo.Context, value string, expiresAt time.Time) {
 	maxAge := int(time.Until(expiresAt).Seconds())
 
+	signedValue := h.signCookie(value)
+
 	cookie := &http.Cookie{
 		Name:     h.cookieName,
-		Value:    value,
+		Value:    signedValue,
 		Path:     "/",
 		HttpOnly: true,
 		Secure:   false,
@@ -75,4 +90,24 @@ func (h *cookieHandler) Delete(ectx echo.Context) {
 	}
 
 	ectx.SetCookie(cookie)
+}
+
+func (h *cookieHandler) signCookie(value string) string {
+	mac := hmac.New(sha256.New, []byte(h.sessionSecret))
+	mac.Write([]byte(value))
+	signature := hex.EncodeToString(mac.Sum(nil))
+	return value + "." + signature
+}
+
+func (h *cookieHandler) verifyCookie(signedValue string) bool {
+	parts := strings.Split(signedValue, ".")
+	if len(parts) != 2 {
+		return false
+	}
+
+	value, signature := parts[0], parts[1]
+	expectedSignature := h.signCookie(value)
+	expectedParts := strings.Split(expectedSignature, ".")
+
+	return len(expectedParts) == 2 && hmac.Equal([]byte(signature), []byte(expectedParts[1]))
 }
