@@ -24,12 +24,12 @@ const (
 type AuthService interface {
 	RegisterAccount(ctx context.Context, name, email, password string) error
 	VerifyEmail(ctx context.Context, input model.VerifyEmailInput) (*domain.Session, error)
-	Login(ctx context.Context, input model.LoginInput) (*model.AccessToken, error)
+	Login(ctx context.Context, input model.LoginInput) (*domain.Session, error)
 	UpdatePassword(ctx context.Context, userID uuid.UUID, currentPassword, newPassword string) error
 	RequestChangeEmail(ctx context.Context, userID uuid.UUID, newEmail string) error
 	ChangeEmail(ctx context.Context, token uuid.UUID) error
 	RequestPasswordReset(ctx context.Context, email string) error
-	ResetPassword(ctx context.Context, token uuid.UUID, newPassword string) (*model.AccessToken, error)
+	ResetPassword(ctx context.Context, token uuid.UUID, newPassword string) (*domain.Session, error)
 }
 
 type authService struct {
@@ -141,7 +141,7 @@ func (s *authService) VerifyEmail(ctx context.Context, input model.VerifyEmailIn
 	return session, nil
 }
 
-func (s *authService) Login(ctx context.Context, input model.LoginInput) (*model.AccessToken, error) {
+func (s *authService) Login(ctx context.Context, input model.LoginInput) (*domain.Session, error) {
 	user, err := s.userRepo.FindByEmail(ctx, input.Email)
 	if err != nil {
 		if errors.Is(err, repository.ErrUserNotFound) {
@@ -172,12 +172,7 @@ func (s *authService) Login(ctx context.Context, input model.LoginInput) (*model
 		return nil, fmt.Errorf("create session: %w", err)
 	}
 
-	accessToken, err := s.jwtService.GenerateAccessTokenJWT(ctx, user.ID, session.ID)
-	if err != nil {
-		return nil, fmt.Errorf("generate access token for userId %s: %w", user.ID, err)
-	}
-
-	return accessToken, nil
+	return session, nil
 }
 
 func (s *authService) UpdatePassword(ctx context.Context, userID uuid.UUID, currentPassword, newPassword string) error {
@@ -311,7 +306,7 @@ func (s *authService) RequestPasswordReset(ctx context.Context, email string) er
 	return nil
 }
 
-func (s *authService) ResetPassword(ctx context.Context, token uuid.UUID, newPassword string) (*model.AccessToken, error) {
+func (s *authService) ResetPassword(ctx context.Context, token uuid.UUID, newPassword string) (*domain.Session, error) {
 	verificationToken, err := s.verificationTokenRepo.FindByID(ctx, token)
 	if err != nil {
 		if errors.Is(err, repository.ErrVerificationCodeNotFound) {

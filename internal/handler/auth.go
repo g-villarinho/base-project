@@ -128,7 +128,7 @@ func (h *AuthHandler) Login(c echo.Context) error {
 		UserAgent:  c.Request().Header.Get("User-Agent"),
 	}
 
-	accessToken, err := h.authService.Login(c.Request().Context(), input)
+	session, err := h.authService.Login(c.Request().Context(), input)
 	if err != nil {
 		logger.Error("login", "error", err)
 
@@ -147,7 +147,7 @@ func (h *AuthHandler) Login(c echo.Context) error {
 		return echo.ErrInternalServerError
 	}
 
-	h.cookieHandler.Set(c, accessToken.Value, accessToken.ExpiresAt)
+	h.cookieHandler.Set(c, session.Token, session.ExpiresAt)
 	return c.NoContent(http.StatusOK)
 }
 
@@ -239,7 +239,7 @@ func (h *AuthHandler) ConfirmResetPassword(c echo.Context) error {
 		return err
 	}
 
-	accessToken, err := h.authService.ResetPassword(c.Request().Context(), payload.Token, payload.NewPassword)
+	session, err := h.authService.ResetPassword(c.Request().Context(), payload.Token, payload.NewPassword)
 	if err != nil {
 		logger.Error("reset password", "error", err)
 
@@ -254,7 +254,7 @@ func (h *AuthHandler) ConfirmResetPassword(c echo.Context) error {
 		return echo.ErrInternalServerError
 	}
 
-	h.cookieHandler.Set(c, accessToken.Value, accessToken.ExpiresAt)
+	h.cookieHandler.Set(c, session.Token, session.ExpiresAt)
 	return c.NoContent(http.StatusOK)
 }
 
