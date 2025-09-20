@@ -35,30 +35,27 @@ type AuthService interface {
 type authService struct {
 	userRepo              repository.UserRepository
 	verificationTokenRepo repository.VerificationTokenRepository
-	jwtService            JwtService
-	config                *config.Config
-	logger                *slog.Logger
 	emailNotification     notification.EmailNotification
 	sessionService        SessionService
+	URLConfig             config.URL
+	logger                *slog.Logger
 }
 
 func NewAuthService(
 	userRepo repository.UserRepository,
 	verificationTokenRepo repository.VerificationTokenRepository,
-	jwtService JwtService,
-	config *config.Config,
-	logger *slog.Logger,
 	emailNotification notification.EmailNotification,
 	sessionService SessionService,
+	logger *slog.Logger,
+	config *config.Config,
 ) AuthService {
 	return &authService{
 		userRepo:              userRepo,
 		verificationTokenRepo: verificationTokenRepo,
-		jwtService:            jwtService,
-		config:                config,
-		logger:                logger.With(slog.String("service", "auth")),
 		emailNotification:     emailNotification,
 		sessionService:        sessionService,
+		URLConfig:             config.URL,
+		logger:                logger.With(slog.String("service", "auth")),
 	}
 }
 
@@ -344,17 +341,17 @@ func (s *authService) getVerificationTokenURL(token uuid.UUID, flow domain.Verif
 
 	switch flow {
 	case domain.VerificationEmailFlow:
-		baseURL = s.config.URL.APIBaseURL
-		path = "/api/v1/auth/verify-email"
+		baseURL = s.URLConfig.APIBaseURL
+		path = "/auth/verify-email"
 	case domain.ResetPasswordFlow:
-		baseURL = s.config.URL.APPBaseURL
+		baseURL = s.URLConfig.APPBaseURL
 		path = "/reset-password"
 	case domain.ChangeEmailFlow:
-		baseURL = s.config.URL.APIBaseURL
-		path = "/api/v1/auth/change-email"
+		baseURL = s.URLConfig.APIBaseURL
+		path = "/auth/change-email"
 	default:
-		baseURL = s.config.URL.APIBaseURL
-		path = "/api/v1/auth/verify"
+		baseURL = s.URLConfig.APIBaseURL
+		path = "/auth/verify"
 	}
 
 	parsedURL, err := url.Parse(baseURL)

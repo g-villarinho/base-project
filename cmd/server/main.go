@@ -48,14 +48,16 @@ func provideDependecies() *dig.Container {
 
 	// Service
 	injector.Provide(container, service.NewAuthService)
-	injector.Provide(container, service.NewJwtService)
-  injector.Provide(container, service.NewUserService)
+	injector.Provide(container, service.NewSessionService)
+	injector.Provide(container, service.NewUserService)
 
 	// Repository
 	injector.Provide(container, repository.NewUserRepository)
+	injector.Provide(container, repository.NewSessionRepository)
 	injector.Provide(container, repository.NewVerificationCodeRepository)
 
 	//Handler
+	injector.Provide(container, handler.NewCookieHandler)
 	injector.Provide(container, handler.NewAuthHandler)
 	injector.Provide(container, handler.NewUserHandler)
 
@@ -69,8 +71,8 @@ func provideDependecies() *dig.Container {
 }
 
 func NewServer(
-	config *config.Config, 
-	authHandler *handler.AuthHandler, 
+	config *config.Config,
+	authHandler *handler.AuthHandler,
 	userHandler *handler.UserHandler,
 	authMiddleware *middleware.AuthMiddleware,
 ) *echo.Echo {
@@ -90,7 +92,7 @@ func NewServer(
 	}
 
 	registerAuthRoutes(e, authHandler, authMiddleware)
-  registerUserRoutes(e, userHandler, authMiddleware)
+	registerUserRoutes(e, userHandler, authMiddleware)
 
 	return e
 }

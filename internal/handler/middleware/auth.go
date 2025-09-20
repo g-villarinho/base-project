@@ -4,20 +4,17 @@ import (
 	"log/slog"
 
 	"github.com/g-villarinho/user-demo/internal/handler"
-	"github.com/g-villarinho/user-demo/internal/service"
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
 )
 
 type AuthMiddleware struct {
-	jwtService    service.JwtService
 	logger        *slog.Logger
 	cookieHandler handler.CookieHandler
 }
 
-func NewAuthMiddleware(jwtService service.JwtService, logger *slog.Logger, cookieHandler handler.CookieHandler) *AuthMiddleware {
+func NewAuthMiddleware(logger *slog.Logger, cookieHandler handler.CookieHandler) *AuthMiddleware {
 	return &AuthMiddleware{
-		jwtService:    jwtService,
 		logger:        logger,
 		cookieHandler: cookieHandler,
 	}
@@ -42,21 +39,14 @@ func (m *AuthMiddleware) EnsuredAuthenticated(next echo.HandlerFunc) echo.Handle
 			return echo.ErrUnauthorized
 		}
 
-		claims, err := m.jwtService.VerifyAccessToken(c.Request().Context(), cookie.Value)
-		if err != nil {
-			logger.Warn("authentication failed: invalid token", "error", err)
-			m.cookieHandler.Delete(c)
-			return echo.ErrUnauthorized
-		}
+		// userID, err := uuid.Parse(claims.Subject)
+		// if err != nil {
+		// 	logger.Error("authentication failed: invalid user ID in token", "subject", claims.Subject, "error", err)
+		// 	m.cookieHandler.Delete(c)
+		// 	return echo.ErrUnauthorized
+		// }
 
-		userID, err := uuid.Parse(claims.Subject)
-		if err != nil {
-			logger.Error("authentication failed: invalid user ID in token", "subject", claims.Subject, "error", err)
-			m.cookieHandler.Delete(c)
-			return echo.ErrUnauthorized
-		}
-
-		handler.SetUserID(c, userID)
+		handler.SetUserID(c, uuid.New())
 		return next(c)
 	}
 }

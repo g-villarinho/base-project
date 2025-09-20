@@ -22,7 +22,7 @@ type sessionService struct {
 
 func NewSessionService(
 	sessionRepo repository.SessionRepository,
-	config config.Config) SessionService {
+	config *config.Config) SessionService {
 	return &sessionService{
 		sessionRepo:   sessionRepo,
 		sessionConfig: config.Session,

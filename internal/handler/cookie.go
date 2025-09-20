@@ -21,7 +21,7 @@ type cookieHandler struct {
 	sessionSecret string
 }
 
-func NewCookieHandler(config config.Config) CookieHandler {
+func NewCookieHandler(config *config.Config) CookieHandler {
 	sameSite := http.SameSiteStrictMode
 	switch config.Session.CookieSameSite {
 	case "lax":
