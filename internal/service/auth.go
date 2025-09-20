@@ -34,7 +34,7 @@ type AuthService interface {
 
 type authService struct {
 	userRepo              repository.UserRepository
-	verificationTokenRepo repository.VerificationTokenRepository
+	verificationTokenRepo repository.VerificationRepository
 	emailNotification     notification.EmailNotification
 	sessionService        SessionService
 	URLConfig             config.URL
@@ -43,7 +43,7 @@ type authService struct {
 
 func NewAuthService(
 	userRepo repository.UserRepository,
-	verificationTokenRepo repository.VerificationTokenRepository,
+	verificationTokenRepo repository.VerificationRepository,
 	emailNotification notification.EmailNotification,
 	sessionService SessionService,
 	logger *slog.Logger,
@@ -85,7 +85,7 @@ func (s *authService) RegisterAccount(ctx context.Context, name string, email st
 	}
 
 	expiresAt := time.Now().UTC().Add(VerfiyEmailExpirationMinute)
-	verificationCode := domain.NewVerificationCode(user.ID, domain.VerificationEmailFlow, expiresAt, "")
+	verificationCode := domain.NewVerification(user.ID, domain.VerificationEmailFlow, expiresAt, "")
 
 	if err := s.verificationTokenRepo.Create(ctx, verificationCode); err != nil {
 		return fmt.Errorf("create verification code for userId %s: %w", user.ID.String(), err)
@@ -222,7 +222,7 @@ func (s *authService) RequestChangeEmail(ctx context.Context, userID uuid.UUID, 
 		return domain.ErrEmailInUse
 	}
 
-	verificationToken := domain.NewVerificationCode(userID, domain.ChangeEmailFlow, time.Now().UTC().Add(VerfiyEmailExpirationMinute), newEmail)
+	verificationToken := domain.NewVerification(userID, domain.ChangeEmailFlow, time.Now().UTC().Add(VerfiyEmailExpirationMinute), newEmail)
 
 	if err := s.verificationTokenRepo.Create(ctx, verificationToken); err != nil {
 		return fmt.Errorf("create verification token for change email for userId %s: %w", userID, err)
@@ -282,7 +282,7 @@ func (s *authService) RequestPasswordReset(ctx context.Context, email string) er
 		return fmt.Errorf("find user by email %s: %w", email, err)
 	}
 
-	verificationToken := domain.NewVerificationCode(user.ID, domain.ResetPasswordFlow, time.Now().UTC().Add(VerfiyEmailExpirationMinute), "")
+	verificationToken := domain.NewVerification(user.ID, domain.ResetPasswordFlow, time.Now().UTC().Add(VerfiyEmailExpirationMinute), "")
 	if err := s.verificationTokenRepo.Create(ctx, verificationToken); err != nil {
 		return fmt.Errorf("create verification token for reset password for userId %s: %w", user.ID, err)
 	}
@@ -400,7 +400,7 @@ func (s *authService) sendVerificationEmail(ctx context.Context, user *domain.Us
 	}
 
 	expiresAt := time.Now().UTC().Add(VerfiyEmailExpirationMinute)
-	newVerificationToken := domain.NewVerificationCode(user.ID, domain.VerificationEmailFlow, expiresAt, "")
+	newVerificationToken := domain.NewVerification(user.ID, domain.VerificationEmailFlow, expiresAt, "")
 
 	if err := s.verificationTokenRepo.Create(ctx, newVerificationToken); err != nil {
 		return fmt.Errorf("create verification code for userId %s: %w", user.ID.String(), err)

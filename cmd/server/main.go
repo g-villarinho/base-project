@@ -54,7 +54,7 @@ func provideDependecies() *dig.Container {
 	// Repository
 	injector.Provide(container, repository.NewUserRepository)
 	injector.Provide(container, repository.NewSessionRepository)
-	injector.Provide(container, repository.NewVerificationCodeRepository)
+	injector.Provide(container, repository.NewVerificationRepository)
 
 	//Handler
 	injector.Provide(container, handler.NewCookieHandler)

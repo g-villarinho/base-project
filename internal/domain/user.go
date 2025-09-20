@@ -9,15 +9,15 @@ import (
 )
 
 var (
-	ErrEmailAlreadyExists   = errors.New("A user with this email already exists")
-	ErrInvalidCredentials   = errors.New("Email or password invalid. Please try again")
-	ErrUserBlocked          = errors.New("Account has been temporarily blocked")
-	ErrEmailNotVerified     = errors.New("Email not verified. Check the registered email inbox")
-	ErrEmailAlreadyVerified = errors.New("Email is already verified")
-	ErrUserNotFound         = errors.New("User not found to perform this operation")
-	ErrPasswordMismatch     = errors.New("Current password does not match")
-	ErrEmailInUse           = errors.New("The new email is already in use by another account")
-	ErrEmailIsTheSame       = errors.New("The new email must be different from the current email")
+	ErrEmailAlreadyExists   = errors.New("a user with this email already exists")
+	ErrInvalidCredentials   = errors.New("email or password invalid. Please try again")
+	ErrUserBlocked          = errors.New("account has been temporarily blocked")
+	ErrEmailNotVerified     = errors.New("email not verified. Check the registered email inbox")
+	ErrEmailAlreadyVerified = errors.New("email is already verified")
+	ErrUserNotFound         = errors.New("user not found to perform this operation")
+	ErrPasswordMismatch     = errors.New("current password does not match")
+	ErrEmailInUse           = errors.New("the new email is already in use by another account")
+	ErrEmailIsTheSame       = errors.New("the new email must be different from the current email")
 )
 
 type UserStatus string

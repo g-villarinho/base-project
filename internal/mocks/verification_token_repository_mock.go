@@ -25,7 +25,7 @@ func (_m *VerificationTokenRepositoryMock) EXPECT() *VerificationTokenRepository
 }
 
 // Create provides a mock function with given fields: ctx, verificationToken
-func (_m *VerificationTokenRepositoryMock) Create(ctx context.Context, verificationToken *domain.VerificationToken) error {
+func (_m *VerificationTokenRepositoryMock) Create(ctx context.Context, verificationToken *domain.Verification) error {
 	ret := _m.Called(ctx, verificationToken)
 
 	if len(ret) == 0 {
@@ -33,7 +33,7 @@ func (_m *VerificationTokenRepositoryMock) Create(ctx context.Context, verificat
 	}
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, *domain.VerificationToken) error); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, *domain.Verification) error); ok {
 		r0 = rf(ctx, verificationToken)
 	} else {
 		r0 = ret.Error(0)
@@ -54,9 +54,9 @@ func (_e *VerificationTokenRepositoryMock_Expecter) Create(ctx interface{}, veri
 	return &VerificationTokenRepositoryMock_Create_Call{Call: _e.mock.On("Create", ctx, verificationToken)}
 }
 
-func (_c *VerificationTokenRepositoryMock_Create_Call) Run(run func(ctx context.Context, verificationToken *domain.VerificationToken)) *VerificationTokenRepositoryMock_Create_Call {
+func (_c *VerificationTokenRepositoryMock_Create_Call) Run(run func(ctx context.Context, verificationToken *domain.Verification)) *VerificationTokenRepositoryMock_Create_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(*domain.VerificationToken))
+		run(args[0].(context.Context), args[1].(*domain.Verification))
 	})
 	return _c
 }
@@ -66,7 +66,7 @@ func (_c *VerificationTokenRepositoryMock_Create_Call) Return(_a0 error) *Verifi
 	return _c
 }
 
-func (_c *VerificationTokenRepositoryMock_Create_Call) RunAndReturn(run func(context.Context, *domain.VerificationToken) error) *VerificationTokenRepositoryMock_Create_Call {
+func (_c *VerificationTokenRepositoryMock_Create_Call) RunAndReturn(run func(context.Context, *domain.Verification) error) *VerificationTokenRepositoryMock_Create_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -119,23 +119,23 @@ func (_c *VerificationTokenRepositoryMock_Delete_Call) RunAndReturn(run func(con
 }
 
 // FindByID provides a mock function with given fields: ctx, ID
-func (_m *VerificationTokenRepositoryMock) FindByID(ctx context.Context, ID uuid.UUID) (*domain.VerificationToken, error) {
+func (_m *VerificationTokenRepositoryMock) FindByID(ctx context.Context, ID uuid.UUID) (*domain.Verification, error) {
 	ret := _m.Called(ctx, ID)
 
 	if len(ret) == 0 {
 		panic("no return value specified for FindByID")
 	}
 
-	var r0 *domain.VerificationToken
+	var r0 *domain.Verification
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, uuid.UUID) (*domain.VerificationToken, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, uuid.UUID) (*domain.Verification, error)); ok {
 		return rf(ctx, ID)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, uuid.UUID) *domain.VerificationToken); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, uuid.UUID) *domain.Verification); ok {
 		r0 = rf(ctx, ID)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*domain.VerificationToken)
+			r0 = ret.Get(0).(*domain.Verification)
 		}
 	}
 
@@ -167,34 +167,34 @@ func (_c *VerificationTokenRepositoryMock_FindByID_Call) Run(run func(ctx contex
 	return _c
 }
 
-func (_c *VerificationTokenRepositoryMock_FindByID_Call) Return(_a0 *domain.VerificationToken, _a1 error) *VerificationTokenRepositoryMock_FindByID_Call {
+func (_c *VerificationTokenRepositoryMock_FindByID_Call) Return(_a0 *domain.Verification, _a1 error) *VerificationTokenRepositoryMock_FindByID_Call {
 	_c.Call.Return(_a0, _a1)
 	return _c
 }
 
-func (_c *VerificationTokenRepositoryMock_FindByID_Call) RunAndReturn(run func(context.Context, uuid.UUID) (*domain.VerificationToken, error)) *VerificationTokenRepositoryMock_FindByID_Call {
+func (_c *VerificationTokenRepositoryMock_FindByID_Call) RunAndReturn(run func(context.Context, uuid.UUID) (*domain.Verification, error)) *VerificationTokenRepositoryMock_FindByID_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // FindValidByUserIDAndFlow provides a mock function with given fields: ctx, userID, flow
-func (_m *VerificationTokenRepositoryMock) FindValidByUserIDAndFlow(ctx context.Context, userID uuid.UUID, flow domain.VerificationTokenFlow) (*domain.VerificationToken, error) {
+func (_m *VerificationTokenRepositoryMock) FindValidByUserIDAndFlow(ctx context.Context, userID uuid.UUID, flow domain.VerificationTokenFlow) (*domain.Verification, error) {
 	ret := _m.Called(ctx, userID, flow)
 
 	if len(ret) == 0 {
 		panic("no return value specified for FindValidByUserIDAndFlow")
 	}
 
-	var r0 *domain.VerificationToken
+	var r0 *domain.Verification
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, uuid.UUID, domain.VerificationTokenFlow) (*domain.VerificationToken, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, uuid.UUID, domain.VerificationTokenFlow) (*domain.Verification, error)); ok {
 		return rf(ctx, userID, flow)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, uuid.UUID, domain.VerificationTokenFlow) *domain.VerificationToken); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, uuid.UUID, domain.VerificationTokenFlow) *domain.Verification); ok {
 		r0 = rf(ctx, userID, flow)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*domain.VerificationToken)
+			r0 = ret.Get(0).(*domain.Verification)
 		}
 	}
 
@@ -227,12 +227,12 @@ func (_c *VerificationTokenRepositoryMock_FindValidByUserIDAndFlow_Call) Run(run
 	return _c
 }
 
-func (_c *VerificationTokenRepositoryMock_FindValidByUserIDAndFlow_Call) Return(_a0 *domain.VerificationToken, _a1 error) *VerificationTokenRepositoryMock_FindValidByUserIDAndFlow_Call {
+func (_c *VerificationTokenRepositoryMock_FindValidByUserIDAndFlow_Call) Return(_a0 *domain.Verification, _a1 error) *VerificationTokenRepositoryMock_FindValidByUserIDAndFlow_Call {
 	_c.Call.Return(_a0, _a1)
 	return _c
 }
 
-func (_c *VerificationTokenRepositoryMock_FindValidByUserIDAndFlow_Call) RunAndReturn(run func(context.Context, uuid.UUID, domain.VerificationTokenFlow) (*domain.VerificationToken, error)) *VerificationTokenRepositoryMock_FindValidByUserIDAndFlow_Call {
+func (_c *VerificationTokenRepositoryMock_FindValidByUserIDAndFlow_Call) RunAndReturn(run func(context.Context, uuid.UUID, domain.VerificationTokenFlow) (*domain.Verification, error)) *VerificationTokenRepositoryMock_FindValidByUserIDAndFlow_Call {
 	_c.Call.Return(run)
 	return _c
 }

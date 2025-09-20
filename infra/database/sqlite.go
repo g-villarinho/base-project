@@ -31,7 +31,7 @@ func NewSqliteDbConnection(config *config.Config) (*gorm.DB, error) {
 	sqlDB.SetMaxOpenConns(config.SqlLite.MaxConn)
 	sqlDB.SetConnMaxLifetime(config.SqlLite.MaxLifeTime)
 
-	if err := db.AutoMigrate(&domain.User{}, &domain.VerificationToken{}); err != nil {
+	if err := db.AutoMigrate(&domain.User{}, &domain.Verification{}); err != nil {
 		return nil, fmt.Errorf("migrate tables: %w", err)
 	}
 
