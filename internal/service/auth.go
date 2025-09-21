@@ -33,29 +33,29 @@ type AuthService interface {
 }
 
 type authService struct {
-	userRepo              repository.UserRepository
-	verificationTokenRepo repository.VerificationRepository
-	emailNotification     notification.EmailNotification
-	sessionService        SessionService
-	URLConfig             config.URL
-	logger                *slog.Logger
+	userRepo          repository.UserRepository
+	verificationRepo  repository.VerificationRepository
+	emailNotification notification.EmailNotification
+	sessionService    SessionService
+	URLConfig         config.URL
+	logger            *slog.Logger
 }
 
 func NewAuthService(
 	userRepo repository.UserRepository,
-	verificationTokenRepo repository.VerificationRepository,
+	verificationRepo repository.VerificationRepository,
 	emailNotification notification.EmailNotification,
 	sessionService SessionService,
 	logger *slog.Logger,
 	config *config.Config,
 ) AuthService {
 	return &authService{
-		userRepo:              userRepo,
-		verificationTokenRepo: verificationTokenRepo,
-		emailNotification:     emailNotification,
-		sessionService:        sessionService,
-		URLConfig:             config.URL,
-		logger:                logger.With(slog.String("service", "auth")),
+		userRepo:          userRepo,
+		verificationRepo:  verificationRepo,
+		emailNotification: emailNotification,
+		sessionService:    sessionService,
+		URLConfig:         config.URL,
+		logger:            logger.With(slog.String("service", "auth")),
 	}
 }
 
@@ -85,13 +85,16 @@ func (s *authService) RegisterAccount(ctx context.Context, name string, email st
 	}
 
 	expiresAt := time.Now().UTC().Add(VerfiyEmailExpirationMinute)
-	verificationCode := domain.NewVerification(user.ID, domain.VerificationEmailFlow, expiresAt, "")
-
-	if err := s.verificationTokenRepo.Create(ctx, verificationCode); err != nil {
-		return fmt.Errorf("create verification code for userId %s: %w", user.ID.String(), err)
+	verification, err := domain.NewVerification(user.ID, domain.VerificationEmailFlow, expiresAt, "")
+	if err != nil {
+		return fmt.Errorf("create verification for userId %s: %w", user.ID.String(), err)
 	}
 
-	url := s.getVerificationTokenURL(verificationCode.ID, verificationCode.Flow)
+	if err := s.verificationRepo.Create(ctx, verification); err != nil {
+		return fmt.Errorf("create verification for userId %s: %w", user.ID.String(), err)
+	}
+
+	url := s.getVerificationURL(verification.Token, verification.Flow)
 
 	go func() {
 		err := s.emailNotification.SendWelcomeEmail(context.Background(), user.CreatedAt, user.Name, url, user.Email)
@@ -109,28 +112,28 @@ func (s *authService) RegisterAccount(ctx context.Context, name string, email st
 }
 
 func (s *authService) VerifyEmail(ctx context.Context, input model.VerifyEmailInput) (*domain.Session, error) {
-	verificationToken, err := s.verificationTokenRepo.FindByID(ctx, input.Token)
+	verification, err := s.verificationRepo.FindByID(ctx, input.Token)
 	if err != nil {
-		if errors.Is(err, repository.ErrVerificationCodeNotFound) {
-			return nil, domain.ErrVerificationTokenNotFound
+		if errors.Is(err, repository.ErrVerificationNotFound) {
+			return nil, domain.ErrVerificationNotFound
 		}
 
 		return nil, fmt.Errorf("find verification token by id %s: %w", input.Token, err)
 	}
 
-	if verificationToken.IsExpired() || !verificationToken.IsVerificationEmailFlow() {
-		return nil, domain.ErrInvalidVerificationToken
+	if verification.IsExpired() || !verification.IsVerificationEmailFlow() {
+		return nil, domain.ErrInvalidVerification
 	}
 
-	if err := s.userRepo.VerifyEmail(ctx, verificationToken.UserID); err != nil {
-		return nil, fmt.Errorf("verify user email for userId %s: %w", verificationToken.UserID, err)
+	if err := s.userRepo.VerifyEmail(ctx, verification.UserID); err != nil {
+		return nil, fmt.Errorf("verify user email for userId %s: %w", verification.UserID, err)
 	}
 
-	if err := s.verificationTokenRepo.Delete(ctx, verificationToken.ID); err != nil {
-		return nil, fmt.Errorf("delete verificationCode with id %s: %w", verificationToken.ID, err)
+	if err := s.verificationRepo.Delete(ctx, verification.ID); err != nil {
+		return nil, fmt.Errorf("delete verificationCode with id %s: %w", verification.ID, err)
 	}
 
-	session, err := s.sessionService.CreateSession(ctx, verificationToken.UserID, input.IPAddress, input.DeviceName, input.UserAgent)
+	session, err := s.sessionService.CreateSession(ctx, verification.UserID, input.IPAddress, input.DeviceName, input.UserAgent)
 	if err != nil {
 		return nil, err
 	}
@@ -166,7 +169,7 @@ func (s *authService) Login(ctx context.Context, input model.LoginInput) (*domai
 
 	session, err := s.sessionService.CreateSession(ctx, user.ID, input.IPAddress, input.DeviceName, input.UserAgent)
 	if err != nil {
-		return nil, fmt.Errorf("create session: %w", err)
+		return nil, err
 	}
 
 	return session, nil
@@ -222,13 +225,16 @@ func (s *authService) RequestChangeEmail(ctx context.Context, userID uuid.UUID, 
 		return domain.ErrEmailInUse
 	}
 
-	verificationToken := domain.NewVerification(userID, domain.ChangeEmailFlow, time.Now().UTC().Add(VerfiyEmailExpirationMinute), newEmail)
-
-	if err := s.verificationTokenRepo.Create(ctx, verificationToken); err != nil {
-		return fmt.Errorf("create verification token for change email for userId %s: %w", userID, err)
+	verification, err := domain.NewVerification(userID, domain.ChangeEmailFlow, time.Now().UTC().Add(VerfiyEmailExpirationMinute), newEmail)
+	if err != nil {
+		return fmt.Errorf("create verification for change email for userId %s: %w", userID, err)
 	}
 
-	url := s.getVerificationTokenURL(verificationToken.ID, verificationToken.Flow)
+	if err := s.verificationRepo.Create(ctx, verification); err != nil {
+		return fmt.Errorf("create verification for change email for userId %s: %w", userID, err)
+	}
+
+	url := s.getVerificationURL(verification.Token, verification.Flow)
 
 	fmt.Println()
 	fmt.Println(url)
@@ -238,31 +244,31 @@ func (s *authService) RequestChangeEmail(ctx context.Context, userID uuid.UUID, 
 }
 
 func (s *authService) ChangeEmail(ctx context.Context, token uuid.UUID) error {
-	verificationToken, err := s.verificationTokenRepo.FindByID(ctx, token)
+	verification, err := s.verificationRepo.FindByID(ctx, token)
 	if err != nil {
-		if errors.Is(err, repository.ErrVerificationCodeNotFound) {
-			return domain.ErrVerificationTokenNotFound
+		if errors.Is(err, repository.ErrVerificationNotFound) {
+			return domain.ErrVerificationNotFound
 		}
 
 		return fmt.Errorf("find verification token by id %s: %w", token, err)
 	}
 
-	if verificationToken.IsExpired() || !verificationToken.IsChangeEmailFlow() {
-		return domain.ErrInvalidVerificationToken
+	if verification.IsExpired() || !verification.IsChangeEmailFlow() {
+		return domain.ErrInvalidVerification
 	}
 
-	if !verificationToken.Payload.Valid {
-		return domain.ErrInvalidVerificationTokenPayload
+	if !verification.Payload.Valid {
+		return domain.ErrInvalidVerificationPayload
 	}
 
-	newEmail := verificationToken.Payload.String
+	newEmail := verification.Payload.String
 
-	if err := s.userRepo.UpdateEmail(ctx, verificationToken.UserID, newEmail); err != nil {
-		return fmt.Errorf("update email for userId %s: %w", verificationToken.UserID, err)
+	if err := s.userRepo.UpdateEmail(ctx, verification.UserID, newEmail); err != nil {
+		return fmt.Errorf("update email for userId %s: %w", verification.UserID, err)
 	}
 
-	if err := s.verificationTokenRepo.Delete(ctx, verificationToken.ID); err != nil {
-		return fmt.Errorf("delete verification token with id %s: %w", verificationToken.ID, err)
+	if err := s.verificationRepo.Delete(ctx, verification.ID); err != nil {
+		return fmt.Errorf("delete verification token with id %s: %w", verification.ID, err)
 	}
 
 	return nil
@@ -282,12 +288,16 @@ func (s *authService) RequestPasswordReset(ctx context.Context, email string) er
 		return fmt.Errorf("find user by email %s: %w", email, err)
 	}
 
-	verificationToken := domain.NewVerification(user.ID, domain.ResetPasswordFlow, time.Now().UTC().Add(VerfiyEmailExpirationMinute), "")
-	if err := s.verificationTokenRepo.Create(ctx, verificationToken); err != nil {
-		return fmt.Errorf("create verification token for reset password for userId %s: %w", user.ID, err)
+	verification, err := domain.NewVerification(user.ID, domain.ResetPasswordFlow, time.Now().UTC().Add(VerfiyEmailExpirationMinute), "")
+	if err != nil {
+		return fmt.Errorf("create verification for reset password for userId %s: %w", user.ID, err)
 	}
 
-	url := s.getVerificationTokenURL(verificationToken.ID, verificationToken.Flow)
+	if err := s.verificationRepo.Create(ctx, verification); err != nil {
+		return fmt.Errorf("create verification for reset password for userId %s: %w", user.ID, err)
+	}
+
+	url := s.getVerificationURL(verification.Token, verification.Flow)
 
 	go func() {
 		err := s.emailNotification.SendResetPasswordEmail(context.Background(), user.Name, url, user.Email)
@@ -304,17 +314,17 @@ func (s *authService) RequestPasswordReset(ctx context.Context, email string) er
 }
 
 func (s *authService) ResetPassword(ctx context.Context, token uuid.UUID, newPassword string) (*domain.Session, error) {
-	verificationToken, err := s.verificationTokenRepo.FindByID(ctx, token)
+	verification, err := s.verificationRepo.FindByID(ctx, token)
 	if err != nil {
-		if errors.Is(err, repository.ErrVerificationCodeNotFound) {
-			return nil, domain.ErrVerificationTokenNotFound
+		if errors.Is(err, repository.ErrVerificationNotFound) {
+			return nil, domain.ErrVerificationNotFound
 		}
 
 		return nil, fmt.Errorf("find verification token by id %s: %w", token, err)
 	}
 
-	if verificationToken.IsExpired() || !verificationToken.IsResetPasswordFlow() {
-		return nil, domain.ErrInvalidVerificationToken
+	if verification.IsExpired() || !verification.IsResetPasswordFlow() {
+		return nil, domain.ErrInvalidVerification
 	}
 
 	newPasswordHash, err := bcrypt.GenerateFromPassword([]byte(newPassword), bcrypt.DefaultCost)
@@ -322,12 +332,12 @@ func (s *authService) ResetPassword(ctx context.Context, token uuid.UUID, newPas
 		return nil, fmt.Errorf("hash new password: %w", err)
 	}
 
-	if err := s.userRepo.UpdatePassword(ctx, verificationToken.UserID, string(newPasswordHash)); err != nil {
-		return nil, fmt.Errorf("update password for userId %s: %w", verificationToken.UserID, err)
+	if err := s.userRepo.UpdatePassword(ctx, verification.UserID, string(newPasswordHash)); err != nil {
+		return nil, fmt.Errorf("update password for userId %s: %w", verification.UserID, err)
 	}
 
-	if err := s.verificationTokenRepo.Delete(ctx, verificationToken.ID); err != nil {
-		return nil, fmt.Errorf("delete verification token with id %s: %w", verificationToken.ID, err)
+	if err := s.verificationRepo.Delete(ctx, verification.ID); err != nil {
+		return nil, fmt.Errorf("delete verification token with id %s: %w", verification.ID, err)
 	}
 
 	return nil, nil
@@ -335,7 +345,7 @@ func (s *authService) ResetPassword(ctx context.Context, token uuid.UUID, newPas
 
 // Private methods
 
-func (s *authService) getVerificationTokenURL(token uuid.UUID, flow domain.VerificationTokenFlow) string {
+func (s *authService) getVerificationURL(token string, flow domain.VerificationFlow) string {
 	var baseURL string
 	var path string
 
@@ -364,7 +374,7 @@ func (s *authService) getVerificationTokenURL(token uuid.UUID, flow domain.Verif
 
 	parsedURL.Path = path
 	q := parsedURL.Query()
-	q.Set("token", token.String())
+	q.Set("token", token)
 	parsedURL.RawQuery = q.Encode()
 
 	return parsedURL.String()
@@ -376,13 +386,13 @@ func (s *authService) sendVerificationEmail(ctx context.Context, user *domain.Us
 		slog.String("userID", user.ID.String()),
 	)
 
-	verificationToken, err := s.verificationTokenRepo.FindValidByUserIDAndFlow(ctx, user.ID, domain.VerificationEmailFlow)
-	if err != nil && !errors.Is(err, repository.ErrVerificationCodeNotFound) {
-		return fmt.Errorf("find existing verification token: %w", err)
+	verification, err := s.verificationRepo.FindValidByUserIDAndFlow(ctx, user.ID, domain.VerificationEmailFlow)
+	if err != nil && !errors.Is(err, repository.ErrVerificationNotFound) {
+		return fmt.Errorf("find existing verification: %w", err)
 	}
 
-	if verificationToken != nil && !verificationToken.IsExpired() {
-		url := s.getVerificationTokenURL(verificationToken.ID, verificationToken.Flow)
+	if verification != nil && !verification.IsExpired() {
+		url := s.getVerificationURL(verification.Token, verification.Flow)
 		go func() {
 			err := s.emailNotification.SendWelcomeEmail(context.Background(), user.CreatedAt, user.Name, url, user.Email)
 			if err != nil {
@@ -395,18 +405,22 @@ func (s *authService) sendVerificationEmail(ctx context.Context, user *domain.Us
 		return nil
 	}
 
-	if err := s.verificationTokenRepo.InvalidateByUserIDAndFlow(ctx, user.ID, domain.VerificationEmailFlow); err != nil {
+	if err := s.verificationRepo.InvalidateByUserIDAndFlow(ctx, user.ID, domain.VerificationEmailFlow); err != nil {
 		return fmt.Errorf("invalidate old verification tokens: %w", err)
 	}
 
 	expiresAt := time.Now().UTC().Add(VerfiyEmailExpirationMinute)
-	newVerificationToken := domain.NewVerification(user.ID, domain.VerificationEmailFlow, expiresAt, "")
+	newVerification, err := domain.NewVerification(user.ID, domain.VerificationEmailFlow, expiresAt, "")
 
-	if err := s.verificationTokenRepo.Create(ctx, newVerificationToken); err != nil {
+	if err != nil {
+		return fmt.Errorf("create verification for email for userId %s: %w", user.ID.String(), err)
+	}
+
+	if err := s.verificationRepo.Create(ctx, newVerification); err != nil {
 		return fmt.Errorf("create verification code for userId %s: %w", user.ID.String(), err)
 	}
 
-	url := s.getVerificationTokenURL(newVerificationToken.ID, newVerificationToken.Flow)
+	url := s.getVerificationURL(newVerification.Token, newVerification.Flow)
 
 	go func() {
 		err := s.emailNotification.SendWelcomeEmail(context.Background(), user.CreatedAt, user.Name, url, user.Email)

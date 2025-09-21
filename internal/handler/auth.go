@@ -88,11 +88,11 @@ func (h *AuthHandler) VerifyEmail(c echo.Context) error {
 	if err != nil {
 		logger.Error("verify email", "error", err)
 
-		if errors.Is(err, domain.ErrVerificationTokenNotFound) {
+		if errors.Is(err, domain.ErrVerificationNotFound) {
 			return echo.ErrBadRequest
 		}
 
-		if errors.Is(err, domain.ErrInvalidVerificationToken) {
+		if errors.Is(err, domain.ErrInvalidVerification) {
 			return echo.NewHTTPError(http.StatusBadRequest, err.Error())
 		}
 
@@ -243,11 +243,11 @@ func (h *AuthHandler) ConfirmResetPassword(c echo.Context) error {
 	if err != nil {
 		logger.Error("reset password", "error", err)
 
-		if errors.Is(err, domain.ErrVerificationTokenNotFound) {
+		if errors.Is(err, domain.ErrVerificationNotFound) {
 			return echo.ErrBadRequest
 		}
 
-		if errors.Is(err, domain.ErrInvalidVerificationToken) {
+		if errors.Is(err, domain.ErrInvalidVerification) {
 			return echo.NewHTTPError(http.StatusBadRequest, err.Error())
 		}
 
@@ -317,11 +317,11 @@ func (h *AuthHandler) ConfirmChangeEmail(c echo.Context) error {
 	if err != nil {
 		logger.Error("confirm change email", "error", err)
 
-		if errors.Is(err, domain.ErrVerificationTokenNotFound) {
+		if errors.Is(err, domain.ErrVerificationNotFound) {
 			return echo.ErrBadRequest
 		}
 
-		if errors.Is(err, domain.ErrInvalidVerificationToken) {
+		if errors.Is(err, domain.ErrInvalidVerification) {
 			return echo.NewHTTPError(http.StatusBadRequest, err.Error())
 		}
 

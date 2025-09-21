@@ -11,15 +11,15 @@ import (
 )
 
 var (
-	ErrVerificationCodeNotFound = errors.New("verification code record not found")
+	ErrVerificationNotFound = errors.New("verification record not found")
 )
 
 type VerificationRepository interface {
 	Create(ctx context.Context, verification *domain.Verification) error
 	FindByID(ctx context.Context, ID uuid.UUID) (*domain.Verification, error)
 	Delete(ctx context.Context, ID uuid.UUID) error
-	FindValidByUserIDAndFlow(ctx context.Context, userID uuid.UUID, flow domain.VerificationTokenFlow) (*domain.Verification, error)
-	InvalidateByUserIDAndFlow(ctx context.Context, userID uuid.UUID, flow domain.VerificationTokenFlow) error
+	FindValidByUserIDAndFlow(ctx context.Context, userID uuid.UUID, flow domain.VerificationFlow) (*domain.Verification, error)
+	InvalidateByUserIDAndFlow(ctx context.Context, userID uuid.UUID, flow domain.VerificationFlow) error
 }
 
 type verificationRepository struct {
@@ -45,7 +45,7 @@ func (r *verificationRepository) FindByID(ctx context.Context, ID uuid.UUID) (*d
 	err := r.db.WithContext(ctx).First(&verification, "id = ?", ID).Error
 	if err != nil {
 		if err == gorm.ErrRecordNotFound {
-			return nil, ErrVerificationCodeNotFound
+			return nil, ErrVerificationNotFound
 		}
 
 		return nil, err
@@ -63,7 +63,7 @@ func (r *verificationRepository) Delete(ctx context.Context, ID uuid.UUID) error
 	return nil
 }
 
-func (r *verificationRepository) FindValidByUserIDAndFlow(ctx context.Context, userID uuid.UUID, flow domain.VerificationTokenFlow) (*domain.Verification, error) {
+func (r *verificationRepository) FindValidByUserIDAndFlow(ctx context.Context, userID uuid.UUID, flow domain.VerificationFlow) (*domain.Verification, error) {
 	var verification domain.Verification
 
 	err := r.db.WithContext(ctx).
@@ -73,7 +73,7 @@ func (r *verificationRepository) FindValidByUserIDAndFlow(ctx context.Context, u
 
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return nil, ErrVerificationCodeNotFound
+			return nil, ErrVerificationNotFound
 		}
 		return nil, err
 	}
@@ -81,7 +81,7 @@ func (r *verificationRepository) FindValidByUserIDAndFlow(ctx context.Context, u
 	return &verification, nil
 }
 
-func (r *verificationRepository) InvalidateByUserIDAndFlow(ctx context.Context, userID uuid.UUID, flow domain.VerificationTokenFlow) error {
+func (r *verificationRepository) InvalidateByUserIDAndFlow(ctx context.Context, userID uuid.UUID, flow domain.VerificationFlow) error {
 	err := r.db.WithContext(ctx).
 		Where("user_id = ? AND flow = ? AND expires_at > ?", userID, flow, time.Now().UTC()).
 		Delete(&domain.Verification{}).Error

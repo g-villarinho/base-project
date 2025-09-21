@@ -33,9 +33,10 @@ func NewSessionService(
 func (s *sessionService) CreateSession(ctx context.Context, userID uuid.UUID, ipAddress, deviceName, userAgent string) (*domain.Session, error) {
 	expiresAt := time.Now().UTC().Add(s.sessionConfig.Duration)
 
-	session := domain.NewSession(userID, ipAddress, userAgent, deviceName, expiresAt)
-
-	session.GenerateToken(s.sessionConfig.TokenSize)
+	session, err := domain.NewSession(userID, ipAddress, userAgent, deviceName, expiresAt)
+	if err != nil {
+		return nil, fmt.Errorf("create session for userID %s: %w", userID, err)
+	}
 
 	if err := s.sessionRepo.Create(ctx, session); err != nil {
 		return nil, fmt.Errorf("create session for userID %s: %w", userID, err)

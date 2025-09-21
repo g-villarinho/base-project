@@ -1,10 +1,10 @@
 package domain
 
 import (
-	"crypto/rand"
 	"errors"
 	"time"
 
+	"github.com/g-villarinho/user-demo/pkg/crypto"
 	"github.com/google/uuid"
 )
 
@@ -15,7 +15,6 @@ var (
 
 const (
 	defaultSessionTokenSize = 32
-	chars                   = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
 )
 
 type Session struct {
@@ -31,33 +30,24 @@ type Session struct {
 	User   User      `gorm:"foreignKey:UserID;references:ID;constraint:OnDelete:CASCADE"`
 }
 
-func NewSession(userID uuid.UUID, ipAddress, userAgent, deviceName string, expiresAt time.Time) *Session {
+func NewSession(userID uuid.UUID, ipAddress, userAgent, deviceName string, expiresAt time.Time) (*Session, error) {
+	token, err := crypto.CreateRandomStringGenerator(defaultSessionTokenSize)
+	if err != nil {
+		return nil, err
+	}
+
 	return &Session{
 		ID:         uuid.New(),
+		Token:      token,
 		DeviceName: deviceName,
 		IPAddress:  ipAddress,
 		UserAgent:  userAgent,
 		CreatedAt:  time.Now().UTC(),
 		UserID:     userID,
 		ExpiresAt:  expiresAt,
-	}
+	}, nil
 }
 
 func (s *Session) IsExpired() bool {
 	return time.Now().UTC().After(s.ExpiresAt)
-}
-
-func (s *Session) GenerateToken(size int) {
-	if size == 0 {
-		size = defaultSessionTokenSize
-	}
-
-	bytes := make([]byte, size)
-	rand.Read(bytes)
-
-	for i := range bytes {
-		bytes[i] = chars[bytes[i]%byte(len(chars))]
-	}
-
-	s.Token = string(bytes)
 }
