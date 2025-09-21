@@ -20,6 +20,7 @@ type VerificationRepository interface {
 	Delete(ctx context.Context, ID uuid.UUID) error
 	FindValidByUserIDAndFlow(ctx context.Context, userID uuid.UUID, flow domain.VerificationFlow) (*domain.Verification, error)
 	InvalidateByUserIDAndFlow(ctx context.Context, userID uuid.UUID, flow domain.VerificationFlow) error
+	FindByToken(ctx context.Context, token string) (*domain.Verification, error)
 }
 
 type verificationRepository struct {
@@ -87,4 +88,18 @@ func (r *verificationRepository) InvalidateByUserIDAndFlow(ctx context.Context, 
 		Delete(&domain.Verification{}).Error
 
 	return err
+}
+
+func (r *verificationRepository) FindByToken(ctx context.Context, token string) (*domain.Verification, error) {
+	var verification domain.Verification
+	err := r.db.WithContext(ctx).First(&verification, "token = ?", token).Error
+	if err != nil {
+		if err == gorm.ErrRecordNotFound {
+			return nil, ErrVerificationNotFound
+		}
+
+		return nil, err
+	}
+
+	return &verification, nil
 }

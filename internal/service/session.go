@@ -13,7 +13,9 @@ import (
 
 type SessionService interface {
 	CreateSession(ctx context.Context, userID uuid.UUID, ipAddress, deviceName, userAgent string) (*domain.Session, error)
-	FindByToken(ctx context.Context, token string) (*domain.Session, error)
+	FindSessionByToken(ctx context.Context, token string) (*domain.Session, error)
+	DeleteSessionByID(ctx context.Context, userID, sessionID uuid.UUID) error
+	// DeleteAllSessionsByUserID(ctx context.Context, userID uuid.UUID) error
 }
 
 type sessionService struct {
@@ -45,7 +47,7 @@ func (s *sessionService) CreateSession(ctx context.Context, userID uuid.UUID, ip
 	return session, nil
 }
 
-func (s *sessionService) FindByToken(ctx context.Context, token string) (*domain.Session, error) {
+func (s *sessionService) FindSessionByToken(ctx context.Context, token string) (*domain.Session, error) {
 	session, err := s.sessionRepo.FindByToken(ctx, token)
 	if err != nil {
 		if err == repository.ErrSessionNotFound {
@@ -60,4 +62,25 @@ func (s *sessionService) FindByToken(ctx context.Context, token string) (*domain
 	}
 
 	return session, nil
+}
+
+func (s *sessionService) DeleteSessionByID(ctx context.Context, userID uuid.UUID, sessionID uuid.UUID) error {
+	session, err := s.sessionRepo.FindByID(ctx, sessionID)
+	if err != nil {
+		if err == repository.ErrSessionNotFound {
+			return domain.ErrSessionNotFound
+		}
+
+		return fmt.Errorf("find session by id: %w", err)
+	}
+
+	if session.UserID != userID {
+		return domain.ErrSessionNotBelong
+	}
+
+	if err := s.sessionRepo.DeleteByID(ctx, sessionID); err != nil {
+		return fmt.Errorf("delete session by id: %w", err)
+	}
+
+	return nil
 }

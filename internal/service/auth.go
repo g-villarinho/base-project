@@ -27,9 +27,9 @@ type AuthService interface {
 	Login(ctx context.Context, input model.LoginInput) (*domain.Session, error)
 	UpdatePassword(ctx context.Context, userID uuid.UUID, currentPassword, newPassword string) error
 	RequestChangeEmail(ctx context.Context, userID uuid.UUID, newEmail string) error
-	ChangeEmail(ctx context.Context, token uuid.UUID) error
+	ChangeEmail(ctx context.Context, token string) error
 	RequestPasswordReset(ctx context.Context, email string) error
-	ResetPassword(ctx context.Context, token uuid.UUID, newPassword string) (*domain.Session, error)
+	ResetPassword(ctx context.Context, token string, newPassword string) (*domain.Session, error)
 }
 
 type authService struct {
@@ -60,10 +60,6 @@ func NewAuthService(
 }
 
 func (s *authService) RegisterAccount(ctx context.Context, name string, email string, password string) error {
-	logger := s.logger.With(
-		slog.String("method", "RegisterAccount"),
-	)
-
 	userExists, err := s.userRepo.ExistsByEmail(ctx, email)
 	if err != nil {
 		return fmt.Errorf("find user by email: %w", err)
@@ -96,23 +92,13 @@ func (s *authService) RegisterAccount(ctx context.Context, name string, email st
 
 	url := s.getVerificationURL(verification.Token, verification.Flow)
 
-	go func() {
-		err := s.emailNotification.SendWelcomeEmail(context.Background(), user.CreatedAt, user.Name, url, user.Email)
-		if err != nil {
-			logger.Error("failed to send welcome email",
-				slog.String("userId", user.ID.String()),
-				slog.String("error", err.Error()),
-			)
-		}
-
-		logger.Debug("email sent successfully")
-	}()
+	s.SendWelcomeEmailAsync(user, url)
 
 	return nil
 }
 
 func (s *authService) VerifyEmail(ctx context.Context, input model.VerifyEmailInput) (*domain.Session, error) {
-	verification, err := s.verificationRepo.FindByID(ctx, input.Token)
+	verification, err := s.verificationRepo.FindByToken(ctx, input.Token)
 	if err != nil {
 		if errors.Is(err, repository.ErrVerificationNotFound) {
 			return nil, domain.ErrVerificationNotFound
@@ -225,7 +211,9 @@ func (s *authService) RequestChangeEmail(ctx context.Context, userID uuid.UUID, 
 		return domain.ErrEmailInUse
 	}
 
-	verification, err := domain.NewVerification(userID, domain.ChangeEmailFlow, time.Now().UTC().Add(VerfiyEmailExpirationMinute), newEmail)
+	expiresAt := time.Now().UTC().Add(VerfiyEmailExpirationMinute)
+
+	verification, err := domain.NewVerification(userID, domain.ChangeEmailFlow, expiresAt, newEmail)
 	if err != nil {
 		return fmt.Errorf("create verification for change email for userId %s: %w", userID, err)
 	}
@@ -243,8 +231,8 @@ func (s *authService) RequestChangeEmail(ctx context.Context, userID uuid.UUID, 
 	return nil
 }
 
-func (s *authService) ChangeEmail(ctx context.Context, token uuid.UUID) error {
-	verification, err := s.verificationRepo.FindByID(ctx, token)
+func (s *authService) ChangeEmail(ctx context.Context, token string) error {
+	verification, err := s.verificationRepo.FindByToken(ctx, token)
 	if err != nil {
 		if errors.Is(err, repository.ErrVerificationNotFound) {
 			return domain.ErrVerificationNotFound
@@ -313,8 +301,8 @@ func (s *authService) RequestPasswordReset(ctx context.Context, email string) er
 	return nil
 }
 
-func (s *authService) ResetPassword(ctx context.Context, token uuid.UUID, newPassword string) (*domain.Session, error) {
-	verification, err := s.verificationRepo.FindByID(ctx, token)
+func (s *authService) ResetPassword(ctx context.Context, token string, newPassword string) (*domain.Session, error) {
+	verification, err := s.verificationRepo.FindByToken(ctx, token)
 	if err != nil {
 		if errors.Is(err, repository.ErrVerificationNotFound) {
 			return nil, domain.ErrVerificationNotFound
@@ -381,11 +369,6 @@ func (s *authService) getVerificationURL(token string, flow domain.VerificationF
 }
 
 func (s *authService) sendVerificationEmail(ctx context.Context, user *domain.User) error {
-	logger := s.logger.With(
-		slog.String("method", "sendVerificationEmail"),
-		slog.String("userID", user.ID.String()),
-	)
-
 	verification, err := s.verificationRepo.FindValidByUserIDAndFlow(ctx, user.ID, domain.VerificationEmailFlow)
 	if err != nil && !errors.Is(err, repository.ErrVerificationNotFound) {
 		return fmt.Errorf("find existing verification: %w", err)
@@ -393,16 +376,7 @@ func (s *authService) sendVerificationEmail(ctx context.Context, user *domain.Us
 
 	if verification != nil && !verification.IsExpired() {
 		url := s.getVerificationURL(verification.Token, verification.Flow)
-		go func() {
-			err := s.emailNotification.SendWelcomeEmail(context.Background(), user.CreatedAt, user.Name, url, user.Email)
-			if err != nil {
-				logger.Error("failed to send welcome email",
-					slog.String("error", err.Error()),
-				)
-			}
-			logger.Debug("email sent successfully")
-		}()
-		return nil
+		s.SendWelcomeEmailAsync(user, url)
 	}
 
 	if err := s.verificationRepo.InvalidateByUserIDAndFlow(ctx, user.ID, domain.VerificationEmailFlow); err != nil {
@@ -422,6 +396,17 @@ func (s *authService) sendVerificationEmail(ctx context.Context, user *domain.Us
 
 	url := s.getVerificationURL(newVerification.Token, newVerification.Flow)
 
+	s.SendWelcomeEmailAsync(user, url)
+
+	return nil
+}
+
+func (s *authService) SendWelcomeEmailAsync(user *domain.User, url string) {
+	logger := s.logger.With(
+		slog.String("method", "SendWelcomeEmailAsync"),
+		slog.String("userID", user.ID.String()),
+	)
+
 	go func() {
 		err := s.emailNotification.SendWelcomeEmail(context.Background(), user.CreatedAt, user.Name, url, user.Email)
 		if err != nil {
@@ -431,6 +416,4 @@ func (s *authService) sendVerificationEmail(ctx context.Context, user *domain.Us
 		}
 		logger.Debug("email sent successfully")
 	}()
-
-	return nil
 }

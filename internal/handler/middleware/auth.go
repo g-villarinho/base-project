@@ -44,7 +44,7 @@ func (m *AuthMiddleware) EnsuredAuthenticated(next echo.HandlerFunc) echo.Handle
 			return echo.ErrUnauthorized
 		}
 
-		session, err := m.sessionService.FindByToken(c.Request().Context(), cookie.Value)
+		session, err := m.sessionService.FindSessionByToken(c.Request().Context(), cookie.Value)
 		if err != nil {
 			logger.Warn("authentication failed: invalid session token", slog.String("token", cookie.Value), slog.String("error", err.Error()))
 			m.cookieHandler.Delete(c)

@@ -1,9 +1,5 @@
 package model
 
-import (
-	"github.com/google/uuid"
-)
-
 type RegisterAccountPayload struct {
 	Name     string `json:"name" validate:"required,max=255" example:"João Silva"`
 	Email    string `json:"email" validate:"required,email,max=255" example:"joao.silva@email.com"`
@@ -11,7 +7,7 @@ type RegisterAccountPayload struct {
 }
 
 type VerifyEmailPayload struct {
-	Token uuid.UUID `query:"token" validate:"required,uuid"`
+	Token string `query:"token" validate:"required,uuid"`
 }
 
 type LoginPayload struct {
@@ -29,8 +25,8 @@ type ForgotPasswordPayload struct {
 }
 
 type ResetPasswordPayload struct {
-	Token       uuid.UUID `query:"token" validate:"required,uuid"`
-	NewPassword string    `json:"new_password" validate:"required,min=8,max=255" example:"novasenha456"`
+	Token       string `query:"token" validate:"required,uuid"`
+	NewPassword string `json:"new_password" validate:"required,min=8,max=255" example:"novasenha456"`
 }
 
 type RequestEmailChangePayload struct {
@@ -38,7 +34,7 @@ type RequestEmailChangePayload struct {
 }
 
 type ConfirmEmailChangePayload struct {
-	Token uuid.UUID `query:"token" validate:"required,uuid"`
+	Token string `query:"token" validate:"required,uuid"`
 }
 
 type LoginInput struct {
@@ -50,7 +46,7 @@ type LoginInput struct {
 }
 
 type VerifyEmailInput struct {
-	Token      uuid.UUID
+	Token      string
 	IPAddress  string
 	UserAgent  string
 	DeviceName string

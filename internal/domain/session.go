@@ -9,8 +9,9 @@ import (
 )
 
 var (
-	ErrSessionNotFound = errors.New("Session not found to perform the operation")
-	ErrSessionExpired  = errors.New("Session is expired")
+	ErrSessionNotFound  = errors.New("Session not found to perform the operation")
+	ErrSessionExpired   = errors.New("Session is expired")
+	ErrSessionNotBelong = errors.New("Session does not belong to the user")
 )
 
 const (
