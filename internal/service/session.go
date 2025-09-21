@@ -15,7 +15,7 @@ type SessionService interface {
 	CreateSession(ctx context.Context, userID uuid.UUID, ipAddress, deviceName, userAgent string) (*domain.Session, error)
 	FindSessionByToken(ctx context.Context, token string) (*domain.Session, error)
 	DeleteSessionByID(ctx context.Context, userID, sessionID uuid.UUID) error
-	// DeleteAllSessionsByUserID(ctx context.Context, userID uuid.UUID) error
+	DeleteAllSessionsByUserID(ctx context.Context, userID uuid.UUID) error
 }
 
 type sessionService struct {
@@ -80,6 +80,14 @@ func (s *sessionService) DeleteSessionByID(ctx context.Context, userID uuid.UUID
 
 	if err := s.sessionRepo.DeleteByID(ctx, sessionID); err != nil {
 		return fmt.Errorf("delete session by id: %w", err)
+	}
+
+	return nil
+}
+
+func (s *sessionService) DeleteAllSessionsByUserID(ctx context.Context, userID uuid.UUID) error {
+	if err := s.sessionRepo.DeleteByUserID(ctx, userID); err != nil {
+		return fmt.Errorf("delete all sessions by user id: %w", err)
 	}
 
 	return nil
