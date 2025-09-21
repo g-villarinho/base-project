@@ -2,81 +2,58 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-## Project Overview
-
-This is a Go-based user authentication service built with Echo framework. It provides a RESTful API for user registration, authentication, email verification, and password management using JWT tokens and SQLite database.
-
-## Key Commands
-
-### Development Setup
-```bash
-make setup          # Install all necessary project dependencies (gotestfmt, mockery, air, swag, newman)
-make generate-key    # Generate ECDSA authentication keys (ecdsa_private.pem, ecdsa_public.pem)
-```
+## Development Commands
 
 ### Building and Running
-```bash
-make build          # Build the server binary to bin/server
-make run            # Build and run the server (runs on port from config)
-```
+- `make build` - Compiles the server binary to `bin/server`
+- `make run` - Builds and runs the server (requires build first)
+- `go run cmd/server/main.go` - Run server directly without building
 
 ### Testing
-```bash
-make test           # Run all tests with formatted output using gotestfmt
-make tests          # Alias for make test
-```
+- `make test` - Runs all tests with formatted output using gotestfmt
+- `make tests` - Alias for test command
 
-### Development Tools
-```bash
-make mocks          # Generate mocks for all interfaces using mockery
-```
+### Code Generation
+- `make mocks` - Generates mock implementations using mockery
+- Mock configuration is in `.mockery.yml`
+- Mocks are generated in `internal/mocks/` directory
 
-## Architecture
+### Setup
+- `make setup` - Installs required development tools (gotestfmt, mockery, air, swag, newman)
+- `make generate-key` - Generates ECDSA private/public key pair for JWT authentication
 
-### Directory Structure
-- `cmd/server/` - Application entrypoint with dependency injection setup
-- `internal/` - Private application code
-  - `handler/` - HTTP handlers and middleware
-  - `service/` - Business logic layer
-  - `repository/` - Database access layer
-  - `model/` - Database models
-  - `dto/` - Data transfer objects
-  - `mocks/` - Generated mocks for testing
-- `pkg/` - Public packages that could be imported by other projects
-  - `injector/` - Dependency injection utilities
-  - `keyparser/` - ECDSA key parsing utilities
-  - `serializer/` - JSON serialization
-  - `validation/` - Request validation
-- `config/` - Configuration management
-- `infra/` - Infrastructure setup (database connections)
+## Architecture Overview
 
-### Dependency Injection
-The application uses `go.uber.org/dig` for dependency injection. All dependencies are registered in `cmd/server/main.go` in the `provideDependencies()` function.
+This is a Go web API built with Echo framework following clean architecture principles:
 
-### Database
-- Uses SQLite with GORM ORM
-- Database file: `users.db`
-- Automatic migrations handled by GORM
+### Core Structure
+- **Domain Layer** (`internal/domain/`) - Business entities and errors (User, Session, Verification)
+- **Repository Layer** (`internal/repository/`) - Data access interfaces and implementations
+- **Service Layer** (`internal/service/`) - Business logic (AuthService, UserService, SessionService)
+- **Handler Layer** (`internal/handler/`) - HTTP request handlers and routing
+- **Infrastructure** (`infra/`) - External integrations (database, email client)
 
-### Authentication
-- JWT-based authentication using ECDSA signing
-- Private/public key pair stored as PEM files
-- Middleware for protecting authenticated routes
+### Key Components
+- **Dependency Injection**: Uses uber/dig container for dependency management
+- **Authentication**: JWT-based with ECDSA signing, session management
+- **Database**: SQLite with GORM ORM
+- **Email**: Resend client for notifications
+- **Middleware**: CORS, rate limiting, authentication
+- **Validation**: Custom validator with localization support
 
-## Testing Standards
+### Important Patterns
+- Interfaces defined in service/repository layers for testing
+- Error handling with custom domain errors
+- Context-aware operations throughout
+- Mock generation for all service/repository interfaces
 
-Test files follow specific conventions defined in `.claude/rules/TESTS.md`:
-- Test files should be named `*_test.go` and located in the same package
-- Each method gets one main test function: `TestServiceName_MethodName`
-- Use `t.Run()` for subtests with descriptive names: "should [action] when [condition]"
-- All external dependencies must be mocked using mocks from `internal/mocks/`
-- Generate missing mocks with `make mocks`
+### Configuration
+- Environment-based configuration in `config/` package
+- Development routes available at `/dev/health` and `/dev/env`
+- Rate limiting and CORS configured per environment
 
-## Configuration
-
-The application loads configuration from:
-1. Environment variables
-2. `.env` file (for development)
-3. `.env.test` file (for testing)
-
-Key configuration areas include server port, database settings, JWT signing keys, and feature flags.
+### Authentication Flow
+- Registration requires email verification
+- Login creates JWT tokens and sessions
+- Password reset and email change workflows implemented
+- Session-based logout and cleanup
