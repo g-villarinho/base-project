@@ -19,6 +19,7 @@ type SessionRepository interface {
 	FindByToken(ctx context.Context, token string) (*domain.Session, error)
 	DeleteByID(ctx context.Context, ID uuid.UUID) error
 	DeleteByUserID(ctx context.Context, userID uuid.UUID) error
+	DeleteByUserExceptID(ctx context.Context, userID, exceptID uuid.UUID) error
 }
 
 type sessionRepository struct {
@@ -78,6 +79,17 @@ func (r *sessionRepository) DeleteByID(ctx context.Context, ID uuid.UUID) error 
 func (r *sessionRepository) DeleteByUserID(ctx context.Context, userID uuid.UUID) error {
 	if err := r.db.WithContext(ctx).
 		Where("user_id = ?", userID).
+		Delete(&domain.Session{}).
+		Error; err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (r *sessionRepository) DeleteByUserExceptID(ctx context.Context, userID, exceptID uuid.UUID) error {
+	if err := r.db.WithContext(ctx).
+		Where("user_id = ? AND id != ?", userID, exceptID).
 		Delete(&domain.Session{}).
 		Error; err != nil {
 		return err
