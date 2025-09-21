@@ -52,6 +52,7 @@ func (m *AuthMiddleware) EnsuredAuthenticated(next echo.HandlerFunc) echo.Handle
 		}
 
 		handler.SetUserID(c, session.UserID)
+		handler.SetSessionID(c, session.ID)
 		return next(c)
 	}
 }
