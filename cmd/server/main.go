@@ -14,7 +14,6 @@ import (
 	"github.com/g-villarinho/user-demo/internal/service"
 	"github.com/g-villarinho/user-demo/logger"
 	"github.com/g-villarinho/user-demo/pkg/injector"
-	"github.com/g-villarinho/user-demo/pkg/keyparser"
 	"github.com/g-villarinho/user-demo/pkg/serializer"
 	"github.com/g-villarinho/user-demo/pkg/validation"
 	"github.com/labstack/echo/v4"
@@ -37,7 +36,6 @@ func provideDependecies() *dig.Container {
 	// General
 	injector.Provide(container, config.NewConfig)
 	injector.Provide(container, database.NewSqliteDbConnection)
-	injector.Provide(container, keyparser.NewEcdsaKeyPair)
 	injector.Provide(container, logger.NewLogger)
 
 	// Client
