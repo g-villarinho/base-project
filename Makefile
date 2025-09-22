@@ -3,7 +3,6 @@ setup: ## Instala bilbiotecas necessárias do projeto
 	@go install github.com/vektra/mockery/v2@v2.53.4
 	@go install github.com/air-verse/air@latest
 	@go install github.com/swaggo/swag/cmd/swag@latest
-	@npm install -g newman
 
 generate-key:  ## Gera as chaves de autenticação do projeto
 	@openssl ecparam -name prime256v1 -genkey -noout -out ecdsa_private.pem
