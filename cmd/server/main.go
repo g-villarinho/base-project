@@ -58,6 +58,7 @@ func provideDependecies() *dig.Container {
 	injector.Provide(container, handler.NewCookieHandler)
 	injector.Provide(container, handler.NewAuthHandler)
 	injector.Provide(container, handler.NewUserHandler)
+	injector.Provide(container, handler.NewSessionHandler)
 
 	//Middleware
 	injector.Provide(container, middleware.NewAuthMiddleware)
@@ -72,6 +73,7 @@ func NewServer(
 	config *config.Config,
 	authHandler *handler.AuthHandler,
 	userHandler *handler.UserHandler,
+	sessionHandler *handler.SessionHandler,
 	authMiddleware *middleware.AuthMiddleware,
 ) *echo.Echo {
 	e := echo.New()
@@ -91,6 +93,7 @@ func NewServer(
 
 	registerAuthRoutes(e, authHandler, authMiddleware)
 	registerUserRoutes(e, userHandler, authMiddleware)
+	registerSessionRoutes(e, sessionHandler, authMiddleware)
 
 	return e
 }
@@ -126,4 +129,11 @@ func registerUserRoutes(e *echo.Echo, h *handler.UserHandler, m *middleware.Auth
 
 	user.PATCH("/profile", h.UpdateProfile)
 	user.GET("/profile", h.GetProfile)
+}
+
+func registerSessionRoutes(e *echo.Echo, h *handler.SessionHandler, m *middleware.AuthMiddleware) {
+	session := e.Group("/sessions", m.EnsuredAuthenticated)
+
+	session.DELETE("/:session_id", h.RevokeSession)
+	session.DELETE("", h.RevokeAllSessions)
 }
