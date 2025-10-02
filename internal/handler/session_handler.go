@@ -2,7 +2,6 @@ package handler
 
 import (
 	"errors"
-	"log/slog"
 	"net/http"
 
 	"github.com/g-villarinho/base-project/internal/domain"
@@ -15,33 +14,24 @@ import (
 type SessionHandler struct {
 	sessionService service.SessionService
 	cookieHandler  CookieHandler
-	logger         *slog.Logger
 }
 
 func NewSessionHandler(
 	sessionService service.SessionService,
-	cookieHandler CookieHandler,
-	logger *slog.Logger) *SessionHandler {
+	cookieHandler CookieHandler) *SessionHandler {
 	return &SessionHandler{
 		sessionService: sessionService,
 		cookieHandler:  cookieHandler,
-		logger:         logger.With(slog.String("handler", "session")),
 	}
 }
 
 func (h *SessionHandler) RevokeSession(c echo.Context) error {
-	logger := h.logger.With(
-		slog.String("method", "RevokeSession"),
-		slog.String("path", c.Request().URL.Path),
-	)
-
 	sessionId, err := uuid.Parse(c.Param("session_id"))
 	if err != nil {
 		return echo.ErrBadRequest
 	}
 
 	if err := h.sessionService.DeleteSessionByID(c.Request().Context(), GetUserID(c), sessionId); err != nil {
-		logger.Error("failed to revoke session", slog.String("session_id", sessionId.String()), slog.String("error", err.Error()))
 		if errors.Is(err, domain.ErrSessionNotFound) {
 			return echo.NewHTTPError(http.StatusNotFound, err.Error())
 		}
@@ -61,14 +51,8 @@ func (h *SessionHandler) RevokeSession(c echo.Context) error {
 }
 
 func (h *SessionHandler) RevokeAllSessions(c echo.Context) error {
-	logger := h.logger.With(
-		slog.String("method", "RevokeAllSessions"),
-		slog.String("path", c.Request().URL.Path),
-	)
-
 	var payload model.RevokeAllSessionsPayload
 	if err := c.Bind(&payload); err != nil {
-		logger.Error("bind request body", "error", err)
 		return echo.ErrBadRequest
 	}
 
@@ -79,7 +63,6 @@ func (h *SessionHandler) RevokeAllSessions(c echo.Context) error {
 	}
 
 	if err := h.sessionService.DeleteSessionsByUserID(c.Request().Context(), GetUserID(c), currentSessionId); err != nil {
-		logger.Error("failed to revoke all sessions", slog.String("error", err.Error()))
 		return echo.ErrInternalServerError
 	}
 

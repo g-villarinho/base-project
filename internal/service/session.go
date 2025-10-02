@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"fmt"
+	"log/slog"
 	"time"
 
 	"github.com/g-villarinho/base-project/config"
@@ -22,22 +23,33 @@ type SessionService interface {
 type sessionService struct {
 	sessionRepo   repository.SessionRepository
 	sessionConfig config.Session
+	logger        *slog.Logger
 }
 
 func NewSessionService(
 	sessionRepo repository.SessionRepository,
-	config *config.Config) SessionService {
+	config *config.Config,
+	logger *slog.Logger) SessionService {
 	return &sessionService{
 		sessionRepo:   sessionRepo,
 		sessionConfig: config.Session,
+		logger:        logger.With(slog.String("service", "session")),
 	}
 }
 
 func (s *sessionService) CreateSession(ctx context.Context, userID uuid.UUID, ipAddress, deviceName, userAgent string) (*domain.Session, error) {
+	logger := s.logger.With(
+		slog.String("method", "CreateSession"),
+		slog.String("user_id", userID.String()),
+	)
+
+	logger.Info("creating session")
+
 	expiresAt := time.Now().UTC().Add(s.sessionConfig.Duration)
 
 	session, err := domain.NewSession(userID, ipAddress, userAgent, deviceName, expiresAt)
 	if err != nil {
+		logger.Error("failed to create session domain", slog.String("error", err.Error()))
 		return nil, fmt.Errorf("create session for userID %s: %w", userID, err)
 	}
 
@@ -49,6 +61,10 @@ func (s *sessionService) CreateSession(ctx context.Context, userID uuid.UUID, ip
 }
 
 func (s *sessionService) FindSessionByToken(ctx context.Context, token string) (*domain.Session, error) {
+	logger := s.logger.With(
+		slog.String("method", "FindSessionByToken"),
+	)
+
 	session, err := s.sessionRepo.FindByToken(ctx, token)
 	if err != nil {
 		if err == repository.ErrSessionNotFound {
@@ -59,6 +75,7 @@ func (s *sessionService) FindSessionByToken(ctx context.Context, token string) (
 	}
 
 	if session.IsExpired() {
+		logger.Warn("session expired", slog.String("session_id", session.ID.String()))
 		return nil, domain.ErrSessionExpired
 	}
 
@@ -66,6 +83,12 @@ func (s *sessionService) FindSessionByToken(ctx context.Context, token string) (
 }
 
 func (s *sessionService) DeleteSessionByID(ctx context.Context, userID uuid.UUID, sessionID uuid.UUID) error {
+	logger := s.logger.With(
+		slog.String("method", "DeleteSessionByID"),
+		slog.String("user_id", userID.String()),
+		slog.String("session_id", sessionID.String()),
+	)
+
 	session, err := s.sessionRepo.FindByID(ctx, sessionID)
 	if err != nil {
 		if err == repository.ErrSessionNotFound {
@@ -76,6 +99,7 @@ func (s *sessionService) DeleteSessionByID(ctx context.Context, userID uuid.UUID
 	}
 
 	if session.UserID != userID {
+		logger.Warn("session does not belong to user")
 		return domain.ErrSessionNotBelong
 	}
 
