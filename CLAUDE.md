@@ -12,6 +12,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ### Testing
 - `make test` - Runs all tests with formatted output using gotestfmt
 - `make tests` - Alias for test command
+- `go test ./internal/service/...` - Run tests for specific package
 
 ### Code Generation
 - `make mocks` - Generates mock implementations using mockery
@@ -19,7 +20,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - Mocks are generated in `internal/mocks/` directory
 
 ### Setup
-- `make setup` - Installs required development tools (gotestfmt, mockery, air, swag, newman)
+- `make setup` - Installs required development tools (gotestfmt, mockery, air, swag)
 - `make generate-key` - Generates ECDSA private/public key pair for JWT authentication
 
 ## Architecture Overview

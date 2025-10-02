@@ -3,6 +3,7 @@ package repository
 import (
 	"context"
 	"errors"
+	"time"
 
 	"github.com/g-villarinho/user-demo/internal/domain"
 	"github.com/google/uuid"
@@ -20,6 +21,7 @@ type SessionRepository interface {
 	DeleteByID(ctx context.Context, ID uuid.UUID) error
 	DeleteByUserID(ctx context.Context, userID uuid.UUID) error
 	DeleteByUserExceptID(ctx context.Context, userID, exceptID uuid.UUID) error
+	FindByUserID(ctx context.Context, userID uuid.UUID) ([]domain.Session, error)
 }
 
 type sessionRepository struct {
@@ -96,4 +98,17 @@ func (r *sessionRepository) DeleteByUserExceptID(ctx context.Context, userID, ex
 	}
 
 	return nil
+}
+
+func (r *sessionRepository) FindByUserID(ctx context.Context, userID uuid.UUID) ([]domain.Session, error) {
+	var sessions []domain.Session
+
+	if err := r.db.WithContext(ctx).
+		Where("user_id = ? AND expires_at > ?", userID, time.Now().UTC()).
+		Find(&sessions).
+		Error; err != nil {
+		return nil, err
+	}
+
+	return sessions, nil
 }
