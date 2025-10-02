@@ -1,4 +1,4 @@
-module github.com/g-villarinho/user-demo
+module github.com/g-villarinho/base-project
 
 go 1.25.1
 

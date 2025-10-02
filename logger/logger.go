@@ -4,7 +4,7 @@ import (
 	"log/slog"
 	"os"
 
-	"github.com/g-villarinho/user-demo/config"
+	"github.com/g-villarinho/base-project/config"
 )
 
 func NewLogger(config *config.Config) *slog.Logger {

@@ -4,20 +4,19 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/g-villarinho/user-demo/internal/domain"
-	"github.com/g-villarinho/user-demo/internal/repository"
+	"github.com/g-villarinho/base-project/internal/domain"
+	"github.com/g-villarinho/base-project/internal/repository"
 	"github.com/google/uuid"
 )
 
 type UserService interface {
 	UpdateUser(ctx context.Context, userID uuid.UUID, name string) error
-  GetUser(ctx context.Context, userID uuid.UUID) (*domain.User, error)
+	GetUser(ctx context.Context, userID uuid.UUID) (*domain.User, error)
 }
 
 type userService struct {
 	userRepo repository.UserRepository
 }
-
 
 func NewUserService(userRepo repository.UserRepository) UserService {
 	return &userService{
@@ -34,7 +33,6 @@ func (s *userService) UpdateUser(ctx context.Context, userID uuid.UUID, name str
 		return fmt.Errorf("update name for userId %s: %w", userID.String(), err)
 	}
 
-
 	return nil
 }
 
@@ -47,7 +45,6 @@ func (s *userService) GetUser(ctx context.Context, userID uuid.UUID) (*domain.Us
 
 		return nil, fmt.Errorf("find user by id %s: %w", userID.String(), err)
 	}
-
 
 	return user, nil
 }

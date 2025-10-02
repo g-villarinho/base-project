@@ -11,19 +11,19 @@ recursive: false
 require-template-schema-exists: false
 template: testify
 packages:
-  github.com/g-villarinho/user-demo/internal/service:
+  github.com/g-villarinho/base-project/internal/service:
     config:
       all: true
       recursive: true
-  github.com/g-villarinho/user-demo/internal/repository:
+  github.com/g-villarinho/base-project/internal/repository:
     config:
       all: true
       recursive: true
-  github.com/g-villarinho/user-demo/pkg/keyparser:
+  github.com/g-villarinho/base-project/pkg/keyparser:
     config:
       all: true
       recursive: true
-  github.com/g-villarinho/user-demo/infra/notification:
+  github.com/g-villarinho/base-project/infra/notification:
     config:
       all: true
       recursive: true

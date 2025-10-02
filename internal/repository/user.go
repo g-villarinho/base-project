@@ -5,7 +5,7 @@ import (
 	"errors"
 	"time"
 
-	"github.com/g-villarinho/user-demo/internal/domain"
+	"github.com/g-villarinho/base-project/internal/domain"
 	"github.com/google/uuid"
 	"gorm.io/gorm"
 )
@@ -138,7 +138,7 @@ func (r *userRepository) UpdateEmail(ctx context.Context, ID uuid.UUID, newEmail
 
 func (r *userRepository) UpdateName(ctx context.Context, ID uuid.UUID, name string) error {
 	updates := map[string]any{
-		"name":      name,
+		"name":       name,
 		"updated_at": time.Now().UTC(),
 	}
 
@@ -156,5 +156,3 @@ func (r *userRepository) UpdateName(ctx context.Context, ID uuid.UUID, name stri
 
 	return nil
 }
-
-

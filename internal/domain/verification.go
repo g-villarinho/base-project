@@ -5,7 +5,7 @@ import (
 	"errors"
 	"time"
 
-	"github.com/g-villarinho/user-demo/pkg/crypto"
+	"github.com/g-villarinho/base-project/pkg/crypto"
 	"github.com/google/uuid"
 )
 

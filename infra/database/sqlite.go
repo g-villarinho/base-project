@@ -3,8 +3,8 @@ package database
 import (
 	"fmt"
 
-	"github.com/g-villarinho/user-demo/config"
-	"github.com/g-villarinho/user-demo/internal/domain"
+	"github.com/g-villarinho/base-project/config"
+	"github.com/g-villarinho/base-project/internal/domain"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"

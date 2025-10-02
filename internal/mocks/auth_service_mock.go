@@ -7,8 +7,8 @@ package mocks
 import (
 	"context"
 
-	"github.com/g-villarinho/user-demo/internal/domain"
-	"github.com/g-villarinho/user-demo/internal/model"
+	"github.com/g-villarinho/base-project/internal/domain"
+	"github.com/g-villarinho/base-project/internal/model"
 	"github.com/google/uuid"
 	mock "github.com/stretchr/testify/mock"
 )

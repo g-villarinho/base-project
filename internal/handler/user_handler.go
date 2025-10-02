@@ -5,23 +5,22 @@ import (
 	"log/slog"
 	"net/http"
 
-	"github.com/g-villarinho/user-demo/internal/domain"
-	"github.com/g-villarinho/user-demo/internal/model"
-	"github.com/g-villarinho/user-demo/internal/service"
+	"github.com/g-villarinho/base-project/internal/domain"
+	"github.com/g-villarinho/base-project/internal/model"
+	"github.com/g-villarinho/base-project/internal/service"
 	"github.com/labstack/echo/v4"
 )
 
-
 type UserHandler struct {
 	userService service.UserService
-	logger *slog.Logger
+	logger      *slog.Logger
 }
 
 func NewUserHandler(userService service.UserService, logger *slog.Logger) *UserHandler {
 	return &UserHandler{
 		userService: userService,
-    logger:      logger.With(slog.String("handler", "user")),
-	}	
+		logger:      logger.With(slog.String("handler", "user")),
+	}
 }
 
 func (h *UserHandler) UpdateProfile(c echo.Context) error {
@@ -59,11 +58,11 @@ func (h *UserHandler) GetProfile(c echo.Context) error {
 		slog.String("method", "GetProfile"),
 		slog.String("path", c.Request().URL.Path),
 	)
- 
+
 	user, err := h.userService.GetUser(c.Request().Context(), GetUserID(c))
 	if err != nil {
-		logger .Error("get profile", "error", err)
-		
+		logger.Error("get profile", "error", err)
+
 		if errors.Is(err, domain.ErrUserNotFound) {
 			return echo.NewHTTPError(http.StatusNotFound, err.Error())
 		}
@@ -72,8 +71,8 @@ func (h *UserHandler) GetProfile(c echo.Context) error {
 	}
 
 	response := model.ProfileResponse{
-		ID: user.ID,
-		Name: user.Name,
+		ID:    user.ID,
+		Name:  user.Name,
 		Email: user.Email,
 	}
 

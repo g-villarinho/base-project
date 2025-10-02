@@ -17,7 +17,7 @@ build:
 test: ## Executa todos os testes
 	@find . -name "*_test.go" -not -path "./vendor/*" -not -path "./.git/*" | \
 	sed 's|/[^/]*$$||' | sort -u | \
-	sed 's|^\./|github.com/g-villarinho/user-demo/|' | \
+	sed 's|^\./|github.com/g-villarinho/base-project/|' | \
 	xargs go test -json -v | gotestfmt
 
 tests: test ## Alias para test

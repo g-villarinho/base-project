@@ -8,11 +8,11 @@ import (
 	"net/url"
 	"time"
 
-	"github.com/g-villarinho/user-demo/config"
-	"github.com/g-villarinho/user-demo/infra/notification"
-	"github.com/g-villarinho/user-demo/internal/domain"
-	"github.com/g-villarinho/user-demo/internal/model"
-	"github.com/g-villarinho/user-demo/internal/repository"
+	"github.com/g-villarinho/base-project/config"
+	"github.com/g-villarinho/base-project/infra/notification"
+	"github.com/g-villarinho/base-project/internal/domain"
+	"github.com/g-villarinho/base-project/internal/model"
+	"github.com/g-villarinho/base-project/internal/repository"
 	"github.com/google/uuid"
 	"golang.org/x/crypto/bcrypt"
 )

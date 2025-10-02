@@ -3,8 +3,8 @@ package middleware
 import (
 	"log/slog"
 
-	"github.com/g-villarinho/user-demo/internal/handler"
-	"github.com/g-villarinho/user-demo/internal/service"
+	"github.com/g-villarinho/base-project/internal/handler"
+	"github.com/g-villarinho/base-project/internal/service"
 	"github.com/labstack/echo/v4"
 )
 

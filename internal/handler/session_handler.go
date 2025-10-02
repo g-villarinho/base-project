@@ -5,9 +5,9 @@ import (
 	"log/slog"
 	"net/http"
 
-	"github.com/g-villarinho/user-demo/internal/domain"
-	"github.com/g-villarinho/user-demo/internal/model"
-	"github.com/g-villarinho/user-demo/internal/service"
+	"github.com/g-villarinho/base-project/internal/domain"
+	"github.com/g-villarinho/base-project/internal/model"
+	"github.com/g-villarinho/base-project/internal/service"
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
 )

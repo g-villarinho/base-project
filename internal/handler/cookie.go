@@ -8,7 +8,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/g-villarinho/user-demo/config"
+	"github.com/g-villarinho/base-project/config"
 	"github.com/labstack/echo/v4"
 )
 

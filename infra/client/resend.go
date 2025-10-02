@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/g-villarinho/user-demo/config"
-	"github.com/g-villarinho/user-demo/infra/notification"
+	"github.com/g-villarinho/base-project/config"
+	"github.com/g-villarinho/base-project/infra/notification"
 	"github.com/resend/resend-go/v2"
 )
 

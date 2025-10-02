@@ -5,7 +5,7 @@ import (
 	"errors"
 	"time"
 
-	"github.com/g-villarinho/user-demo/internal/domain"
+	"github.com/g-villarinho/base-project/internal/domain"
 	"github.com/google/uuid"
 	"gorm.io/gorm"
 )

@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/g-villarinho/user-demo/config"
-	"github.com/g-villarinho/user-demo/internal/domain"
-	"github.com/g-villarinho/user-demo/internal/repository"
+	"github.com/g-villarinho/base-project/config"
+	"github.com/g-villarinho/base-project/internal/domain"
+	"github.com/g-villarinho/base-project/internal/repository"
 	"github.com/google/uuid"
 )
 
