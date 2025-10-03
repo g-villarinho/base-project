@@ -14,7 +14,7 @@ run: build
 build:
 	@go build -o bin/server cmd/server/main.go
 
-test: setup ## Executa todos os testes
+test: ## Executa todos os testes
 	@PATH=$(shell go env GOPATH)/bin:$(PATH) find . -name "*_test.go" -not -path "./vendor/*" -not -path "./.git/*" | \
 	sed 's|/[^/]*$$||' | sort -u | \
 	sed 's|^\./|github.com/g-villarinho/base-project/|' | \
