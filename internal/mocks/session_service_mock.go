@@ -125,63 +125,6 @@ func (_c *SessionServiceMock_CreateSession_Call) RunAndReturn(run func(ctx conte
 	return _c
 }
 
-// DeleteAllSessionsByUserID provides a mock function for the type SessionServiceMock
-func (_mock *SessionServiceMock) DeleteAllSessionsByUserID(ctx context.Context, userID uuid.UUID) error {
-	ret := _mock.Called(ctx, userID)
-
-	if len(ret) == 0 {
-		panic("no return value specified for DeleteAllSessionsByUserID")
-	}
-
-	var r0 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, uuid.UUID) error); ok {
-		r0 = returnFunc(ctx, userID)
-	} else {
-		r0 = ret.Error(0)
-	}
-	return r0
-}
-
-// SessionServiceMock_DeleteAllSessionsByUserID_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'DeleteAllSessionsByUserID'
-type SessionServiceMock_DeleteAllSessionsByUserID_Call struct {
-	*mock.Call
-}
-
-// DeleteAllSessionsByUserID is a helper method to define mock.On call
-//   - ctx context.Context
-//   - userID uuid.UUID
-func (_e *SessionServiceMock_Expecter) DeleteAllSessionsByUserID(ctx interface{}, userID interface{}) *SessionServiceMock_DeleteAllSessionsByUserID_Call {
-	return &SessionServiceMock_DeleteAllSessionsByUserID_Call{Call: _e.mock.On("DeleteAllSessionsByUserID", ctx, userID)}
-}
-
-func (_c *SessionServiceMock_DeleteAllSessionsByUserID_Call) Run(run func(ctx context.Context, userID uuid.UUID)) *SessionServiceMock_DeleteAllSessionsByUserID_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		var arg0 context.Context
-		if args[0] != nil {
-			arg0 = args[0].(context.Context)
-		}
-		var arg1 uuid.UUID
-		if args[1] != nil {
-			arg1 = args[1].(uuid.UUID)
-		}
-		run(
-			arg0,
-			arg1,
-		)
-	})
-	return _c
-}
-
-func (_c *SessionServiceMock_DeleteAllSessionsByUserID_Call) Return(err error) *SessionServiceMock_DeleteAllSessionsByUserID_Call {
-	_c.Call.Return(err)
-	return _c
-}
-
-func (_c *SessionServiceMock_DeleteAllSessionsByUserID_Call) RunAndReturn(run func(ctx context.Context, userID uuid.UUID) error) *SessionServiceMock_DeleteAllSessionsByUserID_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
 // DeleteSessionByID provides a mock function for the type SessionServiceMock
 func (_mock *SessionServiceMock) DeleteSessionByID(ctx context.Context, userID uuid.UUID, sessionID uuid.UUID) error {
 	ret := _mock.Called(ctx, userID, sessionID)
@@ -241,6 +184,69 @@ func (_c *SessionServiceMock_DeleteSessionByID_Call) Return(err error) *SessionS
 }
 
 func (_c *SessionServiceMock_DeleteSessionByID_Call) RunAndReturn(run func(ctx context.Context, userID uuid.UUID, sessionID uuid.UUID) error) *SessionServiceMock_DeleteSessionByID_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// DeleteSessionsByUserID provides a mock function for the type SessionServiceMock
+func (_mock *SessionServiceMock) DeleteSessionsByUserID(ctx context.Context, userID uuid.UUID, currentSession *uuid.UUID) error {
+	ret := _mock.Called(ctx, userID, currentSession)
+
+	if len(ret) == 0 {
+		panic("no return value specified for DeleteSessionsByUserID")
+	}
+
+	var r0 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, uuid.UUID, *uuid.UUID) error); ok {
+		r0 = returnFunc(ctx, userID, currentSession)
+	} else {
+		r0 = ret.Error(0)
+	}
+	return r0
+}
+
+// SessionServiceMock_DeleteSessionsByUserID_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'DeleteSessionsByUserID'
+type SessionServiceMock_DeleteSessionsByUserID_Call struct {
+	*mock.Call
+}
+
+// DeleteSessionsByUserID is a helper method to define mock.On call
+//   - ctx context.Context
+//   - userID uuid.UUID
+//   - currentSession *uuid.UUID
+func (_e *SessionServiceMock_Expecter) DeleteSessionsByUserID(ctx interface{}, userID interface{}, currentSession interface{}) *SessionServiceMock_DeleteSessionsByUserID_Call {
+	return &SessionServiceMock_DeleteSessionsByUserID_Call{Call: _e.mock.On("DeleteSessionsByUserID", ctx, userID, currentSession)}
+}
+
+func (_c *SessionServiceMock_DeleteSessionsByUserID_Call) Run(run func(ctx context.Context, userID uuid.UUID, currentSession *uuid.UUID)) *SessionServiceMock_DeleteSessionsByUserID_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 uuid.UUID
+		if args[1] != nil {
+			arg1 = args[1].(uuid.UUID)
+		}
+		var arg2 *uuid.UUID
+		if args[2] != nil {
+			arg2 = args[2].(*uuid.UUID)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+		)
+	})
+	return _c
+}
+
+func (_c *SessionServiceMock_DeleteSessionsByUserID_Call) Return(err error) *SessionServiceMock_DeleteSessionsByUserID_Call {
+	_c.Call.Return(err)
+	return _c
+}
+
+func (_c *SessionServiceMock_DeleteSessionsByUserID_Call) RunAndReturn(run func(ctx context.Context, userID uuid.UUID, currentSession *uuid.UUID) error) *SessionServiceMock_DeleteSessionsByUserID_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -309,6 +315,74 @@ func (_c *SessionServiceMock_FindSessionByToken_Call) Return(session *domain.Ses
 }
 
 func (_c *SessionServiceMock_FindSessionByToken_Call) RunAndReturn(run func(ctx context.Context, token string) (*domain.Session, error)) *SessionServiceMock_FindSessionByToken_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// GetSessionsByUserID provides a mock function for the type SessionServiceMock
+func (_mock *SessionServiceMock) GetSessionsByUserID(ctx context.Context, userID uuid.UUID) ([]domain.Session, error) {
+	ret := _mock.Called(ctx, userID)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetSessionsByUserID")
+	}
+
+	var r0 []domain.Session
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, uuid.UUID) ([]domain.Session, error)); ok {
+		return returnFunc(ctx, userID)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, uuid.UUID) []domain.Session); ok {
+		r0 = returnFunc(ctx, userID)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]domain.Session)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, uuid.UUID) error); ok {
+		r1 = returnFunc(ctx, userID)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// SessionServiceMock_GetSessionsByUserID_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetSessionsByUserID'
+type SessionServiceMock_GetSessionsByUserID_Call struct {
+	*mock.Call
+}
+
+// GetSessionsByUserID is a helper method to define mock.On call
+//   - ctx context.Context
+//   - userID uuid.UUID
+func (_e *SessionServiceMock_Expecter) GetSessionsByUserID(ctx interface{}, userID interface{}) *SessionServiceMock_GetSessionsByUserID_Call {
+	return &SessionServiceMock_GetSessionsByUserID_Call{Call: _e.mock.On("GetSessionsByUserID", ctx, userID)}
+}
+
+func (_c *SessionServiceMock_GetSessionsByUserID_Call) Run(run func(ctx context.Context, userID uuid.UUID)) *SessionServiceMock_GetSessionsByUserID_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 uuid.UUID
+		if args[1] != nil {
+			arg1 = args[1].(uuid.UUID)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *SessionServiceMock_GetSessionsByUserID_Call) Return(sessions []domain.Session, err error) *SessionServiceMock_GetSessionsByUserID_Call {
+	_c.Call.Return(sessions, err)
+	return _c
+}
+
+func (_c *SessionServiceMock_GetSessionsByUserID_Call) RunAndReturn(run func(ctx context.Context, userID uuid.UUID) ([]domain.Session, error)) *SessionServiceMock_GetSessionsByUserID_Call {
 	_c.Call.Return(run)
 	return _c
 }

@@ -153,6 +153,69 @@ func (_c *SessionRepositoryMock_DeleteByID_Call) RunAndReturn(run func(ctx conte
 	return _c
 }
 
+// DeleteByUserExceptID provides a mock function for the type SessionRepositoryMock
+func (_mock *SessionRepositoryMock) DeleteByUserExceptID(ctx context.Context, userID uuid.UUID, exceptID uuid.UUID) error {
+	ret := _mock.Called(ctx, userID, exceptID)
+
+	if len(ret) == 0 {
+		panic("no return value specified for DeleteByUserExceptID")
+	}
+
+	var r0 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, uuid.UUID, uuid.UUID) error); ok {
+		r0 = returnFunc(ctx, userID, exceptID)
+	} else {
+		r0 = ret.Error(0)
+	}
+	return r0
+}
+
+// SessionRepositoryMock_DeleteByUserExceptID_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'DeleteByUserExceptID'
+type SessionRepositoryMock_DeleteByUserExceptID_Call struct {
+	*mock.Call
+}
+
+// DeleteByUserExceptID is a helper method to define mock.On call
+//   - ctx context.Context
+//   - userID uuid.UUID
+//   - exceptID uuid.UUID
+func (_e *SessionRepositoryMock_Expecter) DeleteByUserExceptID(ctx interface{}, userID interface{}, exceptID interface{}) *SessionRepositoryMock_DeleteByUserExceptID_Call {
+	return &SessionRepositoryMock_DeleteByUserExceptID_Call{Call: _e.mock.On("DeleteByUserExceptID", ctx, userID, exceptID)}
+}
+
+func (_c *SessionRepositoryMock_DeleteByUserExceptID_Call) Run(run func(ctx context.Context, userID uuid.UUID, exceptID uuid.UUID)) *SessionRepositoryMock_DeleteByUserExceptID_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 uuid.UUID
+		if args[1] != nil {
+			arg1 = args[1].(uuid.UUID)
+		}
+		var arg2 uuid.UUID
+		if args[2] != nil {
+			arg2 = args[2].(uuid.UUID)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+		)
+	})
+	return _c
+}
+
+func (_c *SessionRepositoryMock_DeleteByUserExceptID_Call) Return(err error) *SessionRepositoryMock_DeleteByUserExceptID_Call {
+	_c.Call.Return(err)
+	return _c
+}
+
+func (_c *SessionRepositoryMock_DeleteByUserExceptID_Call) RunAndReturn(run func(ctx context.Context, userID uuid.UUID, exceptID uuid.UUID) error) *SessionRepositoryMock_DeleteByUserExceptID_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // DeleteByUserID provides a mock function for the type SessionRepositoryMock
 func (_mock *SessionRepositoryMock) DeleteByUserID(ctx context.Context, userID uuid.UUID) error {
 	ret := _mock.Called(ctx, userID)
@@ -342,6 +405,74 @@ func (_c *SessionRepositoryMock_FindByToken_Call) Return(session *domain.Session
 }
 
 func (_c *SessionRepositoryMock_FindByToken_Call) RunAndReturn(run func(ctx context.Context, token string) (*domain.Session, error)) *SessionRepositoryMock_FindByToken_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// FindByUserID provides a mock function for the type SessionRepositoryMock
+func (_mock *SessionRepositoryMock) FindByUserID(ctx context.Context, userID uuid.UUID) ([]domain.Session, error) {
+	ret := _mock.Called(ctx, userID)
+
+	if len(ret) == 0 {
+		panic("no return value specified for FindByUserID")
+	}
+
+	var r0 []domain.Session
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, uuid.UUID) ([]domain.Session, error)); ok {
+		return returnFunc(ctx, userID)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, uuid.UUID) []domain.Session); ok {
+		r0 = returnFunc(ctx, userID)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]domain.Session)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, uuid.UUID) error); ok {
+		r1 = returnFunc(ctx, userID)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// SessionRepositoryMock_FindByUserID_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'FindByUserID'
+type SessionRepositoryMock_FindByUserID_Call struct {
+	*mock.Call
+}
+
+// FindByUserID is a helper method to define mock.On call
+//   - ctx context.Context
+//   - userID uuid.UUID
+func (_e *SessionRepositoryMock_Expecter) FindByUserID(ctx interface{}, userID interface{}) *SessionRepositoryMock_FindByUserID_Call {
+	return &SessionRepositoryMock_FindByUserID_Call{Call: _e.mock.On("FindByUserID", ctx, userID)}
+}
+
+func (_c *SessionRepositoryMock_FindByUserID_Call) Run(run func(ctx context.Context, userID uuid.UUID)) *SessionRepositoryMock_FindByUserID_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 uuid.UUID
+		if args[1] != nil {
+			arg1 = args[1].(uuid.UUID)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *SessionRepositoryMock_FindByUserID_Call) Return(sessions []domain.Session, err error) *SessionRepositoryMock_FindByUserID_Call {
+	_c.Call.Return(sessions, err)
+	return _c
+}
+
+func (_c *SessionRepositoryMock_FindByUserID_Call) RunAndReturn(run func(ctx context.Context, userID uuid.UUID) ([]domain.Session, error)) *SessionRepositoryMock_FindByUserID_Call {
 	_c.Call.Return(run)
 	return _c
 }
