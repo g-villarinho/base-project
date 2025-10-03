@@ -81,11 +81,10 @@ func (r *sessionRepository) FindByToken(ctx context.Context, token string) (*dom
 
 	if err := r.db.WithContext(ctx).First(&session, "token = ?", token).Error; err != nil {
 		if err == gorm.ErrRecordNotFound {
-			logger.Warn("session not found by token")
 			return nil, ErrSessionNotFound
 		}
 
-		logger.Error("failed to find session by token", slog.String("error", err.Error()))
+		logger.Error("find session by token", slog.String("error", err.Error()))
 		return nil, err
 	}
 
@@ -99,7 +98,7 @@ func (r *sessionRepository) DeleteByID(ctx context.Context, ID uuid.UUID) error 
 	)
 
 	if err := r.db.WithContext(ctx).Delete(&domain.Session{}, ID).Error; err != nil {
-		logger.Error("failed to delete session by id", slog.String("error", err.Error()))
+		logger.Error("delete session by id", slog.String("error", err.Error()))
 		return err
 	}
 
@@ -117,7 +116,7 @@ func (r *sessionRepository) DeleteByUserID(ctx context.Context, userID uuid.UUID
 		Delete(&domain.Session{})
 
 	if result.Error != nil {
-		logger.Error("failed to delete sessions by user id", slog.String("error", result.Error.Error()))
+		logger.Error("delete sessions by user id", slog.String("error", result.Error.Error()))
 		return result.Error
 	}
 
@@ -155,7 +154,7 @@ func (r *sessionRepository) FindByUserID(ctx context.Context, userID uuid.UUID) 
 		Where("user_id = ? AND expires_at > ?", userID, time.Now().UTC()).
 		Find(&sessions).
 		Error; err != nil {
-		logger.Error("failed to find sessions by user id", slog.String("error", err.Error()))
+		logger.Error("find sessions by user id", slog.String("error", err.Error()))
 		return nil, err
 	}
 

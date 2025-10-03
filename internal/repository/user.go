@@ -55,7 +55,6 @@ func (r *userRepository) Create(ctx context.Context, user *domain.User) error {
 func (r *userRepository) ExistsByEmail(ctx context.Context, email string) (bool, error) {
 	logger := r.logger.With(
 		slog.String("method", "ExistsByEmail"),
-		slog.String("email", email),
 	)
 
 	var count int64

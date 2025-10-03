@@ -43,13 +43,11 @@ func (s *sessionService) CreateSession(ctx context.Context, userID uuid.UUID, ip
 		slog.String("user_id", userID.String()),
 	)
 
-	logger.Info("creating session")
-
 	expiresAt := time.Now().UTC().Add(s.sessionConfig.Duration)
 
 	session, err := domain.NewSession(userID, ipAddress, userAgent, deviceName, expiresAt)
 	if err != nil {
-		logger.Error("failed to create session domain", slog.String("error", err.Error()))
+		logger.Error("create session domain", slog.String("error", err.Error()))
 		return nil, fmt.Errorf("create session for userID %s: %w", userID, err)
 	}
 
@@ -68,6 +66,7 @@ func (s *sessionService) FindSessionByToken(ctx context.Context, token string) (
 	session, err := s.sessionRepo.FindByToken(ctx, token)
 	if err != nil {
 		if err == repository.ErrSessionNotFound {
+			logger.Warn("session not found to proceed", slog.String("token", token))
 			return nil, domain.ErrSessionNotFound
 		}
 
@@ -92,6 +91,7 @@ func (s *sessionService) DeleteSessionByID(ctx context.Context, userID uuid.UUID
 	session, err := s.sessionRepo.FindByID(ctx, sessionID)
 	if err != nil {
 		if err == repository.ErrSessionNotFound {
+			logger.Warn("session not found to proceed")
 			return domain.ErrSessionNotFound
 		}
 
@@ -127,8 +127,18 @@ func (s *sessionService) DeleteSessionsByUserID(ctx context.Context, userID uuid
 }
 
 func (s *sessionService) GetSessionsByUserID(ctx context.Context, userID uuid.UUID) ([]domain.Session, error) {
+	logger := s.logger.With(
+		slog.String("method", "GetSessionsByUserID"),
+		slog.String("user_id", userID.String()),
+	)
+
 	sessions, err := s.sessionRepo.FindByUserID(ctx, userID)
 	if err != nil {
+		if err == repository.ErrSessionNotFound {
+			logger.Info("no sessions found for user")
+			return []domain.Session{}, nil
+		}
+
 		return nil, fmt.Errorf("get user sessions: %w", err)
 	}
 

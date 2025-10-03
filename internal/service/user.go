@@ -28,8 +28,14 @@ func NewUserService(userRepo repository.UserRepository, logger *slog.Logger) Use
 }
 
 func (s *userService) UpdateUser(ctx context.Context, userID uuid.UUID, name string) error {
+	logger := s.logger.With(
+		slog.String("method", "UpdateUser"),
+		slog.String("user_id", userID.String()),
+	)
+
 	if err := s.userRepo.UpdateName(ctx, userID, name); err != nil {
 		if err == repository.ErrUserNotFound {
+			logger.Warn("user not found to proceed")
 			return domain.ErrUserNotFound
 		}
 
