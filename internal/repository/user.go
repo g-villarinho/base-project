@@ -3,6 +3,7 @@ package repository
 import (
 	"context"
 	"errors"
+	"log/slog"
 	"time"
 
 	"github.com/g-villarinho/base-project/internal/domain"
@@ -26,12 +27,14 @@ type UserRepository interface {
 }
 
 type userRepository struct {
-	db *gorm.DB
+	db     *gorm.DB
+	logger *slog.Logger
 }
 
-func NewUserRepository(db *gorm.DB) UserRepository {
+func NewUserRepository(db *gorm.DB, logger *slog.Logger) UserRepository {
 	return &userRepository{
-		db: db,
+		db:     db,
+		logger: logger.With(slog.String("repository", "user")),
 	}
 }
 
@@ -77,12 +80,18 @@ func (r *userRepository) VerifyEmail(ctx context.Context, ID uuid.UUID) error {
 }
 
 func (r *userRepository) FindByEmail(ctx context.Context, email string) (*domain.User, error) {
+	logger := r.logger.With(
+		slog.String("method", "FindByEmail"),
+	)
+
 	var user domain.User
 	err := r.db.WithContext(ctx).First(&user, "email = ?", email).Error
 	if err != nil {
 		if err == gorm.ErrRecordNotFound {
+			logger.Warn("user not found by email")
 			return nil, ErrUserNotFound
 		}
+		logger.Error("failed to find user by email", slog.String("error", err.Error()))
 		return nil, err
 	}
 
@@ -90,12 +99,19 @@ func (r *userRepository) FindByEmail(ctx context.Context, email string) (*domain
 }
 
 func (r *userRepository) FindByID(ctx context.Context, ID uuid.UUID) (*domain.User, error) {
+	logger := r.logger.With(
+		slog.String("method", "FindByID"),
+		slog.String("user_id", ID.String()),
+	)
+
 	var user domain.User
 	err := r.db.WithContext(ctx).First(&user, "id = ?", ID).Error
 	if err != nil {
 		if err == gorm.ErrRecordNotFound {
+			logger.Warn("user not found by id")
 			return nil, ErrUserNotFound
 		}
+		logger.Error("failed to find user by id", slog.String("error", err.Error()))
 		return nil, err
 	}
 
@@ -137,6 +153,11 @@ func (r *userRepository) UpdateEmail(ctx context.Context, ID uuid.UUID, newEmail
 }
 
 func (r *userRepository) UpdateName(ctx context.Context, ID uuid.UUID, name string) error {
+	logger := r.logger.With(
+		slog.String("method", "UpdateName"),
+		slog.String("user_id", ID.String()),
+	)
+
 	updates := map[string]any{
 		"name":       name,
 		"updated_at": time.Now().UTC(),
@@ -147,10 +168,12 @@ func (r *userRepository) UpdateName(ctx context.Context, ID uuid.UUID, name stri
 		Updates(updates)
 
 	if result.Error != nil {
+		logger.Error("failed to update user name", slog.String("error", result.Error.Error()))
 		return result.Error
 	}
 
 	if result.RowsAffected == 0 {
+		logger.Warn("user not found, no rows affected")
 		return ErrUserNotFound
 	}
 

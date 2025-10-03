@@ -2,7 +2,6 @@ package http
 
 import (
 	"errors"
-	"log/slog"
 	"net/http"
 
 	"github.com/g-villarinho/base-project/internal/domain"
@@ -13,36 +12,25 @@ import (
 
 type UserHandler struct {
 	userService service.UserService
-	logger      *slog.Logger
 }
 
-func NewUserHandler(userService service.UserService, logger *slog.Logger) *UserHandler {
+func NewUserHandler(userService service.UserService) *UserHandler {
 	return &UserHandler{
 		userService: userService,
-		logger:      logger.With(slog.String("handler", "user")),
 	}
 }
 
 func (h *UserHandler) UpdateProfile(c echo.Context) error {
-	logger := h.logger.With(
-		slog.String("method", "UpdateProfile"),
-		slog.String("path", c.Request().URL.Path),
-	)
-
 	var payload model.UpdateProfilePayload
 	if err := c.Bind(&payload); err != nil {
-		logger.Error("bind request body", "error", err)
 		return echo.ErrBadRequest
 	}
 
 	if err := c.Validate(payload); err != nil {
-		logger.Error("invalid payload with validation errors")
 		return err
 	}
 
 	if err := h.userService.UpdateUser(c.Request().Context(), GetUserID(c), payload.Name); err != nil {
-		logger.Error("update profile", "error", err)
-
 		if errors.Is(err, domain.ErrUserNotFound) {
 			return echo.NewHTTPError(http.StatusNotFound, err.Error())
 		}
@@ -54,15 +42,8 @@ func (h *UserHandler) UpdateProfile(c echo.Context) error {
 }
 
 func (h *UserHandler) GetProfile(c echo.Context) error {
-	logger := h.logger.With(
-		slog.String("method", "GetProfile"),
-		slog.String("path", c.Request().URL.Path),
-	)
-
 	user, err := h.userService.GetUser(c.Request().Context(), GetUserID(c))
 	if err != nil {
-		logger.Error("get profile", "error", err)
-
 		if errors.Is(err, domain.ErrUserNotFound) {
 			return echo.NewHTTPError(http.StatusNotFound, err.Error())
 		}

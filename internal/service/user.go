@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"fmt"
+	"log/slog"
 
 	"github.com/g-villarinho/base-project/internal/domain"
 	"github.com/g-villarinho/base-project/internal/repository"
@@ -16,20 +17,28 @@ type UserService interface {
 
 type userService struct {
 	userRepo repository.UserRepository
+	logger   *slog.Logger
 }
 
-func NewUserService(userRepo repository.UserRepository) UserService {
+func NewUserService(userRepo repository.UserRepository, logger *slog.Logger) UserService {
 	return &userService{
 		userRepo: userRepo,
+		logger:   logger.With(slog.String("service", "user")),
 	}
 }
 
 func (s *userService) UpdateUser(ctx context.Context, userID uuid.UUID, name string) error {
+	logger := s.logger.With(
+		slog.String("method", "UpdateUser"),
+		slog.String("user_id", userID.String()),
+	)
+
 	if err := s.userRepo.UpdateName(ctx, userID, name); err != nil {
 		if err == repository.ErrUserNotFound {
 			return domain.ErrUserNotFound
 		}
 
+		logger.Error("failed to update user name", slog.String("error", err.Error()))
 		return fmt.Errorf("update name for userId %s: %w", userID.String(), err)
 	}
 
@@ -37,12 +46,19 @@ func (s *userService) UpdateUser(ctx context.Context, userID uuid.UUID, name str
 }
 
 func (s *userService) GetUser(ctx context.Context, userID uuid.UUID) (*domain.User, error) {
+	logger := s.logger.With(
+		slog.String("method", "GetUser"),
+		slog.String("user_id", userID.String()),
+	)
+
 	user, err := s.userRepo.FindByID(ctx, userID)
 	if err != nil {
 		if err == repository.ErrUserNotFound {
+			logger.Warn("user not found")
 			return nil, domain.ErrUserNotFound
 		}
 
+		logger.Error("failed to find user by id", slog.String("error", err.Error()))
 		return nil, fmt.Errorf("find user by id %s: %w", userID.String(), err)
 	}
 

@@ -18,6 +18,11 @@ func setupLogger(enviroment string) *slog.Logger {
 			Level:     slog.LevelInfo,
 			AddSource: true,
 		}))
+	case "staging":
+		return slog.New(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{
+			Level:     slog.LevelInfo,
+			AddSource: true,
+		}))
 	case "development":
 		return slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
 			Level:     slog.LevelDebug,
