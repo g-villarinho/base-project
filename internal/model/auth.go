@@ -7,7 +7,7 @@ type RegisterAccountPayload struct {
 }
 
 type VerifyEmailPayload struct {
-	Token string `query:"token" validate:"required,uuid"`
+	Token string `query:"token" validate:"required"`
 }
 
 type LoginPayload struct {
@@ -25,7 +25,7 @@ type ForgotPasswordPayload struct {
 }
 
 type ResetPasswordPayload struct {
-	Token       string `query:"token" validate:"required,uuid"`
+	Token       string `query:"token" validate:"required"`
 	NewPassword string `json:"new_password" validate:"required,min=8,max=255" example:"novasenha456"`
 }
 
@@ -34,7 +34,7 @@ type RequestEmailChangePayload struct {
 }
 
 type ConfirmEmailChangePayload struct {
-	Token string `query:"token" validate:"required,uuid"`
+	Token string `query:"token" validate:"required"`
 }
 
 type LoginInput struct {
