@@ -2,14 +2,14 @@ package main
 
 import (
 	"fmt"
-	"net/http"
+	gohttp "net/http"
 
 	"github.com/g-villarinho/base-project/config"
 	"github.com/g-villarinho/base-project/infra/client"
 	"github.com/g-villarinho/base-project/infra/database"
 	"github.com/g-villarinho/base-project/infra/notification"
-	"github.com/g-villarinho/base-project/internal/handler"
-	"github.com/g-villarinho/base-project/internal/handler/middleware"
+	"github.com/g-villarinho/base-project/internal/http"
+	"github.com/g-villarinho/base-project/internal/http/middleware"
 	"github.com/g-villarinho/base-project/internal/repository"
 	"github.com/g-villarinho/base-project/internal/service"
 	"github.com/g-villarinho/base-project/logger"
@@ -55,10 +55,10 @@ func provideDependecies() *dig.Container {
 	injector.Provide(container, repository.NewVerificationRepository)
 
 	//Handler
-	injector.Provide(container, handler.NewCookieHandler)
-	injector.Provide(container, handler.NewAuthHandler)
-	injector.Provide(container, handler.NewUserHandler)
-	injector.Provide(container, handler.NewSessionHandler)
+	injector.Provide(container, http.NewCookieHandler)
+	injector.Provide(container, http.NewAuthHandler)
+	injector.Provide(container, http.NewUserHandler)
+	injector.Provide(container, http.NewSessionHandler)
 
 	//Middleware
 	injector.Provide(container, middleware.NewAuthMiddleware)
@@ -71,16 +71,16 @@ func provideDependecies() *dig.Container {
 
 func NewServer(
 	config *config.Config,
-	authHandler *handler.AuthHandler,
-	userHandler *handler.UserHandler,
-	sessionHandler *handler.SessionHandler,
+	authHandler *http.AuthHandler,
+	userHandler *http.UserHandler,
+	sessionHandler *http.SessionHandler,
 	authMiddleware *middleware.AuthMiddleware,
 ) *echo.Echo {
 	e := echo.New()
 
 	e.Validator = validation.NewValidator()
 	e.JSONSerializer = serializer.NewSerializer()
-	e.HTTPErrorHandler = handler.HttpErrorHandler
+	e.HTTPErrorHandler = http.HttpErrorHandler
 
 	e.Use(echoMiddleware.Recover())
 	e.Use(echoMiddleware.BodyLimit("10M"))
@@ -102,15 +102,15 @@ func registerDevRoutes(e *echo.Echo, config *config.Config) {
 	dev := e.Group("/dev")
 
 	dev.GET("/health", func(c echo.Context) error {
-		return c.JSON(http.StatusOK, map[string]string{"status": "ok"})
+		return c.JSON(gohttp.StatusOK, map[string]string{"status": "ok"})
 	})
 
 	dev.GET("/env", func(c echo.Context) error {
-		return c.JSON(http.StatusOK, config)
+		return c.JSON(gohttp.StatusOK, config)
 	})
 }
 
-func registerAuthRoutes(e *echo.Echo, h *handler.AuthHandler, m *middleware.AuthMiddleware) {
+func registerAuthRoutes(e *echo.Echo, h *http.AuthHandler, m *middleware.AuthMiddleware) {
 	auth := e.Group("/auth")
 
 	auth.POST("/register", h.RegisterAccount)
@@ -124,14 +124,14 @@ func registerAuthRoutes(e *echo.Echo, h *handler.AuthHandler, m *middleware.Auth
 	auth.GET("/change-email/confirm", h.ConfirmChangeEmail, m.EnsuredAuthenticated)
 }
 
-func registerUserRoutes(e *echo.Echo, h *handler.UserHandler, m *middleware.AuthMiddleware) {
+func registerUserRoutes(e *echo.Echo, h *http.UserHandler, m *middleware.AuthMiddleware) {
 	user := e.Group("/user", m.EnsuredAuthenticated)
 
 	user.PATCH("/profile", h.UpdateProfile)
 	user.GET("/profile", h.GetProfile)
 }
 
-func registerSessionRoutes(e *echo.Echo, h *handler.SessionHandler, m *middleware.AuthMiddleware) {
+func registerSessionRoutes(e *echo.Echo, h *http.SessionHandler, m *middleware.AuthMiddleware) {
 	session := e.Group("/sessions", m.EnsuredAuthenticated)
 
 	session.DELETE("/:session_id", h.RevokeSession)

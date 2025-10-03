@@ -3,20 +3,20 @@ package middleware
 import (
 	"log/slog"
 
-	"github.com/g-villarinho/base-project/internal/handler"
+	"github.com/g-villarinho/base-project/internal/http"
 	"github.com/g-villarinho/base-project/internal/service"
 	"github.com/labstack/echo/v4"
 )
 
 type AuthMiddleware struct {
 	logger         *slog.Logger
-	cookieHandler  handler.CookieHandler
+	cookieHandler  http.CookieHandler
 	sessionService service.SessionService
 }
 
 func NewAuthMiddleware(
 	logger *slog.Logger,
-	cookieHandler handler.CookieHandler,
+	cookieHandler http.CookieHandler,
 	sessionService service.SessionService) *AuthMiddleware {
 	return &AuthMiddleware{
 		logger:         logger.With(slog.String("middleware", "auth")),
@@ -51,8 +51,8 @@ func (m *AuthMiddleware) EnsuredAuthenticated(next echo.HandlerFunc) echo.Handle
 			return echo.ErrUnauthorized
 		}
 
-		handler.SetUserID(c, session.UserID)
-		handler.SetSessionID(c, session.ID)
+		http.SetUserID(c, session.UserID)
+		http.SetSessionID(c, session.ID)
 		return next(c)
 	}
 }

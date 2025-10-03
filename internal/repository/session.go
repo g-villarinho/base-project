@@ -136,7 +136,7 @@ func (r *sessionRepository) DeleteByUserExceptID(ctx context.Context, userID, ex
 		Delete(&domain.Session{})
 
 	if result.Error != nil {
-		logger.Error("failed to delete sessions by user except id", slog.String("error", result.Error.Error()))
+		logger.Error("delete sessions by user except id", slog.String("error", result.Error.Error()))
 		return result.Error
 	}
 
