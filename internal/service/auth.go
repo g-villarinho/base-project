@@ -60,33 +60,44 @@ func NewAuthService(
 }
 
 func (s *authService) RegisterAccount(ctx context.Context, name string, email string, password string) error {
+	logger := s.logger.With(
+		slog.String("method", "RegisterAccount"),
+		slog.String("email", email),
+	)
+
 	userExists, err := s.userRepo.ExistsByEmail(ctx, email)
 	if err != nil {
+		logger.Error("failed to check if user exists", slog.String("error", err.Error()))
 		return fmt.Errorf("find user by email: %w", err)
 	}
 
 	if userExists {
+		logger.Warn("email already exists")
 		return domain.ErrEmailAlreadyExists
 	}
 
 	passwordHash, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
 	if err != nil {
+		logger.Error("failed to hash password", slog.String("error", err.Error()))
 		return fmt.Errorf("hash password: %w", err)
 	}
 
 	user := domain.NewUser(name, email, string(passwordHash))
 
 	if err := s.userRepo.Create(ctx, user); err != nil {
+		logger.Error("failed to create user", slog.String("error", err.Error()))
 		return fmt.Errorf("create user: %w", err)
 	}
 
 	expiresAt := time.Now().UTC().Add(VerfiyEmailExpirationMinute)
 	verification, err := domain.NewVerification(user.ID, domain.VerificationEmailFlow, expiresAt, "")
 	if err != nil {
+		logger.Error("failed to create verification", slog.String("error", err.Error()))
 		return fmt.Errorf("create verification for userId %s: %w", user.ID.String(), err)
 	}
 
 	if err := s.verificationRepo.Create(ctx, verification); err != nil {
+		logger.Error("failed to save verification", slog.String("error", err.Error()))
 		return fmt.Errorf("create verification for userId %s: %w", user.ID.String(), err)
 	}
 
@@ -98,24 +109,33 @@ func (s *authService) RegisterAccount(ctx context.Context, name string, email st
 }
 
 func (s *authService) VerifyEmail(ctx context.Context, input model.VerifyEmailInput) (*domain.Session, error) {
+	logger := s.logger.With(
+		slog.String("method", "VerifyEmail"),
+	)
+
 	verification, err := s.verificationRepo.FindByToken(ctx, input.Token)
 	if err != nil {
 		if errors.Is(err, repository.ErrVerificationNotFound) {
+			logger.Warn("verification not found")
 			return nil, domain.ErrVerificationNotFound
 		}
 
+		logger.Error("failed to find verification token", slog.String("error", err.Error()))
 		return nil, fmt.Errorf("find verification token by id %s: %w", input.Token, err)
 	}
 
 	if verification.IsExpired() || !verification.IsVerificationEmailFlow() {
+		logger.Warn("invalid or expired verification")
 		return nil, domain.ErrInvalidVerification
 	}
 
 	if err := s.userRepo.VerifyEmail(ctx, verification.UserID); err != nil {
+		logger.Error("failed to verify user email", slog.String("error", err.Error()))
 		return nil, fmt.Errorf("verify user email for userId %s: %w", verification.UserID, err)
 	}
 
 	if err := s.verificationRepo.Delete(ctx, verification.ID); err != nil {
+		logger.Error("failed to delete verification", slog.String("error", err.Error()))
 		return nil, fmt.Errorf("delete verificationCode with id %s: %w", verification.ID, err)
 	}
 
@@ -128,25 +148,36 @@ func (s *authService) VerifyEmail(ctx context.Context, input model.VerifyEmailIn
 }
 
 func (s *authService) Login(ctx context.Context, input model.LoginInput) (*domain.Session, error) {
+	logger := s.logger.With(
+		slog.String("method", "Login"),
+		slog.String("email", input.Email),
+	)
+
 	user, err := s.userRepo.FindByEmail(ctx, input.Email)
 	if err != nil {
 		if errors.Is(err, repository.ErrUserNotFound) {
+			logger.Warn("user not found")
 			return nil, domain.ErrInvalidCredentials
 		}
 
+		logger.Error("failed to find user by email", slog.String("error", err.Error()))
 		return nil, fmt.Errorf("find user by email: %w", err)
 	}
 
 	if err := bcrypt.CompareHashAndPassword([]byte(user.PasswordHash), []byte(input.Password)); err != nil {
+		logger.Warn("invalid credentials")
 		return nil, domain.ErrInvalidCredentials
 	}
 
 	if user.IsBlocked() {
+		logger.Warn("user is blocked")
 		return nil, domain.ErrUserBlocked
 	}
 
 	if !user.IsEmailVerified() {
+		logger.Warn("email not verified")
 		if err := s.sendVerificationEmail(ctx, user); err != nil {
+			logger.Error("failed to send verification email", slog.String("error", err.Error()))
 			return nil, fmt.Errorf("handle unverified email: %w", err)
 		}
 
@@ -162,26 +193,36 @@ func (s *authService) Login(ctx context.Context, input model.LoginInput) (*domai
 }
 
 func (s *authService) UpdatePassword(ctx context.Context, userID uuid.UUID, currentPassword, newPassword string) error {
+	logger := s.logger.With(
+		slog.String("method", "UpdatePassword"),
+		slog.String("user_id", userID.String()),
+	)
+
 	user, err := s.userRepo.FindByID(ctx, userID)
 	if err != nil {
 		if errors.Is(err, repository.ErrUserNotFound) {
+			logger.Warn("user not found")
 			return domain.ErrUserNotFound
 		}
 
+		logger.Error("failed to find user by id", slog.String("error", err.Error()))
 		return fmt.Errorf("find user by id %s: %w", userID, err)
 	}
 
 	err = bcrypt.CompareHashAndPassword([]byte(user.PasswordHash), []byte(currentPassword))
 	if err != nil {
+		logger.Warn("password mismatch")
 		return domain.ErrPasswordMismatch
 	}
 
 	newPasswordHash, err := bcrypt.GenerateFromPassword([]byte(newPassword), bcrypt.DefaultCost)
 	if err != nil {
+		logger.Error("failed to hash new password", slog.String("error", err.Error()))
 		return fmt.Errorf("hash new password: %w", err)
 	}
 
 	if err := s.userRepo.UpdatePassword(ctx, userID, string(newPasswordHash)); err != nil {
+		logger.Error("failed to update password", slog.String("error", err.Error()))
 		return fmt.Errorf("update password for userId %s: %w", userID, err)
 	}
 
@@ -189,25 +230,35 @@ func (s *authService) UpdatePassword(ctx context.Context, userID uuid.UUID, curr
 }
 
 func (s *authService) RequestChangeEmail(ctx context.Context, userID uuid.UUID, newEmail string) error {
+	logger := s.logger.With(
+		slog.String("method", "RequestChangeEmail"),
+		slog.String("user_id", userID.String()),
+	)
+
 	user, err := s.userRepo.FindByID(ctx, userID)
 	if err != nil {
 		if errors.Is(err, repository.ErrUserNotFound) {
+			logger.Warn("user not found")
 			return domain.ErrUserNotFound
 		}
 
+		logger.Error("failed to find user by id", slog.String("error", err.Error()))
 		return fmt.Errorf("find user by id %s: %w", userID, err)
 	}
 
 	if user.Email == newEmail {
+		logger.Warn("new email is the same as current email")
 		return domain.ErrEmailIsTheSame
 	}
 
 	exists, err := s.userRepo.ExistsByEmail(ctx, newEmail)
 	if err != nil {
+		logger.Error("failed to check if email exists", slog.String("error", err.Error()))
 		return fmt.Errorf("check if email %s already exists: %w", newEmail, err)
 	}
 
 	if exists {
+		logger.Warn("email already in use")
 		return domain.ErrEmailInUse
 	}
 
@@ -215,10 +266,12 @@ func (s *authService) RequestChangeEmail(ctx context.Context, userID uuid.UUID, 
 
 	verification, err := domain.NewVerification(userID, domain.ChangeEmailFlow, expiresAt, newEmail)
 	if err != nil {
+		logger.Error("failed to create verification", slog.String("error", err.Error()))
 		return fmt.Errorf("create verification for change email for userId %s: %w", userID, err)
 	}
 
 	if err := s.verificationRepo.Create(ctx, verification); err != nil {
+		logger.Error("failed to save verification", slog.String("error", err.Error()))
 		return fmt.Errorf("create verification for change email for userId %s: %w", userID, err)
 	}
 
@@ -232,30 +285,40 @@ func (s *authService) RequestChangeEmail(ctx context.Context, userID uuid.UUID, 
 }
 
 func (s *authService) ChangeEmail(ctx context.Context, token string) error {
+	logger := s.logger.With(
+		slog.String("method", "ChangeEmail"),
+	)
+
 	verification, err := s.verificationRepo.FindByToken(ctx, token)
 	if err != nil {
 		if errors.Is(err, repository.ErrVerificationNotFound) {
+			logger.Warn("verification not found")
 			return domain.ErrVerificationNotFound
 		}
 
+		logger.Error("failed to find verification token", slog.String("error", err.Error()))
 		return fmt.Errorf("find verification token by id %s: %w", token, err)
 	}
 
 	if verification.IsExpired() || !verification.IsChangeEmailFlow() {
+		logger.Warn("invalid or expired verification")
 		return domain.ErrInvalidVerification
 	}
 
 	if !verification.Payload.Valid {
+		logger.Warn("invalid verification payload")
 		return domain.ErrInvalidVerificationPayload
 	}
 
 	newEmail := verification.Payload.String
 
 	if err := s.userRepo.UpdateEmail(ctx, verification.UserID, newEmail); err != nil {
+		logger.Error("failed to update email", slog.String("error", err.Error()))
 		return fmt.Errorf("update email for userId %s: %w", verification.UserID, err)
 	}
 
 	if err := s.verificationRepo.Delete(ctx, verification.ID); err != nil {
+		logger.Error("failed to delete verification", slog.String("error", err.Error()))
 		return fmt.Errorf("delete verification token with id %s: %w", verification.ID, err)
 	}
 
@@ -302,29 +365,39 @@ func (s *authService) RequestPasswordReset(ctx context.Context, email string) er
 }
 
 func (s *authService) ResetPassword(ctx context.Context, token string, newPassword string) (*domain.Session, error) {
+	logger := s.logger.With(
+		slog.String("method", "ResetPassword"),
+	)
+
 	verification, err := s.verificationRepo.FindByToken(ctx, token)
 	if err != nil {
 		if errors.Is(err, repository.ErrVerificationNotFound) {
+			logger.Warn("verification not found")
 			return nil, domain.ErrVerificationNotFound
 		}
 
+		logger.Error("failed to find verification token", slog.String("error", err.Error()))
 		return nil, fmt.Errorf("find verification token by id %s: %w", token, err)
 	}
 
 	if verification.IsExpired() || !verification.IsResetPasswordFlow() {
+		logger.Warn("invalid or expired verification")
 		return nil, domain.ErrInvalidVerification
 	}
 
 	newPasswordHash, err := bcrypt.GenerateFromPassword([]byte(newPassword), bcrypt.DefaultCost)
 	if err != nil {
+		logger.Error("failed to hash new password", slog.String("error", err.Error()))
 		return nil, fmt.Errorf("hash new password: %w", err)
 	}
 
 	if err := s.userRepo.UpdatePassword(ctx, verification.UserID, string(newPasswordHash)); err != nil {
+		logger.Error("failed to update password", slog.String("error", err.Error()))
 		return nil, fmt.Errorf("update password for userId %s: %w", verification.UserID, err)
 	}
 
 	if err := s.verificationRepo.Delete(ctx, verification.ID); err != nil {
+		logger.Error("failed to delete verification", slog.String("error", err.Error()))
 		return nil, fmt.Errorf("delete verification token with id %s: %w", verification.ID, err)
 	}
 
