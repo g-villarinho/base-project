@@ -45,3 +45,6 @@ func TestAuthService_Login(t *testing.T) {
 - **Dependências Mockadas:** Todas as dependências externas de um serviço, como repositórios ou outros serviços, devem ser substituídas por mocks nos testes. Isso garante o isolamento do componente que está sendo testado.
 - **Localização dos Mocks:** Os mocks gerados pela ferramenta `mockery` estão localizados no diretório `internal/mocks/`. Utilize os mocks deste diretório.
 - **Geração de Mocks:** Se o mock para uma interface que você precisa testar não existir no diretório `internal/mocks/`, você deve gerá-lo. Para isso, execute o comando `make mocks` na raiz do projeto. Este comando irá gerar todos os mocks definidos no arquivo de configuração `.mockery.yml`.
+
+## 5. Fim
+-- **Rode os testes:** Ao finalizar a criação de testes execute o make test para ver se todos os testes estão passando e se não estiverem conserte os que estão quebrados.
