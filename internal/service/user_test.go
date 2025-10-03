@@ -3,8 +3,8 @@ package service
 import (
 	"context"
 	"errors"
+	"io"
 	"log/slog"
-	"os"
 	"testing"
 
 	"github.com/g-villarinho/base-project/internal/domain"
@@ -14,11 +14,11 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func setupUserService(t *testing.T) (*userService, *mocks.UserRepositoryMock) {
+func setupUserService(t *testing.T) (UserService, *mocks.UserRepositoryMock) {
 	t.Helper()
 	userRepoMock := mocks.NewUserRepositoryMock(t)
-	logger := slog.New(slog.NewTextHandler(os.Stdout, nil))
-	service := NewUserService(userRepoMock, logger).(*userService)
+	logger := slog.New(slog.NewTextHandler(io.Discard, nil))
+	service := NewUserService(userRepoMock, logger)
 	return service, userRepoMock
 }
 

@@ -3,8 +3,8 @@ package service
 import (
 	"context"
 	"errors"
+	"io"
 	"log/slog"
-	"os"
 	"testing"
 	"time"
 
@@ -17,16 +17,16 @@ import (
 	"github.com/stretchr/testify/mock"
 )
 
-func setupSessionService(t *testing.T) (*sessionService, *mocks.SessionRepositoryMock) {
+func setupSessionService(t *testing.T) (SessionService, *mocks.SessionRepositoryMock) {
 	t.Helper()
 	sessionRepoMock := mocks.NewSessionRepositoryMock(t)
-	logger := slog.New(slog.NewTextHandler(os.Stdout, nil))
+	logger := slog.New(slog.NewTextHandler(io.Discard, nil))
 	cfg := &config.Config{
 		Session: config.Session{
 			Duration: 24 * time.Hour,
 		},
 	}
-	service := NewSessionService(sessionRepoMock, cfg, logger).(*sessionService)
+	service := NewSessionService(sessionRepoMock, cfg, logger)
 	return service, sessionRepoMock
 }
 

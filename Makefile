@@ -14,11 +14,11 @@ run: build
 build:
 	@go build -o bin/server cmd/server/main.go
 
-test: ## Executa todos os testes
-	@find . -name "*_test.go" -not -path "./vendor/*" -not -path "./.git/*" | \
+test: setup ## Executa todos os testes
+	@PATH=$(shell go env GOPATH)/bin:$(PATH) find . -name "*_test.go" -not -path "./vendor/*" -not -path "./.git/*" | \
 	sed 's|/[^/]*$$||' | sort -u | \
 	sed 's|^\./|github.com/g-villarinho/base-project/|' | \
-	xargs go test -json -v | gotestfmt
+	xargs go test -json -v | "$(shell go env GOPATH)/bin/gotestfmt" -hide successful-tests -showteststatus
 
 tests: test ## Alias para test
 
