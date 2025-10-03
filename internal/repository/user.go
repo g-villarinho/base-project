@@ -39,20 +39,32 @@ func NewUserRepository(db *gorm.DB, logger *slog.Logger) UserRepository {
 }
 
 func (r *userRepository) Create(ctx context.Context, user *domain.User) error {
+	logger := r.logger.With(
+		slog.String("method", "Create"),
+		slog.String("user_id", user.ID.String()),
+	)
+
 	if err := r.db.WithContext(ctx).Create(&user).Error; err != nil {
-		return nil
+		logger.Error("create user", slog.String("error", err.Error()))
+		return err
 	}
 
 	return nil
 }
 
 func (r *userRepository) ExistsByEmail(ctx context.Context, email string) (bool, error) {
+	logger := r.logger.With(
+		slog.String("method", "ExistsByEmail"),
+		slog.String("email", email),
+	)
+
 	var count int64
 	err := r.db.WithContext(ctx).Model(&domain.User{}).
 		Where("email = ?", email).
 		Count(&count).Error
 
 	if err != nil {
+		logger.Error("check if email exists", slog.String("error", err.Error()))
 		return false, err
 	}
 
@@ -60,6 +72,11 @@ func (r *userRepository) ExistsByEmail(ctx context.Context, email string) (bool,
 }
 
 func (r *userRepository) VerifyEmail(ctx context.Context, ID uuid.UUID) error {
+	logger := r.logger.With(
+		slog.String("method", "VerifyEmail"),
+		slog.String("user_id", ID.String()),
+	)
+
 	now := time.Now().UTC()
 
 	updates := map[string]any{
@@ -73,6 +90,7 @@ func (r *userRepository) VerifyEmail(ctx context.Context, ID uuid.UUID) error {
 		Updates(updates)
 
 	if result.Error != nil {
+		logger.Error("verify user email", slog.String("error", result.Error.Error()))
 		return result.Error
 	}
 
@@ -88,10 +106,10 @@ func (r *userRepository) FindByEmail(ctx context.Context, email string) (*domain
 	err := r.db.WithContext(ctx).First(&user, "email = ?", email).Error
 	if err != nil {
 		if err == gorm.ErrRecordNotFound {
-			logger.Warn("user not found by email")
 			return nil, ErrUserNotFound
 		}
-		logger.Error("failed to find user by email", slog.String("error", err.Error()))
+
+		logger.Error("find user by email", slog.String("error", err.Error()))
 		return nil, err
 	}
 
@@ -108,10 +126,10 @@ func (r *userRepository) FindByID(ctx context.Context, ID uuid.UUID) (*domain.Us
 	err := r.db.WithContext(ctx).First(&user, "id = ?", ID).Error
 	if err != nil {
 		if err == gorm.ErrRecordNotFound {
-			logger.Warn("user not found by id")
 			return nil, ErrUserNotFound
 		}
-		logger.Error("failed to find user by id", slog.String("error", err.Error()))
+
+		logger.Error("find user by id", slog.String("error", err.Error()))
 		return nil, err
 	}
 
@@ -119,6 +137,11 @@ func (r *userRepository) FindByID(ctx context.Context, ID uuid.UUID) (*domain.Us
 }
 
 func (r *userRepository) UpdatePassword(ctx context.Context, ID uuid.UUID, newPasswordHash string) error {
+	logger := r.logger.With(
+		slog.String("method", "UpdatePassword"),
+		slog.String("user_id", ID.String()),
+	)
+
 	updates := map[string]any{
 		"password_hash": newPasswordHash,
 		"updated_at":    time.Now().UTC(),
@@ -129,6 +152,7 @@ func (r *userRepository) UpdatePassword(ctx context.Context, ID uuid.UUID, newPa
 		Updates(updates)
 
 	if result.Error != nil {
+		logger.Error("update user password", slog.String("error", result.Error.Error()))
 		return result.Error
 	}
 
@@ -136,6 +160,11 @@ func (r *userRepository) UpdatePassword(ctx context.Context, ID uuid.UUID, newPa
 }
 
 func (r *userRepository) UpdateEmail(ctx context.Context, ID uuid.UUID, newEmail string) error {
+	logger := r.logger.With(
+		slog.String("method", "UpdateEmail"),
+		slog.String("user_id", ID.String()),
+	)
+
 	updates := map[string]any{
 		"email":      newEmail,
 		"updated_at": time.Now().UTC(),
@@ -146,6 +175,7 @@ func (r *userRepository) UpdateEmail(ctx context.Context, ID uuid.UUID, newEmail
 		Updates(updates)
 
 	if result.Error != nil {
+		logger.Error("update user email", slog.String("error", result.Error.Error()))
 		return result.Error
 	}
 
@@ -168,12 +198,11 @@ func (r *userRepository) UpdateName(ctx context.Context, ID uuid.UUID, name stri
 		Updates(updates)
 
 	if result.Error != nil {
-		logger.Error("failed to update user name", slog.String("error", result.Error.Error()))
+		logger.Error("update user name", slog.String("error", result.Error.Error()))
 		return result.Error
 	}
 
 	if result.RowsAffected == 0 {
-		logger.Warn("user not found, no rows affected")
 		return ErrUserNotFound
 	}
 
