@@ -9,6 +9,7 @@ import (
 	"github.com/g-villarinho/base-project/infra/database"
 	"github.com/g-villarinho/base-project/infra/notification"
 	"github.com/g-villarinho/base-project/internal/http"
+	"github.com/g-villarinho/base-project/internal/http/handlers"
 	"github.com/g-villarinho/base-project/internal/http/middleware"
 	"github.com/g-villarinho/base-project/internal/repository"
 	"github.com/g-villarinho/base-project/internal/service"
@@ -56,9 +57,9 @@ func provideDependecies() *dig.Container {
 
 	//Handler
 	injector.Provide(container, http.NewCookieHandler)
-	injector.Provide(container, http.NewAuthHandler)
-	injector.Provide(container, http.NewUserHandler)
-	injector.Provide(container, http.NewSessionHandler)
+	injector.Provide(container, handlers.NewAuthHandler)
+	injector.Provide(container, handlers.NewUserHandler)
+	injector.Provide(container, handlers.NewSessionHandler)
 
 	//Middleware
 	injector.Provide(container, middleware.NewAuthMiddleware)
@@ -71,9 +72,9 @@ func provideDependecies() *dig.Container {
 
 func NewServer(
 	config *config.Config,
-	authHandler *http.AuthHandler,
-	userHandler *http.UserHandler,
-	sessionHandler *http.SessionHandler,
+	authHandler *handlers.AuthHandler,
+	userHandler *handlers.UserHandler,
+	sessionHandler *handlers.SessionHandler,
 	authMiddleware *middleware.AuthMiddleware,
 ) *echo.Echo {
 	e := echo.New()
@@ -110,7 +111,7 @@ func registerDevRoutes(e *echo.Echo, config *config.Config) {
 	})
 }
 
-func registerAuthRoutes(e *echo.Echo, h *http.AuthHandler, m *middleware.AuthMiddleware) {
+func registerAuthRoutes(e *echo.Echo, h *handlers.AuthHandler, m *middleware.AuthMiddleware) {
 	auth := e.Group("/auth")
 
 	auth.POST("/register", h.RegisterAccount)
@@ -124,14 +125,14 @@ func registerAuthRoutes(e *echo.Echo, h *http.AuthHandler, m *middleware.AuthMid
 	auth.GET("/change-email/confirm", h.ConfirmChangeEmail, m.EnsuredAuthenticated)
 }
 
-func registerUserRoutes(e *echo.Echo, h *http.UserHandler, m *middleware.AuthMiddleware) {
+func registerUserRoutes(e *echo.Echo, h *handlers.UserHandler, m *middleware.AuthMiddleware) {
 	user := e.Group("/user", m.EnsuredAuthenticated)
 
 	user.PATCH("/profile", h.UpdateProfile)
 	user.GET("/profile", h.GetProfile)
 }
 
-func registerSessionRoutes(e *echo.Echo, h *http.SessionHandler, m *middleware.AuthMiddleware) {
+func registerSessionRoutes(e *echo.Echo, h *handlers.SessionHandler, m *middleware.AuthMiddleware) {
 	session := e.Group("/sessions", m.EnsuredAuthenticated)
 
 	session.DELETE("/:session_id", h.RevokeSession)

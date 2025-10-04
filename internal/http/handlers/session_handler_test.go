@@ -1,4 +1,4 @@
-package http
+package handlers
 
 import (
 	"errors"
@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	"github.com/g-villarinho/base-project/internal/domain"
+	httputil "github.com/g-villarinho/base-project/internal/http"
 	"github.com/g-villarinho/base-project/internal/mocks"
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
@@ -30,8 +31,8 @@ func TestSessionHandler_RevokeSession(t *testing.T) {
 		c := e.NewContext(req, rec)
 		c.SetParamNames("session_id")
 		c.SetParamValues(sessionID.String())
-		SetUserID(c, userID)
-		SetSessionID(c, uuid.New()) // Different session
+		httputil.SetUserID(c, userID)
+		httputil.SetSessionID(c, uuid.New()) // Different session
 
 		mockSessionService.On("DeleteSessionByID", mock.Anything, userID, sessionID).Return(nil)
 
@@ -57,8 +58,8 @@ func TestSessionHandler_RevokeSession(t *testing.T) {
 		c := e.NewContext(req, rec)
 		c.SetParamNames("session_id")
 		c.SetParamValues(sessionID.String())
-		SetUserID(c, userID)
-		SetSessionID(c, sessionID) // Same session
+		httputil.SetUserID(c, userID)
+		httputil.SetSessionID(c, sessionID) // Same session
 
 		mockSessionService.On("DeleteSessionByID", mock.Anything, userID, sessionID).Return(nil)
 		mockCookieHandler.On("Delete", c).Return()
@@ -84,7 +85,7 @@ func TestSessionHandler_RevokeSession(t *testing.T) {
 		c := e.NewContext(req, rec)
 		c.SetParamNames("session_id")
 		c.SetParamValues("invalid-uuid")
-		SetUserID(c, userID)
+		httputil.SetUserID(c, userID)
 
 		err := handler.RevokeSession(c)
 
@@ -107,7 +108,7 @@ func TestSessionHandler_RevokeSession(t *testing.T) {
 		c := e.NewContext(req, rec)
 		c.SetParamNames("session_id")
 		c.SetParamValues(sessionID.String())
-		SetUserID(c, userID)
+		httputil.SetUserID(c, userID)
 
 		mockSessionService.On("DeleteSessionByID", mock.Anything, userID, sessionID).Return(domain.ErrSessionNotFound)
 
@@ -136,7 +137,7 @@ func TestSessionHandler_RevokeSession(t *testing.T) {
 		c := e.NewContext(req, rec)
 		c.SetParamNames("session_id")
 		c.SetParamValues(sessionID.String())
-		SetUserID(c, userID)
+		httputil.SetUserID(c, userID)
 
 		mockSessionService.On("DeleteSessionByID", mock.Anything, userID, sessionID).Return(domain.ErrSessionNotBelong)
 
@@ -165,7 +166,7 @@ func TestSessionHandler_RevokeSession(t *testing.T) {
 		c := e.NewContext(req, rec)
 		c.SetParamNames("session_id")
 		c.SetParamValues(sessionID.String())
-		SetUserID(c, userID)
+		httputil.SetUserID(c, userID)
 
 		mockSessionService.On("DeleteSessionByID", mock.Anything, userID, sessionID).Return(errors.New("database error"))
 
@@ -190,8 +191,8 @@ func TestSessionHandler_RevokeAllSessions(t *testing.T) {
 		req := httptest.NewRequest(http.MethodDelete, "/sessions?include_current=false", nil)
 		rec := httptest.NewRecorder()
 		c := e.NewContext(req, rec)
-		SetUserID(c, userID)
-		SetSessionID(c, currentSessionID)
+		httputil.SetUserID(c, userID)
+		httputil.SetSessionID(c, currentSessionID)
 
 		mockSessionService.On("DeleteSessionsByUserID", mock.Anything, userID, (*uuid.UUID)(nil)).Return(nil)
 
@@ -215,8 +216,8 @@ func TestSessionHandler_RevokeAllSessions(t *testing.T) {
 		req := httptest.NewRequest(http.MethodDelete, "/sessions?include_current=true", nil)
 		rec := httptest.NewRecorder()
 		c := e.NewContext(req, rec)
-		SetUserID(c, userID)
-		SetSessionID(c, currentSessionID)
+		httputil.SetUserID(c, userID)
+		httputil.SetSessionID(c, currentSessionID)
 
 		mockSessionService.On("DeleteSessionsByUserID", mock.Anything, userID, &currentSessionID).Return(nil)
 		mockCookieHandler.On("Delete", c).Return()
@@ -242,7 +243,7 @@ func TestSessionHandler_RevokeAllSessions(t *testing.T) {
 		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 		rec := httptest.NewRecorder()
 		c := e.NewContext(req, rec)
-		SetUserID(c, userID)
+		httputil.SetUserID(c, userID)
 
 		err := handler.RevokeAllSessions(c)
 
@@ -262,7 +263,7 @@ func TestSessionHandler_RevokeAllSessions(t *testing.T) {
 		req := httptest.NewRequest(http.MethodDelete, "/sessions", nil)
 		rec := httptest.NewRecorder()
 		c := e.NewContext(req, rec)
-		SetUserID(c, userID)
+		httputil.SetUserID(c, userID)
 
 		mockSessionService.On("DeleteSessionsByUserID", mock.Anything, userID, (*uuid.UUID)(nil)).Return(errors.New("database error"))
 
