@@ -1,7 +1,6 @@
 package main
 
 import (
-	"flag"
 	"fmt"
 	gohttp "net/http"
 
@@ -24,10 +23,8 @@ import (
 )
 
 func main() {
-	envFile := flag.String("env", ".env", "path to .env file")
-	flag.Parse()
 
-	container := provideDependecies(*envFile)
+	container := provideDependecies()
 
 	config := injector.Resolve[*config.Config](container)
 	server := injector.Resolve[*echo.Echo](container)
@@ -35,13 +32,11 @@ func main() {
 	server.Logger.Fatal(server.Start(fmt.Sprintf(":%d", config.Server.Port)))
 }
 
-func provideDependecies(envFile string) *dig.Container {
+func provideDependecies() *dig.Container {
 	container := dig.New()
 
 	// General
-	injector.Provide(container, func() (*config.Config, error) {
-		return config.NewConfig(envFile)
-	})
+	injector.Provide(container, config.NewConfig)
 	injector.Provide(container, database.NewSqliteDbConnection)
 	injector.Provide(container, logger.NewLogger)
 

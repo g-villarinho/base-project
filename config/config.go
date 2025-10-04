@@ -8,22 +8,22 @@ import (
 	"github.com/joho/godotenv"
 )
 
-func NewConfig(envFile string) (*Config, error) {
+func NewConfig() (*Config, error) {
 	var config Config
 
-	if err := loadConfigs(&config, envFile); err != nil {
+	if err := loadConfigs(&config); err != nil {
 		return nil, fmt.Errorf("load environment variables: %w", err)
 	}
 
 	return &config, nil
 }
 
-func loadConfigs(config *Config, envFile string) error {
+func loadConfigs(config *Config) error {
 	if config == nil {
 		return errors.New("environment is nil")
 	}
 
-	if err := godotenv.Load(envFile); err != nil {
+	if err := godotenv.Load(); err != nil {
 		return err
 	}
 

@@ -1,0 +1,21 @@
+version: '3.8'
+
+services:
+  app:
+    build:
+      context: ..
+      dockerfile: Dockerfile
+    ports:
+      - "5001:5001"
+    env_file:
+      - ../.env.test
+    volumes:
+      - ../test.db:/app/test.db
+    environment:
+      - DATABASE_NAME=/app/test.db
+    networks:
+      - test-network
+
+networks:
+  test-network:
+    driver: bridge
