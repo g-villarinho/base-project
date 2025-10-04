@@ -8,7 +8,7 @@ import (
 	"testing"
 
 	"github.com/g-villarinho/base-project/internal/domain"
-	httputil "github.com/g-villarinho/base-project/internal/http"
+	httpctx "github.com/g-villarinho/base-project/internal/http"
 	"github.com/g-villarinho/base-project/internal/mocks"
 	"github.com/g-villarinho/base-project/pkg/validation"
 	"github.com/google/uuid"
@@ -31,7 +31,7 @@ func TestUserHandler_UpdateProfile(t *testing.T) {
 		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 		rec := httptest.NewRecorder()
 		c := e.NewContext(req, rec)
-		httputil.SetUserID(c, userID)
+		httpctx.SetUserID(c, userID)
 
 		mockUserService.On("UpdateUser", mock.Anything, userID, "João Silva").Return(nil)
 
@@ -54,7 +54,7 @@ func TestUserHandler_UpdateProfile(t *testing.T) {
 		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 		rec := httptest.NewRecorder()
 		c := e.NewContext(req, rec)
-		httputil.SetUserID(c, userID)
+		httpctx.SetUserID(c, userID)
 
 		err := handler.UpdateProfile(c)
 
@@ -76,7 +76,7 @@ func TestUserHandler_UpdateProfile(t *testing.T) {
 		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 		rec := httptest.NewRecorder()
 		c := e.NewContext(req, rec)
-		httputil.SetUserID(c, userID)
+		httpctx.SetUserID(c, userID)
 
 		err := handler.UpdateProfile(c)
 
@@ -97,7 +97,7 @@ func TestUserHandler_UpdateProfile(t *testing.T) {
 		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 		rec := httptest.NewRecorder()
 		c := e.NewContext(req, rec)
-		httputil.SetUserID(c, userID)
+		httpctx.SetUserID(c, userID)
 
 		mockUserService.On("UpdateUser", mock.Anything, userID, "João Silva").Return(domain.ErrUserNotFound)
 
@@ -124,7 +124,7 @@ func TestUserHandler_UpdateProfile(t *testing.T) {
 		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 		rec := httptest.NewRecorder()
 		c := e.NewContext(req, rec)
-		httputil.SetUserID(c, userID)
+		httpctx.SetUserID(c, userID)
 
 		mockUserService.On("UpdateUser", mock.Anything, userID, "João Silva").Return(errors.New("database error"))
 
@@ -151,7 +151,7 @@ func TestUserHandler_GetProfile(t *testing.T) {
 		req := httptest.NewRequest(http.MethodGet, "/profile", nil)
 		rec := httptest.NewRecorder()
 		c := e.NewContext(req, rec)
-		httputil.SetUserID(c, userID)
+		httpctx.SetUserID(c, userID)
 
 		mockUserService.On("GetUser", mock.Anything, userID).Return(user, nil)
 
@@ -174,7 +174,7 @@ func TestUserHandler_GetProfile(t *testing.T) {
 		req := httptest.NewRequest(http.MethodGet, "/profile", nil)
 		rec := httptest.NewRecorder()
 		c := e.NewContext(req, rec)
-		httputil.SetUserID(c, userID)
+		httpctx.SetUserID(c, userID)
 
 		mockUserService.On("GetUser", mock.Anything, userID).Return((*domain.User)(nil), domain.ErrUserNotFound)
 
@@ -197,7 +197,7 @@ func TestUserHandler_GetProfile(t *testing.T) {
 		req := httptest.NewRequest(http.MethodGet, "/profile", nil)
 		rec := httptest.NewRecorder()
 		c := e.NewContext(req, rec)
-		httputil.SetUserID(c, userID)
+		httpctx.SetUserID(c, userID)
 
 		mockUserService.On("GetUser", mock.Anything, userID).Return((*domain.User)(nil), errors.New("database error"))
 

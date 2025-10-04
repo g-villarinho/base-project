@@ -5,7 +5,7 @@ import (
 	"net/http"
 
 	"github.com/g-villarinho/base-project/internal/domain"
-	httputil "github.com/g-villarinho/base-project/internal/http"
+	httpctx "github.com/g-villarinho/base-project/internal/http"
 	"github.com/g-villarinho/base-project/internal/model"
 	"github.com/g-villarinho/base-project/internal/service"
 	"github.com/google/uuid"
@@ -14,12 +14,12 @@ import (
 
 type SessionHandler struct {
 	sessionService service.SessionService
-	cookieHandler  httputil.CookieHandler
+	cookieHandler  httpctx.CookieHandler
 }
 
 func NewSessionHandler(
 	sessionService service.SessionService,
-	cookieHandler httputil.CookieHandler) *SessionHandler {
+	cookieHandler httpctx.CookieHandler) *SessionHandler {
 	return &SessionHandler{
 		sessionService: sessionService,
 		cookieHandler:  cookieHandler,
@@ -32,7 +32,7 @@ func (h *SessionHandler) RevokeSession(c echo.Context) error {
 		return echo.ErrBadRequest
 	}
 
-	if err := h.sessionService.DeleteSessionByID(c.Request().Context(), httputil.GetUserID(c), sessionId); err != nil {
+	if err := h.sessionService.DeleteSessionByID(c.Request().Context(), httpctx.GetUserID(c), sessionId); err != nil {
 		if errors.Is(err, domain.ErrSessionNotFound) {
 			return echo.NewHTTPError(http.StatusNotFound, err.Error())
 		}
@@ -44,7 +44,7 @@ func (h *SessionHandler) RevokeSession(c echo.Context) error {
 		return echo.ErrInternalServerError
 	}
 
-	if sessionId == httputil.GetSessionID(c) {
+	if sessionId == httpctx.GetSessionID(c) {
 		h.cookieHandler.Delete(c)
 	}
 
@@ -59,11 +59,11 @@ func (h *SessionHandler) RevokeAllSessions(c echo.Context) error {
 
 	var currentSessionId *uuid.UUID
 	if payload.IncludeCurrent {
-		sessionID := httputil.GetSessionID(c)
+		sessionID := httpctx.GetSessionID(c)
 		currentSessionId = &sessionID
 	}
 
-	if err := h.sessionService.DeleteSessionsByUserID(c.Request().Context(), httputil.GetUserID(c), currentSessionId); err != nil {
+	if err := h.sessionService.DeleteSessionsByUserID(c.Request().Context(), httpctx.GetUserID(c), currentSessionId); err != nil {
 		return echo.ErrInternalServerError
 	}
 

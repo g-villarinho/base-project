@@ -9,7 +9,7 @@ import (
 	"time"
 
 	"github.com/g-villarinho/base-project/internal/domain"
-	httputil "github.com/g-villarinho/base-project/internal/http"
+	httpctx "github.com/g-villarinho/base-project/internal/http"
 	"github.com/g-villarinho/base-project/internal/mocks"
 	"github.com/g-villarinho/base-project/pkg/validation"
 	"github.com/google/uuid"
@@ -418,7 +418,7 @@ func TestAuthHandler_UpdatePassword(t *testing.T) {
 		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 		rec := httptest.NewRecorder()
 		c := e.NewContext(req, rec)
-		httputil.SetUserID(c, userID)
+		httpctx.SetUserID(c, userID)
 
 		mockAuthService.On("UpdatePassword", mock.Anything, userID, "senha12345", "novasenha123").Return(nil)
 
@@ -443,7 +443,7 @@ func TestAuthHandler_UpdatePassword(t *testing.T) {
 		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 		rec := httptest.NewRecorder()
 		c := e.NewContext(req, rec)
-		httputil.SetUserID(c, userID)
+		httpctx.SetUserID(c, userID)
 
 		mockAuthService.On("UpdatePassword", mock.Anything, userID, "senha12345", "novasenha123").Return(domain.ErrUserNotFound)
 
@@ -470,7 +470,7 @@ func TestAuthHandler_UpdatePassword(t *testing.T) {
 		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 		rec := httptest.NewRecorder()
 		c := e.NewContext(req, rec)
-		httputil.SetUserID(c, userID)
+		httpctx.SetUserID(c, userID)
 
 		mockAuthService.On("UpdatePassword", mock.Anything, userID, "wrongpassword", "novasenha123").Return(domain.ErrPasswordMismatch)
 
@@ -497,7 +497,7 @@ func TestAuthHandler_UpdatePassword(t *testing.T) {
 		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 		rec := httptest.NewRecorder()
 		c := e.NewContext(req, rec)
-		httputil.SetUserID(c, userID)
+		httpctx.SetUserID(c, userID)
 
 		mockAuthService.On("UpdatePassword", mock.Anything, userID, "senha12345", "novasenha123").Return(errors.New("database error"))
 
@@ -718,7 +718,7 @@ func TestAuthHandler_RequestChangeEmail(t *testing.T) {
 		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 		rec := httptest.NewRecorder()
 		c := e.NewContext(req, rec)
-		httputil.SetUserID(c, userID)
+		httpctx.SetUserID(c, userID)
 
 		mockAuthService.On("RequestChangeEmail", mock.Anything, userID, "newemail@example.com").Return(nil)
 
@@ -743,7 +743,7 @@ func TestAuthHandler_RequestChangeEmail(t *testing.T) {
 		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 		rec := httptest.NewRecorder()
 		c := e.NewContext(req, rec)
-		httputil.SetUserID(c, userID)
+		httpctx.SetUserID(c, userID)
 
 		mockAuthService.On("RequestChangeEmail", mock.Anything, userID, "existing@example.com").Return(domain.ErrEmailInUse)
 
@@ -770,7 +770,7 @@ func TestAuthHandler_RequestChangeEmail(t *testing.T) {
 		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 		rec := httptest.NewRecorder()
 		c := e.NewContext(req, rec)
-		httputil.SetUserID(c, userID)
+		httpctx.SetUserID(c, userID)
 
 		mockAuthService.On("RequestChangeEmail", mock.Anything, userID, "newemail@example.com").Return(domain.ErrUserNotFound)
 
@@ -797,7 +797,7 @@ func TestAuthHandler_RequestChangeEmail(t *testing.T) {
 		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 		rec := httptest.NewRecorder()
 		c := e.NewContext(req, rec)
-		httputil.SetUserID(c, userID)
+		httpctx.SetUserID(c, userID)
 
 		mockAuthService.On("RequestChangeEmail", mock.Anything, userID, "same@example.com").Return(domain.ErrEmailIsTheSame)
 
@@ -824,7 +824,7 @@ func TestAuthHandler_RequestChangeEmail(t *testing.T) {
 		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 		rec := httptest.NewRecorder()
 		c := e.NewContext(req, rec)
-		httputil.SetUserID(c, userID)
+		httpctx.SetUserID(c, userID)
 
 		mockAuthService.On("RequestChangeEmail", mock.Anything, userID, "newemail@example.com").Return(errors.New("database error"))
 

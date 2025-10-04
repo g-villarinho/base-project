@@ -5,7 +5,7 @@ import (
 	"net/http"
 
 	"github.com/g-villarinho/base-project/internal/domain"
-	httputil "github.com/g-villarinho/base-project/internal/http"
+	httpctx "github.com/g-villarinho/base-project/internal/http"
 	"github.com/g-villarinho/base-project/internal/model"
 	"github.com/g-villarinho/base-project/internal/service"
 	"github.com/labstack/echo/v4"
@@ -13,12 +13,12 @@ import (
 
 type AuthHandler struct {
 	authService   service.AuthService
-	cookieHandler httputil.CookieHandler
+	cookieHandler httpctx.CookieHandler
 }
 
 func NewAuthHandler(
 	authService service.AuthService,
-	cookieHandler httputil.CookieHandler,
+	cookieHandler httpctx.CookieHandler,
 ) *AuthHandler {
 	return &AuthHandler{
 		authService:   authService,
@@ -138,7 +138,7 @@ func (h *AuthHandler) UpdatePassword(c echo.Context) error {
 		return err
 	}
 
-	err := h.authService.UpdatePassword(c.Request().Context(), httputil.GetUserID(c), payload.CurrentPassword, payload.NewPassword)
+	err := h.authService.UpdatePassword(c.Request().Context(), httpctx.GetUserID(c), payload.CurrentPassword, payload.NewPassword)
 	if err != nil {
 		if errors.Is(err, domain.ErrUserNotFound) {
 			return echo.NewHTTPError(http.StatusNotFound, err.Error())
@@ -220,7 +220,7 @@ func (h *AuthHandler) RequestChangeEmail(c echo.Context) error {
 		return err
 	}
 
-	err := h.authService.RequestChangeEmail(c.Request().Context(), httputil.GetUserID(c), payload.NewEmail)
+	err := h.authService.RequestChangeEmail(c.Request().Context(), httpctx.GetUserID(c), payload.NewEmail)
 	if err != nil {
 		if errors.Is(err, domain.ErrEmailInUse) {
 			return echo.NewHTTPError(http.StatusConflict, err.Error())
