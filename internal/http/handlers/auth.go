@@ -50,7 +50,9 @@ func (h *AuthHandler) RegisterAccount(c echo.Context) error {
 
 func (h *AuthHandler) VerifyEmail(c echo.Context) error {
 	var payload model.VerifyEmailPayload
-	if err := c.Bind(&payload); err != nil {
+
+	// Bind query params
+	if err := echo.QueryParamsBinder(c).String("token", &payload.Token).BindError(); err != nil {
 		return echo.ErrBadRequest
 	}
 
@@ -176,6 +178,13 @@ func (h *AuthHandler) RequestResetPassword(c echo.Context) error {
 
 func (h *AuthHandler) ConfirmResetPassword(c echo.Context) error {
 	var payload model.ResetPasswordPayload
+
+	// Bind query params
+	if err := echo.QueryParamsBinder(c).String("token", &payload.Token).BindError(); err != nil {
+		return echo.ErrBadRequest
+	}
+
+	// Bind JSON body
 	if err := c.Bind(&payload); err != nil {
 		return echo.ErrBadRequest
 	}
@@ -233,7 +242,9 @@ func (h *AuthHandler) RequestChangeEmail(c echo.Context) error {
 
 func (h *AuthHandler) ConfirmChangeEmail(c echo.Context) error {
 	var payload model.ConfirmEmailChangePayload
-	if err := c.Bind(&payload); err != nil {
+
+	// Bind query params
+	if err := echo.QueryParamsBinder(c).String("token", &payload.Token).BindError(); err != nil {
 		return echo.ErrBadRequest
 	}
 

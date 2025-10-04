@@ -144,7 +144,7 @@ func TestAuthHandler_VerifyEmail(t *testing.T) {
 
 		e := echo.New()
 		e.Validator = validation.NewValidator()
-		req := httptest.NewRequest(http.MethodPost, "/verify-email?token="+token, nil)
+		req := httptest.NewRequest(http.MethodGet, "/verify-email?token="+token, nil)
 		rec := httptest.NewRecorder()
 		c := e.NewContext(req, rec)
 
@@ -168,7 +168,7 @@ func TestAuthHandler_VerifyEmail(t *testing.T) {
 
 		e := echo.New()
 		e.Validator = validation.NewValidator()
-		req := httptest.NewRequest(http.MethodPost, "/verify-email", nil)
+		req := httptest.NewRequest(http.MethodGet, "/verify-email", nil)
 		rec := httptest.NewRecorder()
 		c := e.NewContext(req, rec)
 
@@ -187,7 +187,7 @@ func TestAuthHandler_VerifyEmail(t *testing.T) {
 
 		e := echo.New()
 		e.Validator = validation.NewValidator()
-		req := httptest.NewRequest(http.MethodPost, "/verify-email?token="+token, nil)
+		req := httptest.NewRequest(http.MethodGet, "/verify-email?token="+token, nil)
 		rec := httptest.NewRecorder()
 		c := e.NewContext(req, rec)
 
@@ -210,7 +210,7 @@ func TestAuthHandler_VerifyEmail(t *testing.T) {
 
 		e := echo.New()
 		e.Validator = validation.NewValidator()
-		req := httptest.NewRequest(http.MethodPost, "/verify-email?token="+token, nil)
+		req := httptest.NewRequest(http.MethodGet, "/verify-email?token="+token, nil)
 		rec := httptest.NewRecorder()
 		c := e.NewContext(req, rec)
 
@@ -236,7 +236,7 @@ func TestAuthHandler_VerifyEmail(t *testing.T) {
 
 		e := echo.New()
 		e.Validator = validation.NewValidator()
-		req := httptest.NewRequest(http.MethodPost, "/verify-email?token="+token, nil)
+		req := httptest.NewRequest(http.MethodGet, "/verify-email?token="+token, nil)
 		rec := httptest.NewRecorder()
 		c := e.NewContext(req, rec)
 
@@ -615,10 +615,11 @@ func TestAuthHandler_ConfirmResetPassword(t *testing.T) {
 		mockCookieHandler := mocks.NewCookieHandlerMock(t)
 		handler := NewAuthHandler(mockAuthService, mockCookieHandler)
 
+		token := "valid-token-123"
 		payload := `{invalid json}`
 
 		e := echo.New()
-		req := httptest.NewRequest(http.MethodPost, "/reset-password", strings.NewReader(payload))
+		req := httptest.NewRequest(http.MethodPost, "/reset-password?token="+token, strings.NewReader(payload))
 		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 		rec := httptest.NewRecorder()
 		c := e.NewContext(req, rec)
@@ -844,7 +845,7 @@ func TestAuthHandler_ConfirmChangeEmail(t *testing.T) {
 
 		e := echo.New()
 		e.Validator = validation.NewValidator()
-		req := httptest.NewRequest(http.MethodPost, "/confirm-change-email?token="+token, nil)
+		req := httptest.NewRequest(http.MethodGet, "/confirm-change-email?token="+token, nil)
 		rec := httptest.NewRecorder()
 		c := e.NewContext(req, rec)
 
@@ -864,7 +865,7 @@ func TestAuthHandler_ConfirmChangeEmail(t *testing.T) {
 
 		e := echo.New()
 		e.Validator = validation.NewValidator()
-		req := httptest.NewRequest(http.MethodPost, "/confirm-change-email", nil)
+		req := httptest.NewRequest(http.MethodGet, "/confirm-change-email", nil)
 		rec := httptest.NewRecorder()
 		c := e.NewContext(req, rec)
 
@@ -883,7 +884,7 @@ func TestAuthHandler_ConfirmChangeEmail(t *testing.T) {
 
 		e := echo.New()
 		e.Validator = validation.NewValidator()
-		req := httptest.NewRequest(http.MethodPost, "/confirm-change-email?token="+token, nil)
+		req := httptest.NewRequest(http.MethodGet, "/confirm-change-email?token="+token, nil)
 		rec := httptest.NewRecorder()
 		c := e.NewContext(req, rec)
 
@@ -904,7 +905,7 @@ func TestAuthHandler_ConfirmChangeEmail(t *testing.T) {
 
 		e := echo.New()
 		e.Validator = validation.NewValidator()
-		req := httptest.NewRequest(http.MethodPost, "/confirm-change-email?token="+token, nil)
+		req := httptest.NewRequest(http.MethodGet, "/confirm-change-email?token="+token, nil)
 		rec := httptest.NewRecorder()
 		c := e.NewContext(req, rec)
 
@@ -928,7 +929,7 @@ func TestAuthHandler_ConfirmChangeEmail(t *testing.T) {
 
 		e := echo.New()
 		e.Validator = validation.NewValidator()
-		req := httptest.NewRequest(http.MethodPost, "/confirm-change-email?token="+token, nil)
+		req := httptest.NewRequest(http.MethodGet, "/confirm-change-email?token="+token, nil)
 		rec := httptest.NewRecorder()
 		c := e.NewContext(req, rec)
 
@@ -952,7 +953,7 @@ func TestAuthHandler_ConfirmChangeEmail(t *testing.T) {
 
 		e := echo.New()
 		e.Validator = validation.NewValidator()
-		req := httptest.NewRequest(http.MethodPost, "/confirm-change-email?token="+token, nil)
+		req := httptest.NewRequest(http.MethodGet, "/confirm-change-email?token="+token, nil)
 		rec := httptest.NewRecorder()
 		c := e.NewContext(req, rec)
 
