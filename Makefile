@@ -8,8 +8,14 @@ generate-key:  ## Gera as chaves de autenticação do projeto
 	@openssl ecparam -name prime256v1 -genkey -noout -out ecdsa_private.pem
 	@openssl ec -in ecdsa_private.pem -pubout -out ecdsa_public.pem
 
-run: build
+run: build ## Roda o servidor com .env padrão
 	@./bin/server
+
+run-test: build ## Roda o servidor com .env.test
+	@./bin/server -env=.env.test
+
+run-e2e: build ## Roda o servidor com .env.e2e
+	@./bin/server -env=.env.e2e
 
 build:
 	@go build -o bin/server cmd/server/main.go
