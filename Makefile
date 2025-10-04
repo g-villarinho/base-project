@@ -27,3 +27,9 @@ test-e2e-down: ## Derruba ambiente de testes E2E
 
 test-e2e-logs: ## Mostra logs do ambiente de testes E2E
 	@cd tests && docker-compose logs -f app
+
+run-e2e: test-e2e-up ## Roda testes E2E
+	@sleep 5
+	@go run tests/seed.go
+	@go test -v ./tests/e2e/...
+	@make test-e2e-down
