@@ -29,20 +29,20 @@ func NewAuthHandler(
 func (h *AuthHandler) RegisterAccount(c echo.Context) error {
 	var payload model.RegisterAccountPayload
 	if err := c.Bind(&payload); err != nil {
-		return echo.ErrBadRequest
+		return BadRequest(c, err)
 	}
 
 	if err := c.Validate(payload); err != nil {
-		return err
+		return HandleValidationError(c, payload, err)
 	}
 
 	err := h.authService.RegisterAccount(c.Request().Context(), payload.Name, payload.Email, payload.Password)
 	if err != nil {
 		if errors.Is(err, domain.ErrEmailAlreadyExists) {
-			return echo.NewHTTPError(http.StatusConflict, err.Error())
+			return ConflictError(c, err.Error())
 		}
 
-		return echo.ErrInternalServerError
+		return InternalServerError(c, "Failed to register account")
 	}
 
 	return c.NoContent(http.StatusCreated)
@@ -53,11 +53,11 @@ func (h *AuthHandler) VerifyEmail(c echo.Context) error {
 
 	// Bind query params
 	if err := echo.QueryParamsBinder(c).String("token", &payload.Token).BindError(); err != nil {
-		return echo.ErrBadRequest
+		return BadRequest(c, err)
 	}
 
 	if err := c.Validate(payload); err != nil {
-		return err
+		return HandleValidationError(c, payload, err)
 	}
 
 	input := model.VerifyEmailInput{
@@ -70,14 +70,14 @@ func (h *AuthHandler) VerifyEmail(c echo.Context) error {
 	session, err := h.authService.VerifyEmail(c.Request().Context(), input)
 	if err != nil {
 		if errors.Is(err, domain.ErrVerificationNotFound) {
-			return echo.ErrBadRequest
+			return NotFound(c, "Verification token not found")
 		}
 
 		if errors.Is(err, domain.ErrInvalidVerification) {
-			return echo.NewHTTPError(http.StatusBadRequest, err.Error())
+			return BadRequest(c, err)
 		}
 
-		return echo.ErrInternalServerError
+		return InternalServerError(c, "Failed to verify email")
 	}
 
 	h.cookieHandler.Set(c, session.Token, session.ExpiresAt)
@@ -87,11 +87,11 @@ func (h *AuthHandler) VerifyEmail(c echo.Context) error {
 func (h *AuthHandler) Login(c echo.Context) error {
 	var payload model.LoginPayload
 	if err := c.Bind(&payload); err != nil {
-		return echo.ErrBadRequest
+		return BadRequest(c, err)
 	}
 
 	if err := c.Validate(payload); err != nil {
-		return err
+		return HandleValidationError(c, payload, err)
 	}
 
 	input := model.LoginInput{
@@ -105,18 +105,18 @@ func (h *AuthHandler) Login(c echo.Context) error {
 	session, err := h.authService.Login(c.Request().Context(), input)
 	if err != nil {
 		if errors.Is(err, domain.ErrInvalidCredentials) {
-			return echo.NewHTTPError(http.StatusUnauthorized, err.Error())
+			return Unauthorized(c, err.Error())
 		}
 
 		if errors.Is(err, domain.ErrUserBlocked) {
-			return echo.NewHTTPError(http.StatusForbidden, err.Error())
+			return ConflictError(c, err.Error())
 		}
 
 		if errors.Is(err, domain.ErrEmailNotVerified) {
-			return echo.NewHTTPError(http.StatusForbidden, err.Error())
+			return ConflictError(c, err.Error())
 		}
 
-		return echo.ErrInternalServerError
+		return InternalServerError(c, "Failed to login")
 	}
 
 	h.cookieHandler.Set(c, session.Token, session.ExpiresAt)
@@ -131,24 +131,24 @@ func (h *AuthHandler) Logout(c echo.Context) error {
 func (h *AuthHandler) UpdatePassword(c echo.Context) error {
 	var payload model.UpdatePasswordPayload
 	if err := c.Bind(&payload); err != nil {
-		return echo.ErrBadRequest
+		return BadRequest(c, err)
 	}
 
 	if err := c.Validate(payload); err != nil {
-		return err
+		return HandleValidationError(c, payload, err)
 	}
 
 	err := h.authService.UpdatePassword(c.Request().Context(), echoctx.GetUserID(c), payload.CurrentPassword, payload.NewPassword)
 	if err != nil {
 		if errors.Is(err, domain.ErrUserNotFound) {
-			return echo.NewHTTPError(http.StatusNotFound, err.Error())
+			return NotFound(c, err.Error())
 		}
 
 		if errors.Is(err, domain.ErrPasswordMismatch) {
-			return echo.NewHTTPError(http.StatusUnauthorized, err.Error())
+			return Unauthorized(c, err.Error())
 		}
 
-		return echo.ErrInternalServerError
+		return InternalServerError(c, "Failed to update password")
 	}
 
 	return c.NoContent(http.StatusOK)
@@ -157,11 +157,11 @@ func (h *AuthHandler) UpdatePassword(c echo.Context) error {
 func (h *AuthHandler) RequestResetPassword(c echo.Context) error {
 	var payload model.ForgotPasswordPayload
 	if err := c.Bind(&payload); err != nil {
-		return echo.ErrBadRequest
+		return BadRequest(c, err)
 	}
 
 	if err := c.Validate(payload); err != nil {
-		return err
+		return HandleValidationError(c, payload, err)
 	}
 
 	if err := h.authService.RequestPasswordReset(c.Request().Context(), payload.Email); err != nil {
@@ -170,7 +170,7 @@ func (h *AuthHandler) RequestResetPassword(c echo.Context) error {
 			return c.NoContent(http.StatusOK)
 		}
 
-		return echo.ErrInternalServerError
+		return InternalServerError(c, "Failed to request password reset")
 	}
 
 	return c.NoContent(http.StatusOK)
@@ -181,29 +181,29 @@ func (h *AuthHandler) ConfirmResetPassword(c echo.Context) error {
 
 	// Bind query params
 	if err := echo.QueryParamsBinder(c).String("token", &payload.Token).BindError(); err != nil {
-		return echo.ErrBadRequest
+		return BadRequest(c, err)
 	}
 
 	// Bind JSON body
 	if err := c.Bind(&payload); err != nil {
-		return echo.ErrBadRequest
+		return BadRequest(c, err)
 	}
 
 	if err := c.Validate(payload); err != nil {
-		return err
+		return HandleValidationError(c, payload, err)
 	}
 
 	session, err := h.authService.ResetPassword(c.Request().Context(), payload.Token, payload.NewPassword)
 	if err != nil {
 		if errors.Is(err, domain.ErrVerificationNotFound) {
-			return echo.ErrBadRequest
+			return NotFound(c, "Verification token not found")
 		}
 
 		if errors.Is(err, domain.ErrInvalidVerification) {
-			return echo.NewHTTPError(http.StatusBadRequest, err.Error())
+			return BadRequest(c, err)
 		}
 
-		return echo.ErrInternalServerError
+		return InternalServerError(c, "Failed to reset password")
 	}
 
 	h.cookieHandler.Set(c, session.Token, session.ExpiresAt)
@@ -213,28 +213,28 @@ func (h *AuthHandler) ConfirmResetPassword(c echo.Context) error {
 func (h *AuthHandler) RequestChangeEmail(c echo.Context) error {
 	var payload model.RequestEmailChangePayload
 	if err := c.Bind(&payload); err != nil {
-		return echo.ErrBadRequest
+		return BadRequest(c, err)
 	}
 
 	if err := c.Validate(payload); err != nil {
-		return err
+		return HandleValidationError(c, payload, err)
 	}
 
 	err := h.authService.RequestChangeEmail(c.Request().Context(), echoctx.GetUserID(c), payload.NewEmail)
 	if err != nil {
 		if errors.Is(err, domain.ErrEmailInUse) {
-			return echo.NewHTTPError(http.StatusConflict, err.Error())
+			return ConflictError(c, err.Error())
 		}
 
 		if errors.Is(err, domain.ErrUserNotFound) {
-			return echo.NewHTTPError(http.StatusNotFound, err.Error())
+			return NotFound(c, err.Error())
 		}
 
 		if errors.Is(err, domain.ErrEmailIsTheSame) {
-			return echo.NewHTTPError(http.StatusBadRequest, err.Error())
+			return BadRequest(c, err)
 		}
 
-		return echo.ErrInternalServerError
+		return InternalServerError(c, "Failed to request email change")
 	}
 
 	return c.NoContent(http.StatusOK)
@@ -245,28 +245,28 @@ func (h *AuthHandler) ConfirmChangeEmail(c echo.Context) error {
 
 	// Bind query params
 	if err := echo.QueryParamsBinder(c).String("token", &payload.Token).BindError(); err != nil {
-		return echo.ErrBadRequest
+		return BadRequest(c, err)
 	}
 
 	if err := c.Validate(payload); err != nil {
-		return err
+		return HandleValidationError(c, payload, err)
 	}
 
 	err := h.authService.ChangeEmail(c.Request().Context(), payload.Token)
 	if err != nil {
 		if errors.Is(err, domain.ErrVerificationNotFound) {
-			return echo.ErrBadRequest
+			return NotFound(c, "Verification token not found")
 		}
 
 		if errors.Is(err, domain.ErrInvalidVerification) {
-			return echo.NewHTTPError(http.StatusBadRequest, err.Error())
+			return BadRequest(c, err)
 		}
 
 		if errors.Is(err, domain.ErrUserNotFound) {
-			return echo.NewHTTPError(http.StatusNotFound, err.Error())
+			return NotFound(c, err.Error())
 		}
 
-		return echo.ErrInternalServerError
+		return InternalServerError(c, "Failed to change email")
 	}
 
 	return c.NoContent(http.StatusOK)

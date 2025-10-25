@@ -21,7 +21,6 @@ func NewServer(
 
 	e.Validator = validation.NewValidator()
 	e.JSONSerializer = serializer.NewSerializer()
-	e.HTTPErrorHandler = HttpErrorHandler
 
 	e.Use(echoMiddleware.Recover())
 	e.Use(echoMiddleware.BodyLimit("10M"))
