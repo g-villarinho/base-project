@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/g-villarinho/base-project/config"
-	"github.com/g-villarinho/base-project/infra/notification"
+	"github.com/g-villarinho/base-project/internal/infra/notification"
 	"github.com/resend/resend-go/v2"
 )
 

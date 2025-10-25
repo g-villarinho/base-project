@@ -1,12 +1,12 @@
-package handlers
+package handler
 
 import (
 	"errors"
 	"net/http"
 
 	"github.com/g-villarinho/base-project/internal/domain"
-	httpctx "github.com/g-villarinho/base-project/internal/http"
 	"github.com/g-villarinho/base-project/internal/model"
+	"github.com/g-villarinho/base-project/internal/server"
 	"github.com/g-villarinho/base-project/internal/service"
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
@@ -14,12 +14,12 @@ import (
 
 type SessionHandler struct {
 	sessionService service.SessionService
-	cookieHandler  httpctx.CookieHandler
+	cookieHandler  CookieHandler
 }
 
 func NewSessionHandler(
 	sessionService service.SessionService,
-	cookieHandler httpctx.CookieHandler) *SessionHandler {
+	cookieHandler CookieHandler) *SessionHandler {
 	return &SessionHandler{
 		sessionService: sessionService,
 		cookieHandler:  cookieHandler,
@@ -32,7 +32,7 @@ func (h *SessionHandler) RevokeSession(c echo.Context) error {
 		return echo.ErrBadRequest
 	}
 
-	if err := h.sessionService.DeleteSessionByID(c.Request().Context(), httpctx.GetUserID(c), sessionId); err != nil {
+	if err := h.sessionService.DeleteSessionByID(c.Request().Context(), server.GetUserID(c), sessionId); err != nil {
 		if errors.Is(err, domain.ErrSessionNotFound) {
 			return echo.NewHTTPError(http.StatusNotFound, err.Error())
 		}
@@ -44,7 +44,7 @@ func (h *SessionHandler) RevokeSession(c echo.Context) error {
 		return echo.ErrInternalServerError
 	}
 
-	if sessionId == httpctx.GetSessionID(c) {
+	if sessionId == server.GetSessionID(c) {
 		h.cookieHandler.Delete(c)
 	}
 
@@ -59,11 +59,11 @@ func (h *SessionHandler) RevokeAllSessions(c echo.Context) error {
 
 	var currentSessionId *uuid.UUID
 	if payload.IncludeCurrent {
-		sessionID := httpctx.GetSessionID(c)
+		sessionID := server.GetSessionID(c)
 		currentSessionId = &sessionID
 	}
 
-	if err := h.sessionService.DeleteSessionsByUserID(c.Request().Context(), httpctx.GetUserID(c), currentSessionId); err != nil {
+	if err := h.sessionService.DeleteSessionsByUserID(c.Request().Context(), server.GetUserID(c), currentSessionId); err != nil {
 		return echo.ErrInternalServerError
 	}
 
