@@ -47,6 +47,7 @@ func provideDependecies() *dig.Container {
 	injector.Provide(container, notification.NewEmailNotification)
 
 	// Service
+	injector.Provide(container, service.NewVerificationService)
 	injector.Provide(container, service.NewAuthService)
 	injector.Provide(container, service.NewSessionService)
 	injector.Provide(container, service.NewUserService)
