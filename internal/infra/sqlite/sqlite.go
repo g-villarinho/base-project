@@ -1,4 +1,4 @@
-package database
+package sqlite
 
 import (
 	"fmt"
@@ -10,7 +10,7 @@ import (
 	"gorm.io/gorm/logger"
 )
 
-func NewSqliteDbConnection(config *config.Config) (*gorm.DB, error) {
+func NewDbConnection(config *config.Config) (*gorm.DB, error) {
 	var gormConfig = &gorm.Config{}
 	gormConfig.Logger = logger.Default.LogMode(logger.Silent)
 	if config.ShowSQLLogs {

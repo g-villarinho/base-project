@@ -3,8 +3,8 @@ package server
 import (
 	"github.com/g-villarinho/base-project/config"
 	"github.com/g-villarinho/base-project/internal/infra/client"
-	"github.com/g-villarinho/base-project/internal/infra/database"
 	"github.com/g-villarinho/base-project/internal/infra/notification"
+	"github.com/g-villarinho/base-project/internal/infra/sqlite"
 	"github.com/g-villarinho/base-project/internal/repository"
 	"github.com/g-villarinho/base-project/internal/server/handler"
 	"github.com/g-villarinho/base-project/internal/server/middleware"
@@ -19,7 +19,7 @@ func ProvideDependencies() *dig.Container {
 
 	// General
 	injector.Provide(container, config.NewConfig)
-	injector.Provide(container, database.NewSqliteDbConnection)
+	injector.Provide(container, sqlite.NewDbConnection)
 	injector.Provide(container, logger.NewLogger)
 
 	// Client
