@@ -5,8 +5,8 @@ import (
 	"net/http"
 
 	"github.com/g-villarinho/base-project/internal/domain"
+	"github.com/g-villarinho/base-project/internal/echoctx"
 	"github.com/g-villarinho/base-project/internal/model"
-	"github.com/g-villarinho/base-project/internal/server"
 	"github.com/g-villarinho/base-project/internal/service"
 	"github.com/labstack/echo/v4"
 )
@@ -31,7 +31,7 @@ func (h *UserHandler) UpdateProfile(c echo.Context) error {
 		return err
 	}
 
-	if err := h.userService.UpdateUser(c.Request().Context(), server.GetUserID(c), payload.Name); err != nil {
+	if err := h.userService.UpdateUser(c.Request().Context(), echoctx.GetUserID(c), payload.Name); err != nil {
 		if errors.Is(err, domain.ErrUserNotFound) {
 			return echo.NewHTTPError(http.StatusNotFound, err.Error())
 		}
@@ -43,7 +43,7 @@ func (h *UserHandler) UpdateProfile(c echo.Context) error {
 }
 
 func (h *UserHandler) GetProfile(c echo.Context) error {
-	user, err := h.userService.GetUser(c.Request().Context(), server.GetUserID(c))
+	user, err := h.userService.GetUser(c.Request().Context(), echoctx.GetUserID(c))
 	if err != nil {
 		if errors.Is(err, domain.ErrUserNotFound) {
 			return echo.NewHTTPError(http.StatusNotFound, err.Error())

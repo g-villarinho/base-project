@@ -3,7 +3,7 @@ package middleware
 import (
 	"log/slog"
 
-	"github.com/g-villarinho/base-project/internal/server"
+	"github.com/g-villarinho/base-project/internal/echoctx"
 	"github.com/g-villarinho/base-project/internal/server/handler"
 	"github.com/g-villarinho/base-project/internal/service"
 	"github.com/labstack/echo/v4"
@@ -52,8 +52,8 @@ func (m *AuthMiddleware) EnsuredAuthenticated(next echo.HandlerFunc) echo.Handle
 			return echo.ErrUnauthorized
 		}
 
-		server.SetUserID(c, session.UserID)
-		server.SetSessionID(c, session.ID)
+		echoctx.SetUserID(c, session.UserID)
+		echoctx.SetSessionID(c, session.ID)
 		return next(c)
 	}
 }

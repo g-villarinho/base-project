@@ -5,8 +5,8 @@ import (
 	"net/http"
 
 	"github.com/g-villarinho/base-project/internal/domain"
+	"github.com/g-villarinho/base-project/internal/echoctx"
 	"github.com/g-villarinho/base-project/internal/model"
-	"github.com/g-villarinho/base-project/internal/server"
 	"github.com/g-villarinho/base-project/internal/service"
 	"github.com/labstack/echo/v4"
 )
@@ -138,7 +138,7 @@ func (h *AuthHandler) UpdatePassword(c echo.Context) error {
 		return err
 	}
 
-	err := h.authService.UpdatePassword(c.Request().Context(), server.GetUserID(c), payload.CurrentPassword, payload.NewPassword)
+	err := h.authService.UpdatePassword(c.Request().Context(), echoctx.GetUserID(c), payload.CurrentPassword, payload.NewPassword)
 	if err != nil {
 		if errors.Is(err, domain.ErrUserNotFound) {
 			return echo.NewHTTPError(http.StatusNotFound, err.Error())
@@ -220,7 +220,7 @@ func (h *AuthHandler) RequestChangeEmail(c echo.Context) error {
 		return err
 	}
 
-	err := h.authService.RequestChangeEmail(c.Request().Context(), server.GetUserID(c), payload.NewEmail)
+	err := h.authService.RequestChangeEmail(c.Request().Context(), echoctx.GetUserID(c), payload.NewEmail)
 	if err != nil {
 		if errors.Is(err, domain.ErrEmailInUse) {
 			return echo.NewHTTPError(http.StatusConflict, err.Error())

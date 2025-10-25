@@ -5,8 +5,8 @@ import (
 	"net/http"
 
 	"github.com/g-villarinho/base-project/internal/domain"
+	"github.com/g-villarinho/base-project/internal/echoctx"
 	"github.com/g-villarinho/base-project/internal/model"
-	"github.com/g-villarinho/base-project/internal/server"
 	"github.com/g-villarinho/base-project/internal/service"
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
@@ -32,7 +32,7 @@ func (h *SessionHandler) RevokeSession(c echo.Context) error {
 		return echo.ErrBadRequest
 	}
 
-	if err := h.sessionService.DeleteSessionByID(c.Request().Context(), server.GetUserID(c), sessionId); err != nil {
+	if err := h.sessionService.DeleteSessionByID(c.Request().Context(), echoctx.GetUserID(c), sessionId); err != nil {
 		if errors.Is(err, domain.ErrSessionNotFound) {
 			return echo.NewHTTPError(http.StatusNotFound, err.Error())
 		}
@@ -44,7 +44,7 @@ func (h *SessionHandler) RevokeSession(c echo.Context) error {
 		return echo.ErrInternalServerError
 	}
 
-	if sessionId == server.GetSessionID(c) {
+	if sessionId == echoctx.GetSessionID(c) {
 		h.cookieHandler.Delete(c)
 	}
 
@@ -59,11 +59,11 @@ func (h *SessionHandler) RevokeAllSessions(c echo.Context) error {
 
 	var currentSessionId *uuid.UUID
 	if payload.IncludeCurrent {
-		sessionID := server.GetSessionID(c)
+		sessionID := echoctx.GetSessionID(c)
 		currentSessionId = &sessionID
 	}
 
-	if err := h.sessionService.DeleteSessionsByUserID(c.Request().Context(), server.GetUserID(c), currentSessionId); err != nil {
+	if err := h.sessionService.DeleteSessionsByUserID(c.Request().Context(), echoctx.GetUserID(c), currentSessionId); err != nil {
 		return echo.ErrInternalServerError
 	}
 
