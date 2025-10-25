@@ -5,8 +5,8 @@ import (
 	"net/http"
 
 	"github.com/g-villarinho/base-project/internal/domain"
-	"github.com/g-villarinho/base-project/internal/echoctx"
 	"github.com/g-villarinho/base-project/internal/model"
+	"github.com/g-villarinho/base-project/internal/server/echoctx"
 	"github.com/g-villarinho/base-project/internal/service"
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"

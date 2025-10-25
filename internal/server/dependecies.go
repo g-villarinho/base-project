@@ -1,4 +1,4 @@
-package bootstrap
+package server
 
 import (
 	"github.com/g-villarinho/base-project/config"
@@ -6,7 +6,6 @@ import (
 	"github.com/g-villarinho/base-project/internal/infra/database"
 	"github.com/g-villarinho/base-project/internal/infra/notification"
 	"github.com/g-villarinho/base-project/internal/repository"
-	"github.com/g-villarinho/base-project/internal/server"
 	"github.com/g-villarinho/base-project/internal/server/handler"
 	"github.com/g-villarinho/base-project/internal/server/middleware"
 	"github.com/g-villarinho/base-project/internal/service"
@@ -50,7 +49,7 @@ func ProvideDependencies() *dig.Container {
 	injector.Provide(container, middleware.NewAuthMiddleware)
 
 	//Server
-	injector.Provide(container, server.NewServer)
+	injector.Provide(container, NewServer)
 
 	return container
 }

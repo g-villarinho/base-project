@@ -3,7 +3,7 @@ package middleware
 import (
 	"log/slog"
 
-	"github.com/g-villarinho/base-project/internal/echoctx"
+	"github.com/g-villarinho/base-project/internal/server/echoctx"
 	"github.com/g-villarinho/base-project/internal/server/handler"
 	"github.com/g-villarinho/base-project/internal/service"
 	"github.com/labstack/echo/v4"
