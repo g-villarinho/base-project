@@ -103,6 +103,11 @@ func (s *sessionService) DeleteSessionByID(ctx context.Context, userID uuid.UUID
 		return domain.ErrSessionNotBelong
 	}
 
+	if session.IsExpired() {
+		logger.Info("session already expired and not need delete")
+		return nil
+	}
+
 	if err := s.sessionRepo.DeleteByID(ctx, sessionID); err != nil {
 		return fmt.Errorf("delete session by id: %w", err)
 	}

@@ -22,6 +22,7 @@ type AuthService interface {
 	ChangeEmail(ctx context.Context, token string) error
 	RequestPasswordReset(ctx context.Context, email string) error
 	ResetPassword(ctx context.Context, token string, newPassword string) (*domain.Session, error)
+	Logout(ctx context.Context, userID, sessionID uuid.UUID) error
 }
 
 type authService struct {
@@ -273,6 +274,7 @@ func (s *authService) ResetPassword(ctx context.Context, token string, newPasswo
 
 	verification, err := s.verificationService.ValidateAndConsume(ctx, token, domain.ResetPasswordFlow)
 	if err != nil {
+		logger.Error(err.Error())
 		return nil, err
 	}
 
@@ -287,4 +289,19 @@ func (s *authService) ResetPassword(ctx context.Context, token string, newPasswo
 	}
 
 	return nil, nil
+}
+
+func (s *authService) Logout(ctx context.Context, userID, sessionID uuid.UUID) error {
+	logger := s.logger.With(
+		slog.String("method", "Logout"),
+		slog.String("userId", userID.String()),
+		slog.String("sessionId", sessionID.String()),
+	)
+
+	if err := s.sessionService.DeleteSessionByID(ctx, userID, sessionID); err != nil {
+		logger.Error(err.Error())
+		return err
+	}
+
+	return nil
 }
