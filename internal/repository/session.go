@@ -3,6 +3,7 @@ package repository
 import (
 	"context"
 	"errors"
+	"fmt"
 	"log/slog"
 	"time"
 
@@ -38,14 +39,8 @@ func NewSessionRepository(db *gorm.DB, logger *slog.Logger) SessionRepository {
 }
 
 func (r *sessionRepository) Create(ctx context.Context, session *domain.Session) error {
-	logger := r.logger.With(
-		slog.String("method", "Create"),
-		slog.String("session_id", session.ID.String()),
-	)
-
 	if err := r.db.WithContext(ctx).Create(&session).Error; err != nil {
-		logger.Error("create session in database", slog.String("error", err.Error()))
-		return err
+		return fmt.Errorf("sessionRepository.Create: %w", err)
 	}
 
 	return nil

@@ -61,11 +61,6 @@ func (r *userRepository) ExistsByEmail(ctx context.Context, email string) (bool,
 }
 
 func (r *userRepository) VerifyEmail(ctx context.Context, ID uuid.UUID) error {
-	logger := r.logger.With(
-		slog.String("method", "VerifyEmail"),
-		slog.String("user_id", ID.String()),
-	)
-
 	now := time.Now().UTC()
 
 	updates := map[string]any{
@@ -79,8 +74,7 @@ func (r *userRepository) VerifyEmail(ctx context.Context, ID uuid.UUID) error {
 		Updates(updates)
 
 	if result.Error != nil {
-		logger.Error("verify user email", slog.String("error", result.Error.Error()))
-		return result.Error
+		return fmt.Errorf("userRepository.VerifyEmail: %w", result.Error)
 	}
 
 	return nil

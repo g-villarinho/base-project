@@ -38,21 +38,15 @@ func NewSessionService(
 }
 
 func (s *sessionService) CreateSession(ctx context.Context, userID uuid.UUID, ipAddress, deviceName, userAgent string) (*domain.Session, error) {
-	logger := s.logger.With(
-		slog.String("method", "CreateSession"),
-		slog.String("user_id", userID.String()),
-	)
-
 	expiresAt := time.Now().UTC().Add(s.sessionConfig.Duration)
 
 	session, err := domain.NewSession(userID, ipAddress, userAgent, deviceName, expiresAt)
 	if err != nil {
-		logger.Error("create session domain", slog.String("error", err.Error()))
-		return nil, fmt.Errorf("create session for userID %s: %w", userID, err)
+		return nil, fmt.Errorf("sessionService.CreateSession: new session: %w", err)
 	}
 
 	if err := s.sessionRepo.Create(ctx, session); err != nil {
-		return nil, fmt.Errorf("create session for userID %s: %w", userID, err)
+		return nil, fmt.Errorf("sessionService.CreateSession: %w", err)
 	}
 
 	return session, nil

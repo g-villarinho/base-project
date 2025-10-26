@@ -81,7 +81,7 @@ func (s *authService) VerifyEmail(ctx context.Context, input model.VerifyEmailIn
 	}
 
 	if err := s.userRepository.VerifyEmail(ctx, verification.UserID); err != nil {
-		return nil, fmt.Errorf("verify user email for userId %s: %w", verification.UserID, err)
+		return nil, fmt.Errorf("authService.VerifyEmail: %w", err)
 	}
 
 	session, err := s.sessionService.CreateSession(ctx, verification.UserID, input.IPAddress, input.DeviceName, input.UserAgent)
@@ -92,7 +92,7 @@ func (s *authService) VerifyEmail(ctx context.Context, input model.VerifyEmailIn
 	return session, nil
 }
 
-func (s *authService) Login(ctx context.Context, input model.LoginInput) (*domain.LoginResult, error) {
+func (s *authService) Login(ctx context.Context, input model.LoginInput) (*domain.Session, error) {
 	user, err := s.userRepository.FindByEmail(ctx, input.Email)
 	if err != nil {
 		if errors.Is(err, repository.ErrUserNotFound) {
@@ -102,35 +102,28 @@ func (s *authService) Login(ctx context.Context, input model.LoginInput) (*domai
 		return nil, fmt.Errorf("authService.Login: find user by email: %w", err)
 	}
 
-	result := &domain.LoginResult{
-		UserID: user.ID,
-	}
-
 	if err := bcrypt.CompareHashAndPassword([]byte(user.PasswordHash), []byte(input.Password)); err != nil {
-		return result, domain.ErrInvalidCredentials
+		return nil, domain.ErrInvalidCredentials
 	}
 
 	if user.IsBlocked() {
-		return result, domain.ErrUserBlocked
+		return nil, domain.ErrUserBlocked
 	}
 
 	if !user.IsEmailVerified() {
 		if err := s.verificationService.SendVerificationEmail(ctx, user, domain.VerificationEmailFlow); err != nil {
-			
+			return nil, fmt.Errorf("authService.Login: send verification email %s: %w", user.ID, err)
 		}
 
-		return result, domain.ErrEmailNotVerified
+		return nil, domain.ErrEmailNotVerified
 	}
 
 	session, err := s.sessionService.CreateSession(ctx, user.ID, input.IPAddress, input.DeviceName, input.UserAgent)
 	if err != nil {
-		return result, fmt.Errorf("authService.Login: create session: %w", err)
+		return nil, fmt.Errorf("authService.Login: create session: %w", err)
 	}
 
-	result.SessionToken = session.Token
-	result.SessionExpiresAt = session.ExpiresAt
-
-	return result, nil
+	return session, nil
 }
 
 func (s *authService) UpdatePassword(ctx context.Context, userID uuid.UUID, currentPassword, newPassword string) error {
