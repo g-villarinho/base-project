@@ -122,5 +122,6 @@ func HandleValidationError(c echo.Context, obj any, err error) error {
 		validationErrors := validation.FormatValidationErrors(err, lang)
 		return ValidationError(c, validationErrors)
 	}
+
 	return BadRequest(c, err)
 }

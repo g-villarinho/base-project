@@ -2,6 +2,7 @@ package handler
 
 import (
 	"errors"
+	"log/slog"
 	"net/http"
 
 	"github.com/g-villarinho/base-project/internal/domain"
@@ -14,33 +15,49 @@ import (
 type AuthHandler struct {
 	authService   service.AuthService
 	cookieHandler CookieHandler
+	logger        *slog.Logger
 }
 
 func NewAuthHandler(
 	authService service.AuthService,
 	cookieHandler CookieHandler,
+	logger *slog.Logger,
 ) *AuthHandler {
 	return &AuthHandler{
 		authService:   authService,
 		cookieHandler: cookieHandler,
+		logger:        logger.With(slog.String("handler", "auth")),
 	}
 }
 
 func (h *AuthHandler) RegisterAccount(c echo.Context) error {
+	logger := h.logger.With(
+		slog.String("method", "RegisterAccount"),
+		slog.String("path", c.Path()),
+	)
+
 	var payload model.RegisterAccountPayload
 	if err := c.Bind(&payload); err != nil {
+		logger.Warn("Failed to bind payload", slog.Any("error", err))
 		return BadRequest(c, err)
 	}
 
 	if err := c.Validate(payload); err != nil {
+		logger.Info("Payload validation failed")
 		return HandleValidationError(c, payload, err)
 	}
 
 	err := h.authService.RegisterAccount(c.Request().Context(), payload.Name, payload.Email, payload.Password)
 	if err != nil {
 		if errors.Is(err, domain.ErrEmailAlreadyExists) {
-			return ConflictError(c, err.Error())
+			logger.Warn("Registration conflict: email already exists")
+			return ConflictError(c, "The email address provided is not available")
 		}
+
+		logger.Error(
+			"Failed to register account due to internal error",
+			slog.Any("error", err),
+		)
 
 		return InternalServerError(c, "Failed to register account")
 	}

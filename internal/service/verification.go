@@ -49,57 +49,39 @@ func NewVerificationService(
 }
 
 func (s *verificationService) CreateVerification(ctx context.Context, userID uuid.UUID, flow domain.VerificationFlow, payload string) (*domain.Verification, error) {
-	logger := s.logger.With(
-		slog.String("method", "CreateVerification"),
-		slog.String("userID", userID.String()),
-		slog.String("flow", string(flow)),
-	)
-
 	expiresAt := time.Now().UTC().Add(VerfiyEmailExpirationMinute)
 	verification, err := domain.NewVerification(userID, flow, expiresAt, payload)
 	if err != nil {
-		logger.Error("create verification", slog.String("error", err.Error()))
-		return nil, fmt.Errorf("create verification for userId %s: %w", userID.String(), err)
+		return nil, fmt.Errorf("VerificationService.CreateVerification: %w", err)
 	}
 
 	if err := s.verificationRepo.Create(ctx, verification); err != nil {
-		return nil, fmt.Errorf("create verification for userId %s: %w", userID.String(), err)
+		return nil, fmt.Errorf("VerificationService.CreateVerification: %w", err)
 	}
 
 	return verification, nil
 }
 
 func (s *verificationService) ValidateAndConsume(ctx context.Context, token string, expectedFlow domain.VerificationFlow) (*domain.Verification, error) {
-	logger := s.logger.With(
-		slog.String("method", "ValidateAndConsume"),
-		slog.String("token", token),
-		slog.String("expectedFlow", string(expectedFlow)),
-	)
-
 	verification, err := s.verificationRepo.FindByToken(ctx, token)
 	if err != nil {
 		if errors.Is(err, repository.ErrVerificationNotFound) {
-			logger.Warn("verification not found")
-			return nil, domain.ErrVerificationNotFound
+			return nil, fmt.Errorf("VerificationService.ValidateAndConsume: %w", domain.ErrVerificationNotFound)
 		}
-		return nil, fmt.Errorf("find verification token by id %s: %w", token, err)
+
+		return nil, fmt.Errorf("VerificationService.ValidateAndConsume: %w", err)
 	}
 
 	if verification.IsExpired() {
-		logger.Warn("verification expired")
 		return nil, domain.ErrInvalidVerification
 	}
 
 	if verification.Flow != expectedFlow {
-		logger.Warn("verification flow mismatch",
-			slog.String("expected", string(expectedFlow)),
-			slog.String("actual", string(verification.Flow)),
-		)
 		return nil, domain.ErrInvalidVerification
 	}
 
 	if err := s.verificationRepo.Delete(ctx, verification.ID); err != nil {
-		return nil, fmt.Errorf("delete verification with id %s: %w", verification.ID, err)
+		return nil, fmt.Errorf("VerificationService.ValidateAndConsume: %w", err)
 	}
 
 	return verification, nil
@@ -143,7 +125,7 @@ func (s *verificationService) GenerateVerificationURL(token string, flow domain.
 func (s *verificationService) SendVerificationEmail(ctx context.Context, user *domain.User, flow domain.VerificationFlow) error {
 	verification, err := s.verificationRepo.FindValidByUserIDAndFlow(ctx, user.ID, flow)
 	if err != nil && !errors.Is(err, repository.ErrVerificationNotFound) {
-		return fmt.Errorf("find existing verification: %w", err)
+		return fmt.Errorf("verificationService.SendVerificationEmail: %w", err)
 	}
 
 	if verification != nil && !verification.IsExpired() {
@@ -153,12 +135,12 @@ func (s *verificationService) SendVerificationEmail(ctx context.Context, user *d
 	}
 
 	if err := s.verificationRepo.InvalidateByUserIDAndFlow(ctx, user.ID, flow); err != nil {
-		return fmt.Errorf("invalidate old verification tokens: %w", err)
+		return fmt.Errorf("VerificationService.SendVerificationEmail: %w", err)
 	}
 
 	newVerification, err := s.CreateVerification(ctx, user.ID, flow, "")
 	if err != nil {
-		return err
+		return fmt.Errorf("VerificationService.SendVerificationEmail: %w", err)
 	}
 
 	verificationURL := s.GenerateVerificationURL(newVerification.Token, newVerification.Flow)
@@ -197,8 +179,6 @@ func (s *verificationService) sendEmailAsync(user *domain.User, verificationURL 
 
 		if err != nil {
 			logger.Error("failed to send email", slog.String("error", err.Error()))
-		} else {
-			logger.Debug("email sent successfully")
 		}
 	}()
 }

@@ -3,6 +3,7 @@ package repository
 import (
 	"context"
 	"errors"
+	"fmt"
 	"log/slog"
 	"time"
 
@@ -39,32 +40,21 @@ func NewUserRepository(db *gorm.DB, logger *slog.Logger) UserRepository {
 }
 
 func (r *userRepository) Create(ctx context.Context, user *domain.User) error {
-	logger := r.logger.With(
-		slog.String("method", "Create"),
-		slog.String("user_id", user.ID.String()),
-	)
-
 	if err := r.db.WithContext(ctx).Create(&user).Error; err != nil {
-		logger.Error("create user", slog.String("error", err.Error()))
-		return err
+		return fmt.Errorf("userRepository.Create: %w", err)
 	}
 
 	return nil
 }
 
 func (r *userRepository) ExistsByEmail(ctx context.Context, email string) (bool, error) {
-	logger := r.logger.With(
-		slog.String("method", "ExistsByEmail"),
-	)
-
 	var count int64
 	err := r.db.WithContext(ctx).Model(&domain.User{}).
 		Where("email = ?", email).
 		Count(&count).Error
 
 	if err != nil {
-		logger.Error("check if email exists", slog.String("error", err.Error()))
-		return false, err
+		return false, fmt.Errorf("userRepository.ExistsByEmail: %w", err)
 	}
 
 	return count > 0, nil

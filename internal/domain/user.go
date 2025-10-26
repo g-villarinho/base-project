@@ -10,9 +10,9 @@ import (
 
 var (
 	ErrEmailAlreadyExists   = errors.New("a user with this email already exists")
-	ErrInvalidCredentials   = errors.New("email or password invalid. Please try again")
+	ErrInvalidCredentials   = errors.New("email or password invalid")
 	ErrUserBlocked          = errors.New("account has been temporarily blocked")
-	ErrEmailNotVerified     = errors.New("email not verified. Check the registered email inbox")
+	ErrEmailNotVerified     = errors.New("email not verified")
 	ErrEmailAlreadyVerified = errors.New("email is already verified")
 	ErrUserNotFound         = errors.New("user not found to perform this operation")
 	ErrPasswordMismatch     = errors.New("current password does not match")

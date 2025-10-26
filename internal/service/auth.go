@@ -47,35 +47,28 @@ func NewAuthService(
 }
 
 func (s *authService) RegisterAccount(ctx context.Context, name string, email string, password string) error {
-	logger := s.logger.With(
-		slog.String("method", "RegisterAccount"),
-	)
-
 	userExists, err := s.userRepository.ExistsByEmail(ctx, email)
 	if err != nil {
-		return fmt.Errorf("find user by email: %w", err)
+		return fmt.Errorf("authService.RegisterAccount: %w", err)
 	}
 
 	if userExists {
-		logger.Warn("a user with this email already exists")
 		return domain.ErrEmailAlreadyExists
 	}
 
 	passwordHash, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
 	if err != nil {
-		logger.Error("hash password", slog.String("error", err.Error()))
-		return fmt.Errorf("hash password: %w", err)
+		return fmt.Errorf("authService.RegisterAccount: hash password: %w", err)
 	}
 
 	user := domain.NewUser(name, email, string(passwordHash))
 
 	if err := s.userRepository.Create(ctx, user); err != nil {
-		return fmt.Errorf("create user: %w", err)
+		return fmt.Errorf("authService.RegisterAccount: %w", err)
 	}
 
 	if err := s.verificationService.SendVerificationEmail(ctx, user, domain.VerificationEmailFlow); err != nil {
-		logger.Error("send verification email", slog.String("error", err.Error()))
-		return fmt.Errorf("send verification email for userId %s: %w", user.ID.String(), err)
+		return fmt.Errorf("authService.RegisterAccount: %w", err)
 	}
 
 	return nil
@@ -99,49 +92,45 @@ func (s *authService) VerifyEmail(ctx context.Context, input model.VerifyEmailIn
 	return session, nil
 }
 
-func (s *authService) Login(ctx context.Context, input model.LoginInput) (*domain.Session, error) {
-	logger := s.logger.With(
-		slog.String("method", "Login"),
-		slog.String("email", input.Email),
-	)
-
+func (s *authService) Login(ctx context.Context, input model.LoginInput) (*domain.LoginResult, error) {
 	user, err := s.userRepository.FindByEmail(ctx, input.Email)
 	if err != nil {
 		if errors.Is(err, repository.ErrUserNotFound) {
-			logger.Warn("user not found")
 			return nil, domain.ErrInvalidCredentials
 		}
 
-		logger.Error("failed to find user by email", slog.String("error", err.Error()))
-		return nil, fmt.Errorf("find user by email: %w", err)
+		return nil, fmt.Errorf("authService.Login: find user by email: %w", err)
+	}
+
+	result := &domain.LoginResult{
+		UserID: user.ID,
 	}
 
 	if err := bcrypt.CompareHashAndPassword([]byte(user.PasswordHash), []byte(input.Password)); err != nil {
-		logger.Warn("invalid credentials")
-		return nil, domain.ErrInvalidCredentials
+		return result, domain.ErrInvalidCredentials
 	}
 
 	if user.IsBlocked() {
-		logger.Warn("user is blocked")
-		return nil, domain.ErrUserBlocked
+		return result, domain.ErrUserBlocked
 	}
 
 	if !user.IsEmailVerified() {
-		logger.Warn("email not verified")
 		if err := s.verificationService.SendVerificationEmail(ctx, user, domain.VerificationEmailFlow); err != nil {
-			logger.Error("send verification email", slog.String("error", err.Error()))
-			return nil, fmt.Errorf("handle unverified email: %w", err)
+			
 		}
 
-		return nil, domain.ErrEmailNotVerified
+		return result, domain.ErrEmailNotVerified
 	}
 
 	session, err := s.sessionService.CreateSession(ctx, user.ID, input.IPAddress, input.DeviceName, input.UserAgent)
 	if err != nil {
-		return nil, err
+		return result, fmt.Errorf("authService.Login: create session: %w", err)
 	}
 
-	return session, nil
+	result.SessionToken = session.Token
+	result.SessionExpiresAt = session.ExpiresAt
+
+	return result, nil
 }
 
 func (s *authService) UpdatePassword(ctx context.Context, userID uuid.UUID, currentPassword, newPassword string) error {
