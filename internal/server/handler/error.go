@@ -98,6 +98,20 @@ func ValidationError(c echo.Context, validationErrors map[string]string) error {
 	return c.JSON(problem.Status, problem)
 }
 
+func Forbidden(c echo.Context, message string) error {
+	problem := np.NewProblem(
+		"https://developer.mozilla.org/pt-BR/docs/Web/HTTP/Reference/Status/403",
+		"Forbidden",
+		http.StatusForbidden,
+		np.WithDetail(message),
+		np.WithInstance(c.Request().URL.Path),
+	)
+
+	c.Response().Header().Set("Content-Type", np.ContentTypeProblemJSON)
+	c.Response().WriteHeader(problem.Status)
+	return c.JSON(problem.Status, problem)
+}
+
 // SetupRequired returns a 428 Precondition Required error response indicating application setup is needed.
 func SetupRequired(c echo.Context) error {
 	problem := np.NewProblem(

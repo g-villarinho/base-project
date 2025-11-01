@@ -21,7 +21,7 @@ const (
 
 type VerificationService interface {
 	CreateVerification(ctx context.Context, userID uuid.UUID, flow domain.VerificationFlow, payload string) (*domain.Verification, error)
-	ValidateAndConsume(ctx context.Context, token string, expectedFlow domain.VerificationFlow) (*domain.Verification, error)
+	ConsumeVerificationToken(ctx context.Context, token string, expectedFlow domain.VerificationFlow) (*domain.Verification, error)
 	GenerateVerificationURL(token string, flow domain.VerificationFlow) string
 	SendVerificationEmail(ctx context.Context, user *domain.User, flow domain.VerificationFlow) error
 	InvalidateUserVerifications(ctx context.Context, userID uuid.UUID, flow domain.VerificationFlow) error
@@ -52,24 +52,23 @@ func (s *verificationService) CreateVerification(ctx context.Context, userID uui
 	expiresAt := time.Now().UTC().Add(VerfiyEmailExpirationMinute)
 	verification, err := domain.NewVerification(userID, flow, expiresAt, payload)
 	if err != nil {
-		return nil, fmt.Errorf("VerificationService.CreateVerification: %w", err)
+		return nil, fmt.Errorf("create verification entity: %w", err)
 	}
 
 	if err := s.verificationRepo.Create(ctx, verification); err != nil {
-		return nil, fmt.Errorf("VerificationService.CreateVerification: %w", err)
+		return nil, fmt.Errorf("persist verification: %w", err)
 	}
 
 	return verification, nil
 }
 
-func (s *verificationService) ValidateAndConsume(ctx context.Context, token string, expectedFlow domain.VerificationFlow) (*domain.Verification, error) {
+func (s *verificationService) ConsumeVerificationToken(ctx context.Context, token string, expectedFlow domain.VerificationFlow) (*domain.Verification, error) {
 	verification, err := s.verificationRepo.FindByToken(ctx, token)
 	if err != nil {
 		if errors.Is(err, repository.ErrVerificationNotFound) {
-			return nil, fmt.Errorf("VerificationService.ValidateAndConsume: %w", domain.ErrVerificationNotFound)
+			return nil, domain.ErrVerificationNotFound
 		}
-
-		return nil, fmt.Errorf("VerificationService.ValidateAndConsume: %w", err)
+		return nil, fmt.Errorf("find verification by token: %w", err)
 	}
 
 	if verification.IsExpired() {
@@ -81,7 +80,7 @@ func (s *verificationService) ValidateAndConsume(ctx context.Context, token stri
 	}
 
 	if err := s.verificationRepo.Delete(ctx, verification.ID); err != nil {
-		return nil, fmt.Errorf("VerificationService.ValidateAndConsume: %w", err)
+		return nil, fmt.Errorf("delete verification: %w", err)
 	}
 
 	return verification, nil
@@ -156,7 +155,7 @@ func (s *verificationService) InvalidateUserVerifications(ctx context.Context, u
 	return nil
 }
 
-// Private methods
+// REGION: Private methods
 
 func (s *verificationService) sendEmailAsync(user *domain.User, verificationURL string, flow domain.VerificationFlow) {
 	logger := s.logger.With(

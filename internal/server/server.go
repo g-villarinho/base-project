@@ -27,6 +27,7 @@ func NewServer(
 	e.Use(echoMiddleware.BodyLimit("10M"))
 	e.Use(middleware.Cors(config))
 	e.Use(middleware.RateLimiter(config))
+	e.Use(middleware.ClientInfo())
 
 	if config.IsDevelopment() {
 		registerDevRoutes(e, config)
