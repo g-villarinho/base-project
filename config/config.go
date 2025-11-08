@@ -61,7 +61,7 @@ func setDefaults(v *viper.Viper) {
 
 	// CORS
 	v.SetDefault("cors.allowedorigins", []string{"*"})
-	v.SetDefault("cors.allowedmethods", []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"})
+	v.SetDefault("cors.allowedmethods", []string{"GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"})
 	v.SetDefault("cors.allowedheaders", []string{"Content-Type", "Authorization"})
 
 	// URL
