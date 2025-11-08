@@ -56,7 +56,7 @@ func (s *verificationService) CreateVerification(ctx context.Context, userID uui
 	}
 
 	if err := s.verificationRepo.Create(ctx, verification); err != nil {
-		return nil, fmt.Errorf("persist verification: %w", err)
+		return nil, fmt.Errorf("create verification: %w", err)
 	}
 
 	return verification, nil

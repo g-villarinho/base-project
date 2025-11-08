@@ -36,7 +36,7 @@ func NewVerificationRepository(db *gorm.DB) VerificationRepository {
 
 func (r *verificationRepository) Create(ctx context.Context, verification *domain.Verification) error {
 	if err := r.db.WithContext(ctx).Create(&verification).Error; err != nil {
-		return fmt.Errorf("create verification: %w", err)
+		return fmt.Errorf("persist verification: %w", err)
 	}
 
 	return nil
