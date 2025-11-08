@@ -4,12 +4,18 @@ import (
 	"crypto/hmac"
 	"crypto/sha256"
 	"encoding/hex"
+	"errors"
 	"net/http"
 	"strings"
 	"time"
 
 	"github.com/g-villarinho/base-project/config"
 	"github.com/labstack/echo/v4"
+)
+
+var (
+	ErrCookieNotFoound  = errors.New("cookie not found in header")
+	ErrInvalidSignature = errors.New("invalid cookie signature")
 )
 
 type CookieHandler interface {
@@ -44,12 +50,16 @@ func NewCookieHandler(config *config.Config) CookieHandler {
 
 func (h *cookieHandler) Get(ectx echo.Context) (*http.Cookie, error) {
 	cookie, err := ectx.Cookie(h.cookieName)
-	if err != nil {
-		return nil, err
+	if err != nil || cookie == nil {
+		return nil, ErrCookieNotFoound
+	}
+
+	if cookie.Value == "" {
+		return nil, ErrCookieNotFoound
 	}
 
 	if !h.verifyCookie(cookie.Value) {
-		return nil, echo.NewHTTPError(http.StatusUnauthorized, "invalid cookie signature")
+		return nil, ErrInvalidSignature
 	}
 
 	parts := strings.Split(cookie.Value, ".")

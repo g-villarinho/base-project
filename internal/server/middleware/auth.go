@@ -35,21 +35,15 @@ func (m *AuthMiddleware) EnsuredAuthenticated(next echo.HandlerFunc) echo.Handle
 
 		cookie, err := m.cookieHandler.Get(c)
 		if err != nil {
-			logger.Warn("authentication failed: no cookie found")
-			return echo.ErrUnauthorized
-		}
-
-		if cookie.Value == "" {
-			logger.Warn("authentication failed: empty cookie value")
-			m.cookieHandler.Delete(c)
-			return echo.ErrUnauthorized
+			logger.Warn("authentication failed: unable to retrieve cookie", slog.Any("error", err))
+			return handler.Unauthorized(c, "You need to be logged in to access this resource.")
 		}
 
 		session, err := m.sessionService.FindSessionByToken(c.Request().Context(), cookie.Value)
 		if err != nil {
-			logger.Warn("authentication failed: invalid session token", slog.String("token", cookie.Value), slog.String("error", err.Error()))
+			logger.Warn("authentication failed: invalid session token", slog.Any("error", err))
 			m.cookieHandler.Delete(c)
-			return echo.ErrUnauthorized
+			return handler.Unauthorized(c, "You need to be logged in to access this resource.")
 		}
 
 		echoctx.SetUserID(c, session.UserID)
