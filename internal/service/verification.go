@@ -130,7 +130,7 @@ func (s *verificationService) SendVerificationEmail(ctx context.Context, user *d
 
 	if verification != nil && !verification.IsExpired() {
 		verificationURL := s.GenerateVerificationURL(verification.Token, verification.Flow)
-		s.sendEmailAsync(user, verificationURL, flow)
+		s.sendEmailAsync(user, verificationURL, verification)
 		return nil
 	}
 
@@ -144,7 +144,7 @@ func (s *verificationService) SendVerificationEmail(ctx context.Context, user *d
 	}
 
 	verificationURL := s.GenerateVerificationURL(newVerification.Token, newVerification.Flow)
-	s.sendEmailAsync(user, verificationURL, flow)
+	s.sendEmailAsync(user, verificationURL, newVerification)
 
 	return nil
 }
@@ -158,20 +158,23 @@ func (s *verificationService) InvalidateUserVerifications(ctx context.Context, u
 
 // REGION: Private methods
 
-func (s *verificationService) sendEmailAsync(user *domain.User, verificationURL string, flow domain.VerificationFlow) {
+func (s *verificationService) sendEmailAsync(user *domain.User, verificationURL string, verification *domain.Verification) {
 	logger := s.logger.With(
 		slog.String("method", "sendEmailAsync"),
 		slog.String("userID", user.ID.String()),
-		slog.String("flow", string(flow)),
+		slog.String("flow", string(verification.Flow)),
 	)
 
 	go func() {
 		var err error
-		switch flow {
+		switch verification.Flow {
 		case domain.VerificationEmailFlow:
 			err = s.emailNotification.SendWelcomeEmail(context.Background(), user.CreatedAt, user.Name, verificationURL, user.Email)
 		case domain.ResetPasswordFlow:
 			err = s.emailNotification.SendResetPasswordEmail(context.Background(), user.Name, verificationURL, user.Email)
+		case domain.ChangeEmailFlow:
+			newEmail := verification.Payload.String
+			err = s.emailNotification.SendChangeEmailNotification(context.Background(), user.Name, newEmail, verificationURL, user.Email)
 		default:
 			logger.Warn("unsupported email flow")
 			return

@@ -8,7 +8,6 @@ import (
 	"context"
 
 	"github.com/g-villarinho/base-project/internal/domain"
-	"github.com/g-villarinho/base-project/internal/model"
 	"github.com/google/uuid"
 	mock "github.com/stretchr/testify/mock"
 )
@@ -98,8 +97,8 @@ func (_c *AuthServiceMock_ChangeEmail_Call) RunAndReturn(run func(ctx context.Co
 }
 
 // Login provides a mock function for the type AuthServiceMock
-func (_mock *AuthServiceMock) Login(ctx context.Context, input model.LoginInput) (*domain.Session, error) {
-	ret := _mock.Called(ctx, input)
+func (_mock *AuthServiceMock) Login(ctx context.Context, email string, password string, ipAddress string, userAgent string, deviceName string) (*domain.Session, error) {
+	ret := _mock.Called(ctx, email, password, ipAddress, userAgent, deviceName)
 
 	if len(ret) == 0 {
 		panic("no return value specified for Login")
@@ -107,18 +106,18 @@ func (_mock *AuthServiceMock) Login(ctx context.Context, input model.LoginInput)
 
 	var r0 *domain.Session
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, model.LoginInput) (*domain.Session, error)); ok {
-		return returnFunc(ctx, input)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, string, string, string) (*domain.Session, error)); ok {
+		return returnFunc(ctx, email, password, ipAddress, userAgent, deviceName)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, model.LoginInput) *domain.Session); ok {
-		r0 = returnFunc(ctx, input)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, string, string, string) *domain.Session); ok {
+		r0 = returnFunc(ctx, email, password, ipAddress, userAgent, deviceName)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*domain.Session)
 		}
 	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, model.LoginInput) error); ok {
-		r1 = returnFunc(ctx, input)
+	if returnFunc, ok := ret.Get(1).(func(context.Context, string, string, string, string, string) error); ok {
+		r1 = returnFunc(ctx, email, password, ipAddress, userAgent, deviceName)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -132,24 +131,48 @@ type AuthServiceMock_Login_Call struct {
 
 // Login is a helper method to define mock.On call
 //   - ctx context.Context
-//   - input model.LoginInput
-func (_e *AuthServiceMock_Expecter) Login(ctx interface{}, input interface{}) *AuthServiceMock_Login_Call {
-	return &AuthServiceMock_Login_Call{Call: _e.mock.On("Login", ctx, input)}
+//   - email string
+//   - password string
+//   - ipAddress string
+//   - userAgent string
+//   - deviceName string
+func (_e *AuthServiceMock_Expecter) Login(ctx interface{}, email interface{}, password interface{}, ipAddress interface{}, userAgent interface{}, deviceName interface{}) *AuthServiceMock_Login_Call {
+	return &AuthServiceMock_Login_Call{Call: _e.mock.On("Login", ctx, email, password, ipAddress, userAgent, deviceName)}
 }
 
-func (_c *AuthServiceMock_Login_Call) Run(run func(ctx context.Context, input model.LoginInput)) *AuthServiceMock_Login_Call {
+func (_c *AuthServiceMock_Login_Call) Run(run func(ctx context.Context, email string, password string, ipAddress string, userAgent string, deviceName string)) *AuthServiceMock_Login_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
 			arg0 = args[0].(context.Context)
 		}
-		var arg1 model.LoginInput
+		var arg1 string
 		if args[1] != nil {
-			arg1 = args[1].(model.LoginInput)
+			arg1 = args[1].(string)
+		}
+		var arg2 string
+		if args[2] != nil {
+			arg2 = args[2].(string)
+		}
+		var arg3 string
+		if args[3] != nil {
+			arg3 = args[3].(string)
+		}
+		var arg4 string
+		if args[4] != nil {
+			arg4 = args[4].(string)
+		}
+		var arg5 string
+		if args[5] != nil {
+			arg5 = args[5].(string)
 		}
 		run(
 			arg0,
 			arg1,
+			arg2,
+			arg3,
+			arg4,
+			arg5,
 		)
 	})
 	return _c
@@ -160,7 +183,70 @@ func (_c *AuthServiceMock_Login_Call) Return(session *domain.Session, err error)
 	return _c
 }
 
-func (_c *AuthServiceMock_Login_Call) RunAndReturn(run func(ctx context.Context, input model.LoginInput) (*domain.Session, error)) *AuthServiceMock_Login_Call {
+func (_c *AuthServiceMock_Login_Call) RunAndReturn(run func(ctx context.Context, email string, password string, ipAddress string, userAgent string, deviceName string) (*domain.Session, error)) *AuthServiceMock_Login_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// Logout provides a mock function for the type AuthServiceMock
+func (_mock *AuthServiceMock) Logout(ctx context.Context, userID uuid.UUID, sessionID uuid.UUID) error {
+	ret := _mock.Called(ctx, userID, sessionID)
+
+	if len(ret) == 0 {
+		panic("no return value specified for Logout")
+	}
+
+	var r0 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, uuid.UUID, uuid.UUID) error); ok {
+		r0 = returnFunc(ctx, userID, sessionID)
+	} else {
+		r0 = ret.Error(0)
+	}
+	return r0
+}
+
+// AuthServiceMock_Logout_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Logout'
+type AuthServiceMock_Logout_Call struct {
+	*mock.Call
+}
+
+// Logout is a helper method to define mock.On call
+//   - ctx context.Context
+//   - userID uuid.UUID
+//   - sessionID uuid.UUID
+func (_e *AuthServiceMock_Expecter) Logout(ctx interface{}, userID interface{}, sessionID interface{}) *AuthServiceMock_Logout_Call {
+	return &AuthServiceMock_Logout_Call{Call: _e.mock.On("Logout", ctx, userID, sessionID)}
+}
+
+func (_c *AuthServiceMock_Logout_Call) Run(run func(ctx context.Context, userID uuid.UUID, sessionID uuid.UUID)) *AuthServiceMock_Logout_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 uuid.UUID
+		if args[1] != nil {
+			arg1 = args[1].(uuid.UUID)
+		}
+		var arg2 uuid.UUID
+		if args[2] != nil {
+			arg2 = args[2].(uuid.UUID)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+		)
+	})
+	return _c
+}
+
+func (_c *AuthServiceMock_Logout_Call) Return(err error) *AuthServiceMock_Logout_Call {
+	_c.Call.Return(err)
+	return _c
+}
+
+func (_c *AuthServiceMock_Logout_Call) RunAndReturn(run func(ctx context.Context, userID uuid.UUID, sessionID uuid.UUID) error) *AuthServiceMock_Logout_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -498,8 +584,8 @@ func (_c *AuthServiceMock_UpdatePassword_Call) RunAndReturn(run func(ctx context
 }
 
 // VerifyEmail provides a mock function for the type AuthServiceMock
-func (_mock *AuthServiceMock) VerifyEmail(ctx context.Context, input model.VerifyEmailInput) (*domain.Session, error) {
-	ret := _mock.Called(ctx, input)
+func (_mock *AuthServiceMock) VerifyEmail(ctx context.Context, token string, ipAddress string, userAgent string, deviceName string) (*domain.Session, error) {
+	ret := _mock.Called(ctx, token, ipAddress, userAgent, deviceName)
 
 	if len(ret) == 0 {
 		panic("no return value specified for VerifyEmail")
@@ -507,18 +593,18 @@ func (_mock *AuthServiceMock) VerifyEmail(ctx context.Context, input model.Verif
 
 	var r0 *domain.Session
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, model.VerifyEmailInput) (*domain.Session, error)); ok {
-		return returnFunc(ctx, input)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, string, string) (*domain.Session, error)); ok {
+		return returnFunc(ctx, token, ipAddress, userAgent, deviceName)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, model.VerifyEmailInput) *domain.Session); ok {
-		r0 = returnFunc(ctx, input)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, string, string) *domain.Session); ok {
+		r0 = returnFunc(ctx, token, ipAddress, userAgent, deviceName)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*domain.Session)
 		}
 	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, model.VerifyEmailInput) error); ok {
-		r1 = returnFunc(ctx, input)
+	if returnFunc, ok := ret.Get(1).(func(context.Context, string, string, string, string) error); ok {
+		r1 = returnFunc(ctx, token, ipAddress, userAgent, deviceName)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -532,24 +618,42 @@ type AuthServiceMock_VerifyEmail_Call struct {
 
 // VerifyEmail is a helper method to define mock.On call
 //   - ctx context.Context
-//   - input model.VerifyEmailInput
-func (_e *AuthServiceMock_Expecter) VerifyEmail(ctx interface{}, input interface{}) *AuthServiceMock_VerifyEmail_Call {
-	return &AuthServiceMock_VerifyEmail_Call{Call: _e.mock.On("VerifyEmail", ctx, input)}
+//   - token string
+//   - ipAddress string
+//   - userAgent string
+//   - deviceName string
+func (_e *AuthServiceMock_Expecter) VerifyEmail(ctx interface{}, token interface{}, ipAddress interface{}, userAgent interface{}, deviceName interface{}) *AuthServiceMock_VerifyEmail_Call {
+	return &AuthServiceMock_VerifyEmail_Call{Call: _e.mock.On("VerifyEmail", ctx, token, ipAddress, userAgent, deviceName)}
 }
 
-func (_c *AuthServiceMock_VerifyEmail_Call) Run(run func(ctx context.Context, input model.VerifyEmailInput)) *AuthServiceMock_VerifyEmail_Call {
+func (_c *AuthServiceMock_VerifyEmail_Call) Run(run func(ctx context.Context, token string, ipAddress string, userAgent string, deviceName string)) *AuthServiceMock_VerifyEmail_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
 			arg0 = args[0].(context.Context)
 		}
-		var arg1 model.VerifyEmailInput
+		var arg1 string
 		if args[1] != nil {
-			arg1 = args[1].(model.VerifyEmailInput)
+			arg1 = args[1].(string)
+		}
+		var arg2 string
+		if args[2] != nil {
+			arg2 = args[2].(string)
+		}
+		var arg3 string
+		if args[3] != nil {
+			arg3 = args[3].(string)
+		}
+		var arg4 string
+		if args[4] != nil {
+			arg4 = args[4].(string)
 		}
 		run(
 			arg0,
 			arg1,
+			arg2,
+			arg3,
+			arg4,
 		)
 	})
 	return _c
@@ -560,7 +664,7 @@ func (_c *AuthServiceMock_VerifyEmail_Call) Return(session *domain.Session, err 
 	return _c
 }
 
-func (_c *AuthServiceMock_VerifyEmail_Call) RunAndReturn(run func(ctx context.Context, input model.VerifyEmailInput) (*domain.Session, error)) *AuthServiceMock_VerifyEmail_Call {
+func (_c *AuthServiceMock_VerifyEmail_Call) RunAndReturn(run func(ctx context.Context, token string, ipAddress string, userAgent string, deviceName string) (*domain.Session, error)) *AuthServiceMock_VerifyEmail_Call {
 	_c.Call.Return(run)
 	return _c
 }

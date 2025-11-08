@@ -39,6 +39,80 @@ func (_m *VerificationServiceMock) EXPECT() *VerificationServiceMock_Expecter {
 	return &VerificationServiceMock_Expecter{mock: &_m.Mock}
 }
 
+// ConsumeVerificationToken provides a mock function for the type VerificationServiceMock
+func (_mock *VerificationServiceMock) ConsumeVerificationToken(ctx context.Context, token string, expectedFlow domain.VerificationFlow) (*domain.Verification, error) {
+	ret := _mock.Called(ctx, token, expectedFlow)
+
+	if len(ret) == 0 {
+		panic("no return value specified for ConsumeVerificationToken")
+	}
+
+	var r0 *domain.Verification
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, domain.VerificationFlow) (*domain.Verification, error)); ok {
+		return returnFunc(ctx, token, expectedFlow)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, domain.VerificationFlow) *domain.Verification); ok {
+		r0 = returnFunc(ctx, token, expectedFlow)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*domain.Verification)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, string, domain.VerificationFlow) error); ok {
+		r1 = returnFunc(ctx, token, expectedFlow)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// VerificationServiceMock_ConsumeVerificationToken_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ConsumeVerificationToken'
+type VerificationServiceMock_ConsumeVerificationToken_Call struct {
+	*mock.Call
+}
+
+// ConsumeVerificationToken is a helper method to define mock.On call
+//   - ctx context.Context
+//   - token string
+//   - expectedFlow domain.VerificationFlow
+func (_e *VerificationServiceMock_Expecter) ConsumeVerificationToken(ctx interface{}, token interface{}, expectedFlow interface{}) *VerificationServiceMock_ConsumeVerificationToken_Call {
+	return &VerificationServiceMock_ConsumeVerificationToken_Call{Call: _e.mock.On("ConsumeVerificationToken", ctx, token, expectedFlow)}
+}
+
+func (_c *VerificationServiceMock_ConsumeVerificationToken_Call) Run(run func(ctx context.Context, token string, expectedFlow domain.VerificationFlow)) *VerificationServiceMock_ConsumeVerificationToken_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		var arg2 domain.VerificationFlow
+		if args[2] != nil {
+			arg2 = args[2].(domain.VerificationFlow)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+		)
+	})
+	return _c
+}
+
+func (_c *VerificationServiceMock_ConsumeVerificationToken_Call) Return(verification *domain.Verification, err error) *VerificationServiceMock_ConsumeVerificationToken_Call {
+	_c.Call.Return(verification, err)
+	return _c
+}
+
+func (_c *VerificationServiceMock_ConsumeVerificationToken_Call) RunAndReturn(run func(ctx context.Context, token string, expectedFlow domain.VerificationFlow) (*domain.Verification, error)) *VerificationServiceMock_ConsumeVerificationToken_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // CreateVerification provides a mock function for the type VerificationServiceMock
 func (_mock *VerificationServiceMock) CreateVerification(ctx context.Context, userID uuid.UUID, flow domain.VerificationFlow, payload string) (*domain.Verification, error) {
 	ret := _mock.Called(ctx, userID, flow, payload)
@@ -298,80 +372,6 @@ func (_c *VerificationServiceMock_SendVerificationEmail_Call) Return(err error) 
 }
 
 func (_c *VerificationServiceMock_SendVerificationEmail_Call) RunAndReturn(run func(ctx context.Context, user *domain.User, flow domain.VerificationFlow) error) *VerificationServiceMock_SendVerificationEmail_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
-// ValidateAndConsume provides a mock function for the type VerificationServiceMock
-func (_mock *VerificationServiceMock) ValidateAndConsume(ctx context.Context, token string, expectedFlow domain.VerificationFlow) (*domain.Verification, error) {
-	ret := _mock.Called(ctx, token, expectedFlow)
-
-	if len(ret) == 0 {
-		panic("no return value specified for ValidateAndConsume")
-	}
-
-	var r0 *domain.Verification
-	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, string, domain.VerificationFlow) (*domain.Verification, error)); ok {
-		return returnFunc(ctx, token, expectedFlow)
-	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, string, domain.VerificationFlow) *domain.Verification); ok {
-		r0 = returnFunc(ctx, token, expectedFlow)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*domain.Verification)
-		}
-	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, string, domain.VerificationFlow) error); ok {
-		r1 = returnFunc(ctx, token, expectedFlow)
-	} else {
-		r1 = ret.Error(1)
-	}
-	return r0, r1
-}
-
-// VerificationServiceMock_ValidateAndConsume_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ValidateAndConsume'
-type VerificationServiceMock_ValidateAndConsume_Call struct {
-	*mock.Call
-}
-
-// ValidateAndConsume is a helper method to define mock.On call
-//   - ctx context.Context
-//   - token string
-//   - expectedFlow domain.VerificationFlow
-func (_e *VerificationServiceMock_Expecter) ValidateAndConsume(ctx interface{}, token interface{}, expectedFlow interface{}) *VerificationServiceMock_ValidateAndConsume_Call {
-	return &VerificationServiceMock_ValidateAndConsume_Call{Call: _e.mock.On("ValidateAndConsume", ctx, token, expectedFlow)}
-}
-
-func (_c *VerificationServiceMock_ValidateAndConsume_Call) Run(run func(ctx context.Context, token string, expectedFlow domain.VerificationFlow)) *VerificationServiceMock_ValidateAndConsume_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		var arg0 context.Context
-		if args[0] != nil {
-			arg0 = args[0].(context.Context)
-		}
-		var arg1 string
-		if args[1] != nil {
-			arg1 = args[1].(string)
-		}
-		var arg2 domain.VerificationFlow
-		if args[2] != nil {
-			arg2 = args[2].(domain.VerificationFlow)
-		}
-		run(
-			arg0,
-			arg1,
-			arg2,
-		)
-	})
-	return _c
-}
-
-func (_c *VerificationServiceMock_ValidateAndConsume_Call) Return(verification *domain.Verification, err error) *VerificationServiceMock_ValidateAndConsume_Call {
-	_c.Call.Return(verification, err)
-	return _c
-}
-
-func (_c *VerificationServiceMock_ValidateAndConsume_Call) RunAndReturn(run func(ctx context.Context, token string, expectedFlow domain.VerificationFlow) (*domain.Verification, error)) *VerificationServiceMock_ValidateAndConsume_Call {
 	_c.Call.Return(run)
 	return _c
 }

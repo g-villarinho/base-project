@@ -19,6 +19,7 @@ type EmailNotification interface {
 	SendWelcomeEmail(ctx context.Context, userRegistration time.Time, userName, verificationLink, userEmail string) error
 	SendVerifyEmail(ctx context.Context, userName, verificationLink, userEmail string) error
 	SendResetPasswordEmail(ctx context.Context, userName, resetLink, userEmail string) error
+	SendChangeEmailNotification(ctx context.Context, userName, newEmail, confirmationLink, userEmail string) error
 }
 
 type emailNotification struct {
@@ -121,6 +122,40 @@ func (e *emailNotification) SendResetPasswordEmail(ctx context.Context, userName
 	}
 
 	subject := "Password Reset Request"
+
+	if err := e.emailClient.SendEmail(ctx, userEmail, subject, htmlBuffer.String()); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (e *emailNotification) SendChangeEmailNotification(ctx context.Context, userName, newEmail, confirmationLink, userEmail string) error {
+	htmlTemplate, err := template.ParseFS(templateFS, "templates/change-email.html")
+	if err != nil {
+		return err
+	}
+
+	data := struct {
+		UserName         string
+		NewEmail         string
+		ConfirmationLink string
+		CurrentYear      string
+		UserEmail        string
+	}{
+		UserName:         userName,
+		NewEmail:         newEmail,
+		ConfirmationLink: confirmationLink,
+		CurrentYear:      time.Now().Format("2006"),
+		UserEmail:        userEmail,
+	}
+
+	var htmlBuffer bytes.Buffer
+	if err := htmlTemplate.Execute(&htmlBuffer, data); err != nil {
+		return err
+	}
+
+	subject := "Email Change Confirmation"
 
 	if err := e.emailClient.SendEmail(ctx, userEmail, subject, htmlBuffer.String()); err != nil {
 		return err

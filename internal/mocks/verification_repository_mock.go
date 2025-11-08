@@ -153,6 +153,69 @@ func (_c *VerificationRepositoryMock_Delete_Call) RunAndReturn(run func(ctx cont
 	return _c
 }
 
+// DeleteByUserIDAndFlow provides a mock function for the type VerificationRepositoryMock
+func (_mock *VerificationRepositoryMock) DeleteByUserIDAndFlow(ctx context.Context, userID uuid.UUID, flow domain.VerificationFlow) error {
+	ret := _mock.Called(ctx, userID, flow)
+
+	if len(ret) == 0 {
+		panic("no return value specified for DeleteByUserIDAndFlow")
+	}
+
+	var r0 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, uuid.UUID, domain.VerificationFlow) error); ok {
+		r0 = returnFunc(ctx, userID, flow)
+	} else {
+		r0 = ret.Error(0)
+	}
+	return r0
+}
+
+// VerificationRepositoryMock_DeleteByUserIDAndFlow_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'DeleteByUserIDAndFlow'
+type VerificationRepositoryMock_DeleteByUserIDAndFlow_Call struct {
+	*mock.Call
+}
+
+// DeleteByUserIDAndFlow is a helper method to define mock.On call
+//   - ctx context.Context
+//   - userID uuid.UUID
+//   - flow domain.VerificationFlow
+func (_e *VerificationRepositoryMock_Expecter) DeleteByUserIDAndFlow(ctx interface{}, userID interface{}, flow interface{}) *VerificationRepositoryMock_DeleteByUserIDAndFlow_Call {
+	return &VerificationRepositoryMock_DeleteByUserIDAndFlow_Call{Call: _e.mock.On("DeleteByUserIDAndFlow", ctx, userID, flow)}
+}
+
+func (_c *VerificationRepositoryMock_DeleteByUserIDAndFlow_Call) Run(run func(ctx context.Context, userID uuid.UUID, flow domain.VerificationFlow)) *VerificationRepositoryMock_DeleteByUserIDAndFlow_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 uuid.UUID
+		if args[1] != nil {
+			arg1 = args[1].(uuid.UUID)
+		}
+		var arg2 domain.VerificationFlow
+		if args[2] != nil {
+			arg2 = args[2].(domain.VerificationFlow)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+		)
+	})
+	return _c
+}
+
+func (_c *VerificationRepositoryMock_DeleteByUserIDAndFlow_Call) Return(err error) *VerificationRepositoryMock_DeleteByUserIDAndFlow_Call {
+	_c.Call.Return(err)
+	return _c
+}
+
+func (_c *VerificationRepositoryMock_DeleteByUserIDAndFlow_Call) RunAndReturn(run func(ctx context.Context, userID uuid.UUID, flow domain.VerificationFlow) error) *VerificationRepositoryMock_DeleteByUserIDAndFlow_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // FindByID provides a mock function for the type VerificationRepositoryMock
 func (_mock *VerificationRepositoryMock) FindByID(ctx context.Context, ID uuid.UUID) (*domain.Verification, error) {
 	ret := _mock.Called(ctx, ID)
@@ -359,69 +422,6 @@ func (_c *VerificationRepositoryMock_FindValidByUserIDAndFlow_Call) Return(verif
 }
 
 func (_c *VerificationRepositoryMock_FindValidByUserIDAndFlow_Call) RunAndReturn(run func(ctx context.Context, userID uuid.UUID, flow domain.VerificationFlow) (*domain.Verification, error)) *VerificationRepositoryMock_FindValidByUserIDAndFlow_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
-// InvalidateByUserIDAndFlow provides a mock function for the type VerificationRepositoryMock
-func (_mock *VerificationRepositoryMock) InvalidateByUserIDAndFlow(ctx context.Context, userID uuid.UUID, flow domain.VerificationFlow) error {
-	ret := _mock.Called(ctx, userID, flow)
-
-	if len(ret) == 0 {
-		panic("no return value specified for InvalidateByUserIDAndFlow")
-	}
-
-	var r0 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, uuid.UUID, domain.VerificationFlow) error); ok {
-		r0 = returnFunc(ctx, userID, flow)
-	} else {
-		r0 = ret.Error(0)
-	}
-	return r0
-}
-
-// VerificationRepositoryMock_InvalidateByUserIDAndFlow_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'InvalidateByUserIDAndFlow'
-type VerificationRepositoryMock_InvalidateByUserIDAndFlow_Call struct {
-	*mock.Call
-}
-
-// InvalidateByUserIDAndFlow is a helper method to define mock.On call
-//   - ctx context.Context
-//   - userID uuid.UUID
-//   - flow domain.VerificationFlow
-func (_e *VerificationRepositoryMock_Expecter) InvalidateByUserIDAndFlow(ctx interface{}, userID interface{}, flow interface{}) *VerificationRepositoryMock_InvalidateByUserIDAndFlow_Call {
-	return &VerificationRepositoryMock_InvalidateByUserIDAndFlow_Call{Call: _e.mock.On("InvalidateByUserIDAndFlow", ctx, userID, flow)}
-}
-
-func (_c *VerificationRepositoryMock_InvalidateByUserIDAndFlow_Call) Run(run func(ctx context.Context, userID uuid.UUID, flow domain.VerificationFlow)) *VerificationRepositoryMock_InvalidateByUserIDAndFlow_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		var arg0 context.Context
-		if args[0] != nil {
-			arg0 = args[0].(context.Context)
-		}
-		var arg1 uuid.UUID
-		if args[1] != nil {
-			arg1 = args[1].(uuid.UUID)
-		}
-		var arg2 domain.VerificationFlow
-		if args[2] != nil {
-			arg2 = args[2].(domain.VerificationFlow)
-		}
-		run(
-			arg0,
-			arg1,
-			arg2,
-		)
-	})
-	return _c
-}
-
-func (_c *VerificationRepositoryMock_InvalidateByUserIDAndFlow_Call) Return(err error) *VerificationRepositoryMock_InvalidateByUserIDAndFlow_Call {
-	_c.Call.Return(err)
-	return _c
-}
-
-func (_c *VerificationRepositoryMock_InvalidateByUserIDAndFlow_Call) RunAndReturn(run func(ctx context.Context, userID uuid.UUID, flow domain.VerificationFlow) error) *VerificationRepositoryMock_InvalidateByUserIDAndFlow_Call {
 	_c.Call.Return(run)
 	return _c
 }
