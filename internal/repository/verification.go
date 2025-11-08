@@ -3,7 +3,7 @@ package repository
 import (
 	"context"
 	"errors"
-	"log/slog"
+	"fmt"
 	"time"
 
 	"github.com/g-villarinho/base-project/internal/domain"
@@ -20,79 +20,56 @@ type VerificationRepository interface {
 	FindByID(ctx context.Context, ID uuid.UUID) (*domain.Verification, error)
 	Delete(ctx context.Context, ID uuid.UUID) error
 	FindValidByUserIDAndFlow(ctx context.Context, userID uuid.UUID, flow domain.VerificationFlow) (*domain.Verification, error)
-	InvalidateByUserIDAndFlow(ctx context.Context, userID uuid.UUID, flow domain.VerificationFlow) error
+	DeleteByUserIDAndFlow(ctx context.Context, userID uuid.UUID, flow domain.VerificationFlow) error
 	FindByToken(ctx context.Context, token string) (*domain.Verification, error)
 }
 
 type verificationRepository struct {
-	db     *gorm.DB
-	logger *slog.Logger
+	db *gorm.DB
 }
 
-func NewVerificationRepository(db *gorm.DB, logger *slog.Logger) VerificationRepository {
+func NewVerificationRepository(db *gorm.DB) VerificationRepository {
 	return &verificationRepository{
-		db:     db,
-		logger: logger.With(slog.String("repository", "verification")),
+		db: db,
 	}
 }
 
 func (r *verificationRepository) Create(ctx context.Context, verification *domain.Verification) error {
-	logger := r.logger.With(
-		slog.String("method", "Create"),
-		slog.String("verification_id", verification.ID.String()),
-	)
-
 	if err := r.db.WithContext(ctx).Create(&verification).Error; err != nil {
-		logger.Error("create verification in database", slog.String("error", err.Error()))
-		return err
+		return fmt.Errorf("create verification: %w", err)
 	}
 
 	return nil
 }
 
 func (r *verificationRepository) FindByID(ctx context.Context, ID uuid.UUID) (*domain.Verification, error) {
-	logger := r.logger.With(
-		slog.String("method", "FindByID"),
-		slog.String("verification_id", ID.String()),
-	)
-
 	var verification domain.Verification
 	err := r.db.WithContext(ctx).First(&verification, "id = ?", ID).Error
 	if err != nil {
 		if err == gorm.ErrRecordNotFound {
-			logger.Warn("verification not found by id")
 			return nil, ErrVerificationNotFound
 		}
 
-		logger.Error("find verification by id", slog.String("error", err.Error()))
-		return nil, err
+		return nil, fmt.Errorf("find verification by id: %w", err)
 	}
 
 	return &verification, nil
 }
 
 func (r *verificationRepository) Delete(ctx context.Context, ID uuid.UUID) error {
-	logger := r.logger.With(
-		slog.String("method", "Delete"),
-		slog.String("verification_id", ID.String()),
-	)
+	result := r.db.WithContext(ctx).Delete(&domain.Verification{}, "id = ?", ID)
+	if result.Error != nil {
+		return fmt.Errorf("delete verification: %w", result.Error)
+	}
 
-	err := r.db.WithContext(ctx).Delete(&domain.Verification{}, "id = ?", ID).Error
-	if err != nil {
-		logger.Error("failed to delete verification", slog.String("error", err.Error()))
-		return err
+	if result.RowsAffected == 0 {
+		return ErrVerificationNotFound
 	}
 
 	return nil
 }
 
 func (r *verificationRepository) FindValidByUserIDAndFlow(ctx context.Context, userID uuid.UUID, flow domain.VerificationFlow) (*domain.Verification, error) {
-	logger := r.logger.With(
-		slog.String("method", "FindValidByUserIDAndFlow"),
-		slog.String("user_id", userID.String()),
-		slog.String("flow", string(flow)),
-	)
-
 	var verification domain.Verification
 
 	err := r.db.WithContext(ctx).
@@ -102,49 +79,40 @@ func (r *verificationRepository) FindValidByUserIDAndFlow(ctx context.Context, u
 
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			logger.Warn("valid verification not found")
 			return nil, ErrVerificationNotFound
 		}
-		logger.Error("find valid verification", slog.String("error", err.Error()))
-		return nil, err
+
+		return nil, fmt.Errorf("find valid verification by user ID and flow: %w", err)
 	}
 
 	return &verification, nil
 }
 
-func (r *verificationRepository) InvalidateByUserIDAndFlow(ctx context.Context, userID uuid.UUID, flow domain.VerificationFlow) error {
-	logger := r.logger.With(
-		slog.String("method", "InvalidateByUserIDAndFlow"),
-		slog.String("user_id", userID.String()),
-		slog.String("flow", string(flow)),
-	)
-
-	err := r.db.WithContext(ctx).
+func (r *verificationRepository) DeleteByUserIDAndFlow(ctx context.Context, userID uuid.UUID, flow domain.VerificationFlow) error {
+	result := r.db.WithContext(ctx).
 		Where("user_id = ? AND flow = ? AND expires_at > ?", userID, flow, time.Now().UTC()).
-		Delete(&domain.Verification{}).Error
+		Delete(&domain.Verification{})
 
-	if err != nil {
-		logger.Error("failed to invalidate verifications", slog.String("error", err.Error()))
+	if result.Error != nil {
+		return fmt.Errorf("delete by user ID and flow: %w", result.Error)
 	}
 
-	return err
+	if result.RowsAffected == 0 {
+		return ErrVerificationNotFound
+	}
+
+	return nil
 }
 
 func (r *verificationRepository) FindByToken(ctx context.Context, token string) (*domain.Verification, error) {
-	logger := r.logger.With(
-		slog.String("method", "FindByToken"),
-	)
-
 	var verification domain.Verification
 	err := r.db.WithContext(ctx).First(&verification, "token = ?", token).Error
 	if err != nil {
 		if err == gorm.ErrRecordNotFound {
-			logger.Warn("verification not found by token")
 			return nil, ErrVerificationNotFound
 		}
 
-		logger.Error("find verification by token", slog.String("error", err.Error()))
-		return nil, err
+		return nil, fmt.Errorf("find verification by token: %w", err)
 	}
 
 	return &verification, nil

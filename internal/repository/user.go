@@ -28,20 +28,18 @@ type UserRepository interface {
 }
 
 type userRepository struct {
-	db     *gorm.DB
-	logger *slog.Logger
+	db *gorm.DB
 }
 
 func NewUserRepository(db *gorm.DB, logger *slog.Logger) UserRepository {
 	return &userRepository{
-		db:     db,
-		logger: logger.With(slog.String("repository", "user")),
+		db: db,
 	}
 }
 
 func (r *userRepository) Create(ctx context.Context, user *domain.User) error {
 	if err := r.db.WithContext(ctx).Create(&user).Error; err != nil {
-		return fmt.Errorf("userRepository.Create: %w", err)
+		return fmt.Errorf("persist user: %w", err)
 	}
 
 	return nil
@@ -54,7 +52,7 @@ func (r *userRepository) ExistsByEmail(ctx context.Context, email string) (bool,
 		Count(&count).Error
 
 	if err != nil {
-		return false, fmt.Errorf("userRepository.ExistsByEmail: %w", err)
+		return false, fmt.Errorf("find user by email: %w", err)
 	}
 
 	return count > 0, nil
@@ -74,17 +72,17 @@ func (r *userRepository) VerifyEmail(ctx context.Context, ID uuid.UUID) error {
 		Updates(updates)
 
 	if result.Error != nil {
-		return fmt.Errorf("userRepository.VerifyEmail: %w", result.Error)
+		return fmt.Errorf("update user email field: %w", result.Error)
+	}
+
+	if result.RowsAffected == 0 {
+		return ErrUserNotFound
 	}
 
 	return nil
 }
 
 func (r *userRepository) FindByEmail(ctx context.Context, email string) (*domain.User, error) {
-	logger := r.logger.With(
-		slog.String("method", "FindByEmail"),
-	)
-
 	var user domain.User
 	err := r.db.WithContext(ctx).First(&user, "email = ?", email).Error
 	if err != nil {
@@ -92,19 +90,13 @@ func (r *userRepository) FindByEmail(ctx context.Context, email string) (*domain
 			return nil, ErrUserNotFound
 		}
 
-		logger.Error("find user by email", slog.String("error", err.Error()))
-		return nil, err
+		return nil, fmt.Errorf("find user by email: %w", err)
 	}
 
 	return &user, nil
 }
 
 func (r *userRepository) FindByID(ctx context.Context, ID uuid.UUID) (*domain.User, error) {
-	logger := r.logger.With(
-		slog.String("method", "FindByID"),
-		slog.String("user_id", ID.String()),
-	)
-
 	var user domain.User
 	err := r.db.WithContext(ctx).First(&user, "id = ?", ID).Error
 	if err != nil {
@@ -112,19 +104,13 @@ func (r *userRepository) FindByID(ctx context.Context, ID uuid.UUID) (*domain.Us
 			return nil, ErrUserNotFound
 		}
 
-		logger.Error("find user by id", slog.String("error", err.Error()))
-		return nil, err
+		return nil, fmt.Errorf("find user by id: %w", err)
 	}
 
 	return &user, nil
 }
 
 func (r *userRepository) UpdatePassword(ctx context.Context, ID uuid.UUID, newPasswordHash string) error {
-	logger := r.logger.With(
-		slog.String("method", "UpdatePassword"),
-		slog.String("user_id", ID.String()),
-	)
-
 	updates := map[string]any{
 		"password_hash": newPasswordHash,
 		"updated_at":    time.Now().UTC(),
@@ -135,19 +121,13 @@ func (r *userRepository) UpdatePassword(ctx context.Context, ID uuid.UUID, newPa
 		Updates(updates)
 
 	if result.Error != nil {
-		logger.Error("update user password", slog.String("error", result.Error.Error()))
-		return result.Error
+		return fmt.Errorf("update password fields: %w", result.Error)
 	}
 
 	return nil
 }
 
 func (r *userRepository) UpdateEmail(ctx context.Context, ID uuid.UUID, newEmail string) error {
-	logger := r.logger.With(
-		slog.String("method", "UpdateEmail"),
-		slog.String("user_id", ID.String()),
-	)
-
 	updates := map[string]any{
 		"email":      newEmail,
 		"updated_at": time.Now().UTC(),
@@ -158,19 +138,17 @@ func (r *userRepository) UpdateEmail(ctx context.Context, ID uuid.UUID, newEmail
 		Updates(updates)
 
 	if result.Error != nil {
-		logger.Error("update user email", slog.String("error", result.Error.Error()))
-		return result.Error
+		return fmt.Errorf("update user email: %w", result.Error)
+	}
+
+	if result.RowsAffected == 0 {
+		return ErrUserNotFound
 	}
 
 	return nil
 }
 
 func (r *userRepository) UpdateName(ctx context.Context, ID uuid.UUID, name string) error {
-	logger := r.logger.With(
-		slog.String("method", "UpdateName"),
-		slog.String("user_id", ID.String()),
-	)
-
 	updates := map[string]any{
 		"name":       name,
 		"updated_at": time.Now().UTC(),
@@ -181,8 +159,7 @@ func (r *userRepository) UpdateName(ctx context.Context, ID uuid.UUID, name stri
 		Updates(updates)
 
 	if result.Error != nil {
-		logger.Error("update user name", slog.String("error", result.Error.Error()))
-		return result.Error
+		return fmt.Errorf("update user name field: %w", result.Error)
 	}
 
 	if result.RowsAffected == 0 {

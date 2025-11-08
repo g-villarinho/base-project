@@ -68,6 +68,7 @@ func (s *verificationService) ConsumeVerificationToken(ctx context.Context, toke
 		if errors.Is(err, repository.ErrVerificationNotFound) {
 			return nil, domain.ErrVerificationNotFound
 		}
+
 		return nil, fmt.Errorf("find verification by token: %w", err)
 	}
 
@@ -124,7 +125,7 @@ func (s *verificationService) GenerateVerificationURL(token string, flow domain.
 func (s *verificationService) SendVerificationEmail(ctx context.Context, user *domain.User, flow domain.VerificationFlow) error {
 	verification, err := s.verificationRepo.FindValidByUserIDAndFlow(ctx, user.ID, flow)
 	if err != nil && !errors.Is(err, repository.ErrVerificationNotFound) {
-		return fmt.Errorf("verificationService.SendVerificationEmail: %w", err)
+		return fmt.Errorf("find valid verification by user id and flow: %w", err)
 	}
 
 	if verification != nil && !verification.IsExpired() {
@@ -133,13 +134,13 @@ func (s *verificationService) SendVerificationEmail(ctx context.Context, user *d
 		return nil
 	}
 
-	if err := s.verificationRepo.InvalidateByUserIDAndFlow(ctx, user.ID, flow); err != nil {
-		return fmt.Errorf("VerificationService.SendVerificationEmail: %w", err)
+	if err := s.verificationRepo.DeleteByUserIDAndFlow(ctx, user.ID, flow); err != nil {
+		return fmt.Errorf("invalidate verification tokens for userId: %w", err)
 	}
 
 	newVerification, err := s.CreateVerification(ctx, user.ID, flow, "")
 	if err != nil {
-		return fmt.Errorf("VerificationService.SendVerificationEmail: %w", err)
+		return fmt.Errorf(": %w", err)
 	}
 
 	verificationURL := s.GenerateVerificationURL(newVerification.Token, newVerification.Flow)
@@ -149,7 +150,7 @@ func (s *verificationService) SendVerificationEmail(ctx context.Context, user *d
 }
 
 func (s *verificationService) InvalidateUserVerifications(ctx context.Context, userID uuid.UUID, flow domain.VerificationFlow) error {
-	if err := s.verificationRepo.InvalidateByUserIDAndFlow(ctx, userID, flow); err != nil {
+	if err := s.verificationRepo.DeleteByUserIDAndFlow(ctx, userID, flow); err != nil {
 		return fmt.Errorf("invalidate verification tokens for userId %s: %w", userID, err)
 	}
 	return nil

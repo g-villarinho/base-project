@@ -127,6 +127,7 @@ func (s *authService) UpdatePassword(ctx context.Context, userID uuid.UUID, curr
 		if errors.Is(err, repository.ErrUserNotFound) {
 			return domain.ErrUserNotFound
 		}
+
 		return fmt.Errorf("find user by id: %w", err)
 	}
 
