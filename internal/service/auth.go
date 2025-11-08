@@ -8,8 +8,8 @@ import (
 
 	"github.com/g-villarinho/base-project/internal/domain"
 	"github.com/g-villarinho/base-project/internal/repository"
+	"github.com/g-villarinho/base-project/pkg/hash"
 	"github.com/google/uuid"
-	"golang.org/x/crypto/bcrypt"
 )
 
 type AuthService interface {
@@ -54,12 +54,12 @@ func (s *authService) RegisterAccount(ctx context.Context, name string, email st
 		return domain.ErrEmailAlreadyExists
 	}
 
-	passwordHash, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+	passwordHash, err := hash.HashPassword(password)
 	if err != nil {
 		return fmt.Errorf("hash password: %w", err)
 	}
 
-	user := domain.NewUser(name, email, string(passwordHash))
+	user := domain.NewUser(name, email, passwordHash)
 	if err := s.userRepository.Create(ctx, user); err != nil {
 		return fmt.Errorf("create user: %w", err)
 	}
@@ -98,7 +98,7 @@ func (s *authService) Login(ctx context.Context, email, password, ipAddress, use
 		return nil, fmt.Errorf("find user by email: %w", err)
 	}
 
-	if err := bcrypt.CompareHashAndPassword([]byte(user.PasswordHash), []byte(password)); err != nil {
+	if err := hash.VerifyPassword(password, user.PasswordHash); err != nil {
 		return nil, domain.ErrInvalidCredentials
 	}
 
@@ -131,17 +131,17 @@ func (s *authService) UpdatePassword(ctx context.Context, userID uuid.UUID, curr
 		return fmt.Errorf("find user by id: %w", err)
 	}
 
-	err = bcrypt.CompareHashAndPassword([]byte(user.PasswordHash), []byte(currentPassword))
+	err = hash.VerifyPassword(currentPassword, user.PasswordHash)
 	if err != nil {
 		return domain.ErrPasswordMismatch
 	}
 
-	newPasswordHash, err := bcrypt.GenerateFromPassword([]byte(newPassword), bcrypt.DefaultCost)
+	newPasswordHash, err := hash.HashPassword(newPassword)
 	if err != nil {
 		return fmt.Errorf("hash new password: %w", err)
 	}
 
-	if err := s.userRepository.UpdatePassword(ctx, userID, string(newPasswordHash)); err != nil {
+	if err := s.userRepository.UpdatePassword(ctx, userID, newPasswordHash); err != nil {
 		return fmt.Errorf("update password: %w", err)
 	}
 
@@ -223,12 +223,12 @@ func (s *authService) ResetPassword(ctx context.Context, token string, newPasswo
 		return nil, err
 	}
 
-	newPasswordHash, err := bcrypt.GenerateFromPassword([]byte(newPassword), bcrypt.DefaultCost)
+	newPasswordHash, err := hash.HashPassword(newPassword)
 	if err != nil {
 		return nil, fmt.Errorf("hash new password: %w", err)
 	}
 
-	if err := s.userRepository.UpdatePassword(ctx, verification.UserID, string(newPasswordHash)); err != nil {
+	if err := s.userRepository.UpdatePassword(ctx, verification.UserID, newPasswordHash); err != nil {
 		return nil, fmt.Errorf("update password for userId %s: %w", verification.UserID, err)
 	}
 
