@@ -74,8 +74,14 @@ This is a Go web API built with Echo framework following clean architecture prin
 - Handlers return Echo errors; custom error handler formats validation errors
 
 ### Configuration
-- Environment-based configuration in `config/` package loaded from `.env` files
-- Uses Netflix/go-env for environment variable parsing
+- Configuration managed by Viper (`github.com/spf13/viper`) in `config/` package
+- Supports multiple formats: YAML, JSON, TOML, and environment variables
+- Config precedence: Environment variables > Config file > Defaults
+- Primary config file: `config.yaml` (optional - see `config.yaml.example` for reference)
+- Environment variables use uppercase with underscores (e.g., `SERVER_PORT`, `RESEND_API_KEY`)
+- Hierarchical naming: config fields use dot notation (`server.port` maps to `SERVER_PORT` env var)
+- Configuration loaded once at application startup
+- Struct fields use `mapstructure` tags for Viper unmarshal
 - Development routes available at `/dev/health` and `/dev/env` (only in dev mode)
 - Rate limiting and CORS configured per environment
 

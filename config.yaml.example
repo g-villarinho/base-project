@@ -1,0 +1,74 @@
+# Base Project Configuration
+# Copy this file to config.yaml and customize as needed
+# Environment variables take precedence over this file
+# Use uppercase with underscores for env vars: SERVER_PORT, RESEND_API_KEY, etc.
+
+# Application environment: development, staging, or production
+env: development
+
+# Show SQL logs in console (useful for debugging)
+showsqllogs: false
+
+# Server configuration
+server:
+  port: 5001
+  host: localhost
+
+# SQLite database configuration
+sqlite:
+  databasename: users.db
+  maxconn: 10
+  maxidle: 5
+  maxlifetime: 300s  # 5 minutes
+
+# Security and JWT configuration
+security:
+  accesstokenexpirationhours: 2h
+  issuer: users-api
+  audience: users-api
+
+# Rate limiting configuration
+ratelimit:
+  maxrequests: 100
+  window: 1m  # 1 minute
+
+# CORS configuration
+cors:
+  allowedorigins:
+    - "*"
+  allowedmethods:
+    - GET
+    - POST
+    - PUT
+    - DELETE
+    - OPTIONS
+  allowedheaders:
+    - Content-Type
+    - Authorization
+
+# Application URLs
+url:
+  apibaseurl: http://localhost:5001
+  appbaseurl: http://localhost:5173
+
+# Resend email service configuration
+# IMPORTANT: These values are required and must be set via environment variables
+resend:
+  apikey: ""  # Set via RESEND_API_KEY env var
+  domain: ""  # Set via RESEND_DOMAIN env var
+  timeout: 10s
+
+# Session configuration
+session:
+  secret: cjQ6A2CJ2V5g2StB6DPYA3rxfvOlKm3m  # Change this in production!
+  duration: 168h  # 7 days
+  tokensize: 32
+  cookiename: base-project:session
+  cookiesecure: false  # Set to true in production with HTTPS
+  cookiesamesite: strict  # strict, lax, or none
+
+# Private and public keys for JWT signing
+# These are typically loaded from files, not set here
+key:
+  privatekey: ""
+  publickey: ""
