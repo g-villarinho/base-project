@@ -18,18 +18,3 @@ test: ## Executa todos os testes
 
 mocks: ## Gera mock de services, repositories e commons
 	@mockery
-
-test-e2e-up: ## Sobe ambiente de testes E2E com docker-compose
-	@cd tests && docker-compose up -d
-
-test-e2e-down: ## Derruba ambiente de testes E2E
-	@cd tests && docker-compose down -v
-
-test-e2e-logs: ## Mostra logs do ambiente de testes E2E
-	@cd tests && docker-compose logs -f app
-
-run-e2e: test-e2e-up ## Roda testes E2E
-	@sleep 5
-	@go run tests/seed.go
-	@go test -v ./tests/e2e/...
-	@make test-e2e-down

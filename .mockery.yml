@@ -27,6 +27,7 @@ packages:
     config:
       all: true
       recursive: true
-  github.com/g-villarinho/base-project/internal/http:
-    interfaces:
-      CookieHandler:
+  github.com/g-villarinho/base-project/internal/server:
+    config:
+      all: true
+      recursive: true
