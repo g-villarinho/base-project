@@ -88,21 +88,17 @@ func (s *verificationService) ConsumeVerificationToken(ctx context.Context, toke
 }
 
 func (s *verificationService) GenerateVerificationURL(token string, flow domain.VerificationFlow) string {
-	var baseURL string
+	baseURL := s.URLConfig.APPBaseURL
 	var path string
 
 	switch flow {
 	case domain.VerificationEmailFlow:
-		baseURL = s.URLConfig.APIBaseURL
 		path = "/auth/verify-email"
 	case domain.ResetPasswordFlow:
-		baseURL = s.URLConfig.APPBaseURL
-		path = "/reset-password"
+		path = "/auth/reset-password"
 	case domain.ChangeEmailFlow:
-		baseURL = s.URLConfig.APIBaseURL
 		path = "/auth/change-email"
 	default:
-		baseURL = s.URLConfig.APIBaseURL
 		path = "/auth/verify"
 	}
 
@@ -185,3 +181,5 @@ func (s *verificationService) sendEmailAsync(user *domain.User, verificationURL 
 		}
 	}()
 }
+
+// ENDREGION
