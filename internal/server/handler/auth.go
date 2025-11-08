@@ -6,8 +6,8 @@ import (
 	"net/http"
 
 	"github.com/g-villarinho/base-project/internal/domain"
-	"github.com/g-villarinho/base-project/internal/model"
 	"github.com/g-villarinho/base-project/internal/server/echoctx"
+	"github.com/g-villarinho/base-project/internal/server/model"
 	"github.com/g-villarinho/base-project/internal/service"
 	"github.com/labstack/echo/v4"
 )
@@ -38,12 +38,12 @@ func (h *AuthHandler) RegisterAccount(c echo.Context) error {
 	var payload model.RegisterAccountPayload
 	if err := c.Bind(&payload); err != nil {
 		logger.Warn("bind payload", slog.Any("error", err))
-		return BadRequest(c, err)
+		return BadRequest(c, "Invalid request payload. please check the submitted data.")
 	}
 
 	if err := c.Validate(payload); err != nil {
 		logger.Info("Payload validation failed")
-		return HandleValidationError(c, payload, err)
+		return ValidationError(c, err)
 	}
 
 	err := h.authService.RegisterAccount(c.Request().Context(), payload.Name, payload.Email, payload.Password)
@@ -73,12 +73,12 @@ func (h *AuthHandler) VerifyEmail(c echo.Context) error {
 
 	if err := c.Bind(&payload); err != nil {
 		logger.Warn("bind payload", slog.Any("error", err))
-		return BadRequest(c, err)
+		return BadRequest(c, "Invalid request payload. please check the submitted data.")
 	}
 
 	if err := c.Validate(payload); err != nil {
 		logger.Info("payload validation failed")
-		return HandleValidationError(c, payload, err)
+		return ValidationError(c, err)
 	}
 
 	clientInfo := echoctx.GetClientInfo(c)
@@ -92,7 +92,7 @@ func (h *AuthHandler) VerifyEmail(c echo.Context) error {
 
 		if errors.Is(err, domain.ErrInvalidVerification) {
 			logger.Warn("invalid verification", slog.Any("error", err))
-			return BadRequest(c, err)
+			return BadRequest(c, "The verification token is invalid or has expired")
 		}
 
 		logger.Error("failed to verify email",
@@ -113,12 +113,12 @@ func (h *AuthHandler) Login(c echo.Context) error {
 	var payload model.LoginPayload
 	if err := c.Bind(&payload); err != nil {
 		logger.Warn("bind payload", slog.Any("error", err))
-		return BadRequest(c, err)
+		return BadRequest(c, "Invalid request payload. please check the submitted data.")
 	}
 
 	if err := c.Validate(payload); err != nil {
 		logger.Info("payload validation failed")
-		return HandleValidationError(c, payload, err)
+		return ValidationError(c, err)
 	}
 
 	clientInfo := echoctx.GetClientInfo(c)
@@ -151,6 +151,19 @@ func (h *AuthHandler) Login(c echo.Context) error {
 }
 
 func (h *AuthHandler) Logout(c echo.Context) error {
+	logger := h.logger.With(
+		slog.String("method", "Logout"),
+		slog.String("user_id", echoctx.GetUserID(c).String()),
+		slog.String("session_id", echoctx.GetSessionID(c).String()),
+	)
+
+	err := h.authService.Logout(c.Request().Context(), echoctx.GetUserID(c), echoctx.GetSessionID(c))
+	if err != nil {
+		logger.Error("failed to logout",
+			slog.Any("error", err))
+		return InternalServerError(c, "Failed to logout")
+	}
+
 	h.cookieHandler.Delete(c)
 	return c.NoContent(http.StatusOK)
 }
@@ -164,12 +177,12 @@ func (h *AuthHandler) UpdatePassword(c echo.Context) error {
 	var payload model.UpdatePasswordPayload
 	if err := c.Bind(&payload); err != nil {
 		logger.Warn("bind payload", slog.Any("error", err))
-		return BadRequest(c, err)
+		return BadRequest(c, "Invalid request payload. please check the submitted data.")
 	}
 
 	if err := c.Validate(payload); err != nil {
 		logger.Info("payload validation failed")
-		return HandleValidationError(c, payload, err)
+		return ValidationError(c, err)
 	}
 
 	err := h.authService.UpdatePassword(c.Request().Context(), echoctx.GetUserID(c), payload.CurrentPassword, payload.NewPassword)
@@ -201,12 +214,12 @@ func (h *AuthHandler) RequestResetPassword(c echo.Context) error {
 	var payload model.ForgotPasswordPayload
 	if err := c.Bind(&payload); err != nil {
 		logger.Warn("bind payload", slog.Any("error", err))
-		return BadRequest(c, err)
+		return BadRequest(c, "Invalid request payload. please check the submitted data.")
 	}
 
 	if err := c.Validate(payload); err != nil {
 		logger.Info("payload validation failed")
-		return HandleValidationError(c, payload, err)
+		return ValidationError(c, err)
 	}
 
 	if err := h.authService.RequestPasswordReset(c.Request().Context(), payload.Email); err != nil {
@@ -234,12 +247,12 @@ func (h *AuthHandler) ConfirmResetPassword(c echo.Context) error {
 
 	if err := c.Bind(&payload); err != nil {
 		logger.Warn("bind payload", slog.Any("error", err))
-		return BadRequest(c, err)
+		return BadRequest(c, "Invalid request payload. please check the submitted data.")
 	}
 
 	if err := c.Validate(payload); err != nil {
 		logger.Info("payload validation failed")
-		return HandleValidationError(c, payload, err)
+		return ValidationError(c, err)
 	}
 
 	session, err := h.authService.ResetPassword(c.Request().Context(), payload.Token, payload.NewPassword)
@@ -251,7 +264,7 @@ func (h *AuthHandler) ConfirmResetPassword(c echo.Context) error {
 
 		if errors.Is(err, domain.ErrInvalidVerification) {
 			logger.Warn("invalid verification", slog.Any("error", err))
-			return BadRequest(c, err)
+			return BadRequest(c, "The verification token is invalid or has expired")
 		}
 
 		logger.Error("failed to reset password",
@@ -273,12 +286,12 @@ func (h *AuthHandler) RequestChangeEmail(c echo.Context) error {
 	var payload model.RequestEmailChangePayload
 	if err := c.Bind(&payload); err != nil {
 		logger.Warn("bind payload", slog.Any("error", err))
-		return BadRequest(c, err)
+		return BadRequest(c, "Invalid request payload. please check the submitted data.")
 	}
 
 	if err := c.Validate(payload); err != nil {
 		logger.Info("payload validation failed")
-		return HandleValidationError(c, payload, err)
+		return ValidationError(c, err)
 	}
 
 	err := h.authService.RequestChangeEmail(c.Request().Context(), echoctx.GetUserID(c), payload.NewEmail)
@@ -289,19 +302,20 @@ func (h *AuthHandler) RequestChangeEmail(c echo.Context) error {
 		}
 
 		if errors.Is(err, domain.ErrUserNotFound) {
-			logger.Warn("user not found", slog.Any("error", err))
-			return NotFound(c, err.Error())
+			logger.Error("authenticated user not found in database",
+				slog.Any("error", err))
+			return InternalServerError(c, "An unexpected error occurred. Please try again.")
 		}
 
 		if errors.Is(err, domain.ErrEmailIsTheSame) {
 			logger.Warn("email is the same", slog.Any("error", err))
-			return BadRequest(c, err)
+			return BadRequest(c, "The new email address must be different from the current email address.")
 		}
 
 		logger.Error("failed to request email change",
 			slog.Any("error", err))
 
-		return InternalServerError(c, "Failed to request email change")
+		return InternalServerError(c, "An unexpected error occurred while trying to request email change. Please try again.")
 	}
 
 	return c.NoContent(http.StatusOK)
@@ -316,12 +330,12 @@ func (h *AuthHandler) ConfirmChangeEmail(c echo.Context) error {
 
 	if err := c.Bind(&payload); err != nil {
 		logger.Warn("bind payload", slog.Any("error", err))
-		return BadRequest(c, err)
+		return BadRequest(c, "Invalid request payload. please check the submitted data.")
 	}
 
 	if err := c.Validate(payload); err != nil {
 		logger.Info("payload validation failed")
-		return HandleValidationError(c, payload, err)
+		return ValidationError(c, err)
 	}
 
 	err := h.authService.ChangeEmail(c.Request().Context(), payload.Token)
@@ -333,15 +347,19 @@ func (h *AuthHandler) ConfirmChangeEmail(c echo.Context) error {
 
 		if errors.Is(err, domain.ErrInvalidVerification) {
 			logger.Warn("invalid verification", slog.Any("error", err))
-			return BadRequest(c, err)
+			return BadRequest(c, "The verification token is invalid or has expired.")
 		}
 
 		if errors.Is(err, domain.ErrUserNotFound) {
-			logger.Warn("user not found", slog.Any("error", err))
-			return NotFound(c, err.Error())
+			logger.Error("authenticated user not found in database",
+				slog.Any("error", err))
+			return InternalServerError(c, "An unexpected error occurred. Please try again.")
 		}
 
-		return InternalServerError(c, "Failed to change email")
+		logger.Error("failed to change email",
+			slog.Any("error", err))
+
+		return InternalServerError(c, "An unexpected error occurred while trying to change email. Please try again.")
 	}
 
 	return c.NoContent(http.StatusOK)

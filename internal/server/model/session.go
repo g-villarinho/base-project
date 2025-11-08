@@ -1,5 +1,5 @@
 package model
 
 type RevokeAllSessionsPayload struct {
-	IncludeCurrent bool `query:"include_current"`
+	IncludeCurrent bool `json:"include_current"`
 }

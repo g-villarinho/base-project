@@ -1,8 +1,8 @@
 package middleware
 
 import (
-	"github.com/g-villarinho/base-project/internal/model"
 	"github.com/g-villarinho/base-project/internal/server/echoctx"
+	"github.com/g-villarinho/base-project/internal/server/model"
 	"github.com/labstack/echo/v4"
 )
 

@@ -110,6 +110,7 @@ func (s *authService) Login(ctx context.Context, email, password, ipAddress, use
 		if err := s.verificationService.SendVerificationEmail(ctx, user, domain.VerificationEmailFlow); err != nil {
 			return nil, fmt.Errorf("send verification email: %w", err)
 		}
+
 		return nil, domain.ErrEmailNotVerified
 	}
 
@@ -154,6 +155,7 @@ func (s *authService) RequestChangeEmail(ctx context.Context, userID uuid.UUID, 
 		if errors.Is(err, repository.ErrUserNotFound) {
 			return domain.ErrUserNotFound
 		}
+
 		return fmt.Errorf("find user by id: %w", err)
 	}
 

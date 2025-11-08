@@ -39,12 +39,12 @@ func NotFound(c echo.Context, message string) error {
 }
 
 // BadRequest returns a 400 Bad Request error response with details from the provided error.
-func BadRequest(c echo.Context, err error) error {
+func BadRequest(c echo.Context, message string) error {
 	problem := np.NewProblem(
 		"https://developer.mozilla.org/pt-BR/docs/Web/HTTP/Reference/Status/400",
 		"Bad Request",
 		http.StatusBadRequest,
-		np.WithDetail(err.Error()),
+		np.WithDetail(message),
 		np.WithInstance(c.Request().URL.Path),
 	)
 
@@ -84,18 +84,26 @@ func ConflictError(c echo.Context, message string) error {
 }
 
 // ValidationError returns a 422 Unprocessable Entity error response with validation errors.
-func ValidationError(c echo.Context, validationErrors map[string]string) error {
-	problem := np.NewProblem(
-		"https://developer.mozilla.org/pt-BR/docs/Web/HTTP/Reference/Status/422",
-		"Your request is not valid.",
-		http.StatusUnprocessableEntity,
-		np.WithInstance(c.Request().URL.Path),
-		np.WithExtra("errors", validationErrors),
-	)
+func ValidationError(c echo.Context, err error) error {
+	var validationErrs validator.ValidationErrors
+	if errors.As(err, &validationErrs) {
+		lang := c.Request().Header.Get("Accept-Language")
+		validationErrors := validation.FormatValidationErrors(err, lang)
 
-	c.Response().Header().Set("Content-Type", np.ContentTypeProblemJSON)
-	c.Response().WriteHeader(problem.Status)
-	return c.JSON(problem.Status, problem)
+		problem := np.NewProblem(
+			"https://developer.mozilla.org/pt-BR/docs/Web/HTTP/Reference/Status/422",
+			"Your request is not valid.",
+			http.StatusUnprocessableEntity,
+			np.WithInstance(c.Request().URL.Path),
+			np.WithExtra("errors", validationErrors),
+		)
+
+		c.Response().Header().Set("Content-Type", np.ContentTypeProblemJSON)
+		c.Response().WriteHeader(problem.Status)
+		return c.JSON(problem.Status, problem)
+	}
+
+	return BadRequest(c, err.Error())
 }
 
 func Forbidden(c echo.Context, message string) error {
@@ -125,17 +133,4 @@ func SetupRequired(c echo.Context) error {
 	c.Response().Header().Set("Content-Type", np.ContentTypeProblemJSON)
 	c.Response().WriteHeader(problem.Status)
 	return c.JSON(problem.Status, problem)
-}
-
-// HandleValidationError processes validation errors and returns an appropriate error response.
-// This function replaces what the global error handler used to do for validation errors.
-func HandleValidationError(c echo.Context, obj any, err error) error {
-	var validationErrs validator.ValidationErrors
-	if errors.As(err, &validationErrs) {
-		lang := "en"
-		validationErrors := validation.FormatValidationErrors(err, lang)
-		return ValidationError(c, validationErrors)
-	}
-
-	return BadRequest(c, err)
 }
