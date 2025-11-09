@@ -97,10 +97,6 @@ func (r *verificationRepository) DeleteByUserIDAndFlow(ctx context.Context, user
 		return fmt.Errorf("delete by user ID and flow: %w", result.Error)
 	}
 
-	if result.RowsAffected == 0 {
-		return ErrVerificationNotFound
-	}
-
 	return nil
 }
 

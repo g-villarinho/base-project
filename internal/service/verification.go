@@ -136,7 +136,7 @@ func (s *verificationService) SendVerificationEmail(ctx context.Context, user *d
 
 	newVerification, err := s.CreateVerification(ctx, user.ID, flow, "")
 	if err != nil {
-		return fmt.Errorf(": %w", err)
+		return fmt.Errorf("create new verification: %w", err)
 	}
 
 	verificationURL := s.GenerateVerificationURL(newVerification.Token, newVerification.Flow)
