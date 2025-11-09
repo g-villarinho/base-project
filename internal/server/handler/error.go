@@ -25,11 +25,12 @@ func InternalServerError(c echo.Context, title string) error {
 }
 
 // NotFound returns a 404 Not Found error response with the provided message.
-func NotFound(c echo.Context, message string) error {
+func NotFound(c echo.Context, code, message string) error {
 	problem := np.NewProblem(
 		"https://developer.mozilla.org/pt-BR/docs/Web/HTTP/Reference/Status/404",
 		message,
 		http.StatusNotFound,
+		withCode(code),
 		np.WithInstance(c.Request().URL.Path),
 	)
 
@@ -39,12 +40,13 @@ func NotFound(c echo.Context, message string) error {
 }
 
 // BadRequest returns a 400 Bad Request error response with details from the provided error.
-func BadRequest(c echo.Context, message string) error {
+func BadRequest(c echo.Context, code, message string) error {
 	problem := np.NewProblem(
 		"https://developer.mozilla.org/pt-BR/docs/Web/HTTP/Reference/Status/400",
 		"Bad Request",
 		http.StatusBadRequest,
 		np.WithDetail(message),
+		withCode(code),
 		np.WithInstance(c.Request().URL.Path),
 	)
 
@@ -54,12 +56,13 @@ func BadRequest(c echo.Context, message string) error {
 }
 
 // Unauthorized returns a 401 Unauthorized error response with the provided message.
-func Unauthorized(c echo.Context, message string) error {
+func Unauthorized(c echo.Context, code, message string) error {
 	problem := np.NewProblem(
 		"https://developer.mozilla.org/pt-BR/docs/Web/HTTP/Reference/Status/401",
 		"Unauthorized",
 		http.StatusUnauthorized,
 		np.WithDetail(message),
+		withCode(code),
 		np.WithInstance(c.Request().URL.Path),
 	)
 
@@ -69,12 +72,14 @@ func Unauthorized(c echo.Context, message string) error {
 }
 
 // ConflictError returns a 409 Conflict error response with the provided message.
-func ConflictError(c echo.Context, message string) error {
+func ConflictError(c echo.Context, code, message string) error {
 	problem := np.NewProblem(
 		"https://developer.mozilla.org/pt-BR/docs/Web/HTTP/Reference/Status/409",
 		"Conflict",
 		http.StatusConflict,
+		withCode(code),
 		np.WithDetail(message),
+
 		np.WithInstance(c.Request().URL.Path),
 	)
 
@@ -103,14 +108,15 @@ func ValidationError(c echo.Context, err error) error {
 		return c.JSON(problem.Status, problem)
 	}
 
-	return BadRequest(c, err.Error())
+	return BadRequest(c, "VALIDATION_ERROR", err.Error())
 }
 
-func Forbidden(c echo.Context, message string) error {
+func Forbidden(c echo.Context, code, message string) error {
 	problem := np.NewProblem(
 		"https://developer.mozilla.org/pt-BR/docs/Web/HTTP/Reference/Status/403",
 		"Forbidden",
 		http.StatusForbidden,
+		withCode(code),
 		np.WithDetail(message),
 		np.WithInstance(c.Request().URL.Path),
 	)
@@ -120,17 +126,20 @@ func Forbidden(c echo.Context, message string) error {
 	return c.JSON(problem.Status, problem)
 }
 
-// SetupRequired returns a 428 Precondition Required error response indicating application setup is needed.
-func SetupRequired(c echo.Context) error {
+func InvalidBind(c echo.Context) error {
 	problem := np.NewProblem(
-		"https://developer.mozilla.org/pt-BR/docs/Web/HTTP/Reference/Status/428",
-		"Setup Required",
-		http.StatusPreconditionRequired,
-		np.WithDetail("Application setup is required before accessing this resource"),
+		"https://developer.mozilla.org/pt-BR/docs/Web/HTTP/Reference/Status/400",
+		"Invalid Bind",
+		http.StatusBadRequest,
+		np.WithDetail("Invalid request payload. please check the submitted data."),
 		np.WithInstance(c.Request().URL.Path),
 	)
 
 	c.Response().Header().Set("Content-Type", np.ContentTypeProblemJSON)
 	c.Response().WriteHeader(problem.Status)
 	return c.JSON(problem.Status, problem)
+}
+
+func withCode(code string) np.Option {
+	return np.WithExtra("code", code)
 }

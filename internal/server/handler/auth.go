@@ -38,7 +38,7 @@ func (h *AuthHandler) RegisterAccount(c echo.Context) error {
 	var payload model.RegisterAccountPayload
 	if err := c.Bind(&payload); err != nil {
 		logger.Warn("bind payload", slog.Any("error", err))
-		return BadRequest(c, "Invalid request payload. please check the submitted data.")
+		return InvalidBind(c)
 	}
 
 	if err := c.Validate(payload); err != nil {
@@ -50,7 +50,7 @@ func (h *AuthHandler) RegisterAccount(c echo.Context) error {
 	if err != nil {
 		if errors.Is(err, domain.ErrEmailAlreadyExists) {
 			logger.Warn("Registration conflict: email already exists")
-			return ConflictError(c, "The email address provided is not available")
+			return ConflictError(c, "EMAIL_NOT_AVAILABLE", "The email address provided is not available")
 		}
 
 		logger.Error(
@@ -73,7 +73,7 @@ func (h *AuthHandler) VerifyEmail(c echo.Context) error {
 
 	if err := c.Bind(&payload); err != nil {
 		logger.Warn("bind payload", slog.Any("error", err))
-		return BadRequest(c, "Invalid request payload. please check the submitted data.")
+		return InvalidBind(c)
 	}
 
 	if err := c.Validate(payload); err != nil {
@@ -87,12 +87,12 @@ func (h *AuthHandler) VerifyEmail(c echo.Context) error {
 	if err != nil {
 		if errors.Is(err, domain.ErrVerificationNotFound) {
 			logger.Warn("verification not found", slog.Any("error", err))
-			return NotFound(c, "Verification token not found")
+			return NotFound(c, "VERIFICATION_NOT_FOUND", "Verification token not found")
 		}
 
 		if errors.Is(err, domain.ErrInvalidVerification) {
 			logger.Warn("invalid verification", slog.Any("error", err))
-			return BadRequest(c, "The verification token is invalid or has expired")
+			return BadRequest(c, "INVALID_TOKEN", "The verification token is invalid or has expired")
 		}
 
 		logger.Error("failed to verify email",
@@ -113,7 +113,7 @@ func (h *AuthHandler) Login(c echo.Context) error {
 	var payload model.LoginPayload
 	if err := c.Bind(&payload); err != nil {
 		logger.Warn("bind payload", slog.Any("error", err))
-		return BadRequest(c, "Invalid request payload. please check the submitted data.")
+		return InvalidBind(c)
 	}
 
 	if err := c.Validate(payload); err != nil {
@@ -127,17 +127,17 @@ func (h *AuthHandler) Login(c echo.Context) error {
 	if err != nil {
 		if errors.Is(err, domain.ErrInvalidCredentials) {
 			logger.Warn("invalid credentials", slog.Any("error", err))
-			return Unauthorized(c, "Invalid email or password. Please try again.")
+			return Unauthorized(c, "INVALID_CREDENTIALS", "Invalid email or password. Please try again.")
 		}
 
 		if errors.Is(err, domain.ErrUserBlocked) {
 			logger.Warn("user account is blocked", slog.Any("error", err))
-			return Forbidden(c, "User account is blocked")
+			return Forbidden(c, "USER_BLOCKED", "User account is blocked")
 		}
 
 		if errors.Is(err, domain.ErrEmailNotVerified) {
 			logger.Warn("email address is not verified", slog.Any("error", err))
-			return ConflictError(c, "Email address is not verified")
+			return ConflictError(c, "EMAIL_NOT_VERIFIED", "Email address is not verified.")
 		}
 
 		logger.Error("failed to login",
@@ -177,7 +177,7 @@ func (h *AuthHandler) UpdatePassword(c echo.Context) error {
 	var payload model.UpdatePasswordPayload
 	if err := c.Bind(&payload); err != nil {
 		logger.Warn("bind payload", slog.Any("error", err))
-		return BadRequest(c, "Invalid request payload. please check the submitted data.")
+		return InvalidBind(c)
 	}
 
 	if err := c.Validate(payload); err != nil {
@@ -188,13 +188,14 @@ func (h *AuthHandler) UpdatePassword(c echo.Context) error {
 	err := h.authService.UpdatePassword(c.Request().Context(), echoctx.GetUserID(c), payload.CurrentPassword, payload.NewPassword)
 	if err != nil {
 		if errors.Is(err, domain.ErrUserNotFound) {
-			logger.Warn("user not found", slog.Any("error", err))
-			return NotFound(c, "Cannot find user to perform password update")
+			logger.Error("authenticated user not found in database",
+				slog.Any("error", err))
+			return InternalServerError(c, "An unexpected error occurred. Please try again.")
 		}
 
 		if errors.Is(err, domain.ErrPasswordMismatch) {
 			logger.Warn("password mismatch", slog.Any("error", err))
-			return Unauthorized(c, "Current password is incorrect")
+			return BadRequest(c, "PASSWORD_MISMATCH", "Current password is incorrect")
 		}
 
 		logger.Error("failed to update password",
@@ -214,7 +215,7 @@ func (h *AuthHandler) RequestResetPassword(c echo.Context) error {
 	var payload model.ForgotPasswordPayload
 	if err := c.Bind(&payload); err != nil {
 		logger.Warn("bind payload", slog.Any("error", err))
-		return BadRequest(c, "Invalid request payload. please check the submitted data.")
+		return InvalidBind(c)
 	}
 
 	if err := c.Validate(payload); err != nil {
@@ -247,7 +248,7 @@ func (h *AuthHandler) ConfirmResetPassword(c echo.Context) error {
 
 	if err := c.Bind(&payload); err != nil {
 		logger.Warn("bind payload", slog.Any("error", err))
-		return BadRequest(c, "Invalid request payload. please check the submitted data.")
+		return InvalidBind(c)
 	}
 
 	if err := c.Validate(payload); err != nil {
@@ -259,12 +260,12 @@ func (h *AuthHandler) ConfirmResetPassword(c echo.Context) error {
 	if err != nil {
 		if errors.Is(err, domain.ErrVerificationNotFound) {
 			logger.Warn("verification not found", slog.Any("error", err))
-			return NotFound(c, "Verification token not found")
+			return NotFound(c, "VERIFICATION_NOT_FOUND", "Verification token not found")
 		}
 
 		if errors.Is(err, domain.ErrInvalidVerification) {
 			logger.Warn("invalid verification", slog.Any("error", err))
-			return BadRequest(c, "The verification token is invalid or has expired")
+			return BadRequest(c, "INVALID_TOKEN", "The verification token is invalid or has expired")
 		}
 
 		logger.Error("failed to reset password",
@@ -286,7 +287,7 @@ func (h *AuthHandler) RequestChangeEmail(c echo.Context) error {
 	var payload model.RequestEmailChangePayload
 	if err := c.Bind(&payload); err != nil {
 		logger.Warn("bind payload", slog.Any("error", err))
-		return BadRequest(c, "Invalid request payload. please check the submitted data.")
+		return InvalidBind(c)
 	}
 
 	if err := c.Validate(payload); err != nil {
@@ -298,7 +299,7 @@ func (h *AuthHandler) RequestChangeEmail(c echo.Context) error {
 	if err != nil {
 		if errors.Is(err, domain.ErrEmailInUse) {
 			logger.Warn("email in use", slog.Any("error", err))
-			return ConflictError(c, err.Error())
+			return ConflictError(c, "EMAIL_IN_USE", "The email address is already in use.")
 		}
 
 		if errors.Is(err, domain.ErrUserNotFound) {
@@ -309,7 +310,7 @@ func (h *AuthHandler) RequestChangeEmail(c echo.Context) error {
 
 		if errors.Is(err, domain.ErrEmailIsTheSame) {
 			logger.Warn("email is the same", slog.Any("error", err))
-			return BadRequest(c, "The new email address must be different from the current email address.")
+			return BadRequest(c, "EMAIL_IS_SAME", "The new email address must be different from the current email address.")
 		}
 
 		logger.Error("failed to request email change",
@@ -330,7 +331,7 @@ func (h *AuthHandler) ConfirmChangeEmail(c echo.Context) error {
 
 	if err := c.Bind(&payload); err != nil {
 		logger.Warn("bind payload", slog.Any("error", err))
-		return BadRequest(c, "Invalid request payload. please check the submitted data.")
+		return InvalidBind(c)
 	}
 
 	if err := c.Validate(payload); err != nil {
@@ -342,12 +343,12 @@ func (h *AuthHandler) ConfirmChangeEmail(c echo.Context) error {
 	if err != nil {
 		if errors.Is(err, domain.ErrVerificationNotFound) {
 			logger.Warn("verification not found", slog.Any("error", err))
-			return NotFound(c, "Verification token not found")
+			return NotFound(c, "EMAIL_VERIFICATION_NOT_FOUND", "Verification token not found")
 		}
 
 		if errors.Is(err, domain.ErrInvalidVerification) {
 			logger.Warn("invalid verification", slog.Any("error", err))
-			return BadRequest(c, "The verification token is invalid or has expired.")
+			return BadRequest(c, "INVALID_TOKEN", "The verification token is invalid or has expired.")
 		}
 
 		if errors.Is(err, domain.ErrUserNotFound) {

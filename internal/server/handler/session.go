@@ -41,7 +41,7 @@ func (h *SessionHandler) RevokeSession(c echo.Context) error {
 	sessionId, err := uuid.Parse(c.Param("session_id"))
 	if err != nil {
 		logger.Warn("invalid session_id param", slog.String("param", c.Param("session_id")))
-		return BadRequest(c, "invalid session_id parameter")
+		return BadRequest(c, "INVALID_SESSION_ID", "invalid session_id parameter")
 	}
 
 	if err := h.sessionService.DeleteSessionByID(c.Request().Context(), echoctx.GetUserID(c), sessionId); err != nil {
@@ -73,7 +73,7 @@ func (h *SessionHandler) RevokeAllSessions(c echo.Context) error {
 	var payload model.RevokeAllSessionsPayload
 	if err := c.Bind(&payload); err != nil {
 		logger.Warn("bind payload", slog.Any("error", err))
-		return BadRequest(c, "Invalid request payload. please check the submitted data.")
+		return InvalidBind(c)
 	}
 
 	var currentSessionId *uuid.UUID
