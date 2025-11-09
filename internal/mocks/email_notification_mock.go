@@ -38,6 +38,81 @@ func (_m *EmailNotificationMock) EXPECT() *EmailNotificationMock_Expecter {
 	return &EmailNotificationMock_Expecter{mock: &_m.Mock}
 }
 
+// SendChangeEmailNotification provides a mock function for the type EmailNotificationMock
+func (_mock *EmailNotificationMock) SendChangeEmailNotification(ctx context.Context, userName string, newEmail string, confirmationLink string, userEmail string) error {
+	ret := _mock.Called(ctx, userName, newEmail, confirmationLink, userEmail)
+
+	if len(ret) == 0 {
+		panic("no return value specified for SendChangeEmailNotification")
+	}
+
+	var r0 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, string, string) error); ok {
+		r0 = returnFunc(ctx, userName, newEmail, confirmationLink, userEmail)
+	} else {
+		r0 = ret.Error(0)
+	}
+	return r0
+}
+
+// EmailNotificationMock_SendChangeEmailNotification_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'SendChangeEmailNotification'
+type EmailNotificationMock_SendChangeEmailNotification_Call struct {
+	*mock.Call
+}
+
+// SendChangeEmailNotification is a helper method to define mock.On call
+//   - ctx context.Context
+//   - userName string
+//   - newEmail string
+//   - confirmationLink string
+//   - userEmail string
+func (_e *EmailNotificationMock_Expecter) SendChangeEmailNotification(ctx interface{}, userName interface{}, newEmail interface{}, confirmationLink interface{}, userEmail interface{}) *EmailNotificationMock_SendChangeEmailNotification_Call {
+	return &EmailNotificationMock_SendChangeEmailNotification_Call{Call: _e.mock.On("SendChangeEmailNotification", ctx, userName, newEmail, confirmationLink, userEmail)}
+}
+
+func (_c *EmailNotificationMock_SendChangeEmailNotification_Call) Run(run func(ctx context.Context, userName string, newEmail string, confirmationLink string, userEmail string)) *EmailNotificationMock_SendChangeEmailNotification_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		var arg2 string
+		if args[2] != nil {
+			arg2 = args[2].(string)
+		}
+		var arg3 string
+		if args[3] != nil {
+			arg3 = args[3].(string)
+		}
+		var arg4 string
+		if args[4] != nil {
+			arg4 = args[4].(string)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+			arg3,
+			arg4,
+		)
+	})
+	return _c
+}
+
+func (_c *EmailNotificationMock_SendChangeEmailNotification_Call) Return(err error) *EmailNotificationMock_SendChangeEmailNotification_Call {
+	_c.Call.Return(err)
+	return _c
+}
+
+func (_c *EmailNotificationMock_SendChangeEmailNotification_Call) RunAndReturn(run func(ctx context.Context, userName string, newEmail string, confirmationLink string, userEmail string) error) *EmailNotificationMock_SendChangeEmailNotification_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // SendResetPasswordEmail provides a mock function for the type EmailNotificationMock
 func (_mock *EmailNotificationMock) SendResetPasswordEmail(ctx context.Context, userName string, resetLink string, userEmail string) error {
 	ret := _mock.Called(ctx, userName, resetLink, userEmail)
