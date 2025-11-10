@@ -54,6 +54,7 @@ func TestRegisterAccount(t *testing.T) {
 		var response map[string]any
 		err := json.Unmarshal(rec.Body.Bytes(), &response)
 		assert.NoError(t, err)
+		assert.Equal(t, response["code"], "EMAIL_NOT_AVAILABLE")
 
 		assert.NotNil(t, response)
 	})
@@ -68,6 +69,10 @@ func TestRegisterAccount(t *testing.T) {
 		rec := httptest.NewRecorder()
 		ts.Echo.ServeHTTP(rec, req)
 
+		var response map[string]any
+		err := json.Unmarshal(rec.Body.Bytes(), &response)
+		assert.NoError(t, err)
+		assert.Equal(t, response["code"], "INVALID_JSON_PAYLOAD")
 		assert.Equal(t, http.StatusBadRequest, rec.Code)
 	})
 
@@ -88,6 +93,7 @@ func TestRegisterAccount(t *testing.T) {
 		err := json.Unmarshal(rec.Body.Bytes(), &response)
 		assert.NoError(t, err)
 		assert.NotNil(t, response["errors"])
+		assert.Equal(t, response["code"], "VALIDATION_ERROR")
 	})
 
 	t.Run("should return validation error when email is missing", func(t *testing.T) {
@@ -107,6 +113,7 @@ func TestRegisterAccount(t *testing.T) {
 		err := json.Unmarshal(rec.Body.Bytes(), &response)
 		assert.NoError(t, err)
 		assert.NotNil(t, response["errors"])
+		assert.Equal(t, response["code"], "VALIDATION_ERROR")
 	})
 
 	t.Run("should return validation error when password is missing", func(t *testing.T) {
@@ -126,6 +133,7 @@ func TestRegisterAccount(t *testing.T) {
 		err := json.Unmarshal(rec.Body.Bytes(), &response)
 		assert.NoError(t, err)
 		assert.NotNil(t, response["errors"])
+		assert.Equal(t, response["code"], "VALIDATION_ERROR")
 	})
 
 	t.Run("should return validation error for invalid email format", func(t *testing.T) {
@@ -146,6 +154,7 @@ func TestRegisterAccount(t *testing.T) {
 		err := json.Unmarshal(rec.Body.Bytes(), &response)
 		assert.NoError(t, err)
 		assert.NotNil(t, response["errors"])
+		assert.Equal(t, response["code"], "VALIDATION_ERROR")
 	})
 
 	t.Run("should return validation error when password is too short", func(t *testing.T) {
@@ -166,6 +175,7 @@ func TestRegisterAccount(t *testing.T) {
 		err := json.Unmarshal(rec.Body.Bytes(), &response)
 		assert.NoError(t, err)
 		assert.NotNil(t, response["errors"])
+		assert.Equal(t, response["code"], "VALIDATION_ERROR")
 	})
 }
 
@@ -225,7 +235,7 @@ func TestVerifyEmail(t *testing.T) {
 		var response map[string]any
 		err := json.Unmarshal(rec.Body.Bytes(), &response)
 		assert.NoError(t, err)
-		assert.Contains(t, response["title"], "Verification token not found")
+		assert.Contains(t, response["code"], "VERIFICATION_NOT_FOUND")
 	})
 
 	t.Run("should return bad request for expired token", func(t *testing.T) {
@@ -261,14 +271,13 @@ func TestVerifyEmail(t *testing.T) {
 		var response map[string]any
 		err := json.Unmarshal(rec.Body.Bytes(), &response)
 		assert.NoError(t, err)
-		assert.Contains(t, response["title"], "The verification token is invalid or has expired")
+		assert.Contains(t, response["code"], "INVALID_TOKEN")
 	})
 
 	t.Run("should return not found for already used token", func(t *testing.T) {
 		ts := setupTestServer(t)
 		defer teardownTestServer(t, ts)
 
-		// Create a user with pending status
 		user := domain.User{
 			ID:           uuid.New(),
 			Name:         "Test User",
@@ -280,7 +289,6 @@ func TestVerifyEmail(t *testing.T) {
 		result := ts.DB.Create(&user)
 		assert.NoError(t, result.Error)
 
-		// Create a verification token
 		verification := domain.Verification{
 			ID:        uuid.New(),
 			Flow:      domain.VerificationEmailFlow,
@@ -292,7 +300,6 @@ func TestVerifyEmail(t *testing.T) {
 		result = ts.DB.Create(&verification)
 		assert.NoError(t, result.Error)
 
-		// Delete the token to simulate it being used
 		result = ts.DB.Delete(&verification)
 		assert.NoError(t, result.Error)
 
@@ -303,7 +310,7 @@ func TestVerifyEmail(t *testing.T) {
 		var response map[string]any
 		err := json.Unmarshal(rec.Body.Bytes(), &response)
 		assert.NoError(t, err)
-		assert.Contains(t, response["message"], "Verification token not found")
+		assert.Contains(t, response["code"], "VERIFICATION_NOT_FOUND")
 	})
 
 	t.Run("should return validation error when token is missing", func(t *testing.T) {
@@ -355,6 +362,216 @@ func TestVerifyEmail(t *testing.T) {
 		var response map[string]any
 		err := json.Unmarshal(rec.Body.Bytes(), &response)
 		assert.NoError(t, err)
-		assert.Contains(t, response["message"], "invalid or has expired")
+		assert.Contains(t, response["code"], "INVALID_TOKEN")
+	})
+}
+
+func TestLogin(t *testing.T) {
+	t.Run("should set session token in cookie when login is successfully", func(t *testing.T) {
+		ts := setupTestServer(t)
+		defer teardownTestServer(t, ts)
+
+		createTestUser(t, ts, "marcelo@teste.com", "teste@123")
+
+		payload := map[string]any{
+			"email":    "marcelo@teste.com",
+			"password": "teste@123",
+		}
+
+		rec := makeRequest(t, ts, http.MethodPost, "/auth/login", payload)
+
+		assert.Equal(t, http.StatusOK, rec.Code)
+
+		cookies := rec.Result().Cookies()
+		assert.NotEmpty(t, cookies)
+
+		var sessionCookie *http.Cookie
+		for _, cookie := range cookies {
+			if cookie.Name == CookieSessionName {
+				sessionCookie = cookie
+				break
+			}
+		}
+
+		assert.NotNil(t, sessionCookie)
+	})
+
+	t.Run("should return status 409 and code EMAIL_NOT_VERIFIED when trying to login with unverified email", func(t *testing.T) {
+		ts := setupTestServer(t)
+		defer teardownTestServer(t, ts)
+
+		user := createTestUser(t, ts, "marcelo@teste.com", "teste@123")
+
+		updates := map[string]any{
+			"email_confirmed_at": nil,
+		}
+
+		result := ts.DB.Model(&user).Updates(updates)
+		assert.NoError(t, result.Error)
+
+		loginPayload := map[string]any{
+			"email":    "marcelo@teste.com",
+			"password": "teste@123",
+		}
+
+		rec := makeRequest(t, ts, http.MethodPost, "/auth/login", loginPayload)
+
+		assert.Equal(t, http.StatusConflict, rec.Code)
+		assert.Contains(t, rec.Body.String(), "EMAIL_NOT_VERIFIED")
+	})
+
+	t.Run("should return status 401 and code INVALID_CREDENTIALS when login with wrong password", func(t *testing.T) {
+		ts := setupTestServer(t)
+		defer teardownTestServer(t, ts)
+
+		createTestUser(t, ts, "marcelo@teste.com", "teste@123")
+
+		loginPayload := map[string]any{
+			"email":    "marcelo@teste.com",
+			"password": "wrongpassword",
+		}
+
+		rec := makeRequest(t, ts, http.MethodPost, "/auth/login", loginPayload)
+
+		assert.Equal(t, http.StatusUnauthorized, rec.Code)
+		assert.Contains(t, rec.Body.String(), "INVALID_CREDENTIALS")
+	})
+
+	t.Run("should return status 401 and code INVALID_CREDENTIALS when login with email not found", func(t *testing.T) {
+		ts := setupTestServer(t)
+		defer teardownTestServer(t, ts)
+
+		loginPayload := map[string]any{
+			"email":    "marcelo@teste.com",
+			"password": "teste@123",
+		}
+
+		rec := makeRequest(t, ts, http.MethodPost, "/auth/login", loginPayload)
+
+		assert.Equal(t, http.StatusUnauthorized, rec.Code)
+		assert.Contains(t, rec.Body.String(), "INVALID_CREDENTIALS")
+	})
+
+	t.Run("should return status 403 and code USER_BLOCKED when credencials is valid but user status is blocked", func(t *testing.T) {
+		ts := setupTestServer(t)
+		defer teardownTestServer(t, ts)
+
+		user := createTestUser(t, ts, "marcelo@teste.com", "teste@123")
+
+		updates := map[string]any{
+			"status": domain.BlockedStatus,
+		}
+
+		result := ts.DB.Model(&user).Updates(updates)
+		assert.NoError(t, result.Error)
+
+		loginPayload := map[string]any{
+			"email":    "marcelo@teste.com",
+			"password": "teste@123",
+		}
+
+		rec := makeRequest(t, ts, http.MethodPost, "/auth/login", loginPayload)
+
+		assert.Equal(t, http.StatusForbidden, rec.Code)
+		assert.Contains(t, rec.Body.String(), "USER_BLOCKED")
+	})
+
+	t.Run("should return validation error when email is missing", func(t *testing.T) {
+		ts := setupTestServer(t)
+		defer teardownTestServer(t, ts)
+
+		payload := map[string]any{
+			"password": "securepassword123",
+		}
+
+		rec := makeRequest(t, ts, http.MethodPost, "/auth/login", payload)
+
+		assert.Equal(t, http.StatusUnprocessableEntity, rec.Code)
+
+		var response map[string]any
+		err := json.Unmarshal(rec.Body.Bytes(), &response)
+		assert.NoError(t, err)
+		assert.NotNil(t, response["errors"])
+	})
+
+	t.Run("should return validation error when password is missing", func(t *testing.T) {
+		ts := setupTestServer(t)
+		defer teardownTestServer(t, ts)
+
+		payload := map[string]any{
+			"email": "marcelo@teste.com",
+		}
+
+		rec := makeRequest(t, ts, http.MethodPost, "/auth/login", payload)
+
+		assert.Equal(t, http.StatusUnprocessableEntity, rec.Code)
+
+		var response map[string]any
+		err := json.Unmarshal(rec.Body.Bytes(), &response)
+		assert.NoError(t, err)
+		assert.NotNil(t, response["errors"])
+	})
+
+	t.Run("should return validation error for invalid email format", func(t *testing.T) {
+		ts := setupTestServer(t)
+		defer teardownTestServer(t, ts)
+
+		payload := map[string]any{
+			"email":    "invalid-email",
+			"password": "securepassword123",
+		}
+
+		rec := makeRequest(t, ts, http.MethodPost, "/auth/login", payload)
+
+		assert.Equal(t, http.StatusUnprocessableEntity, rec.Code)
+
+		var response map[string]any
+		err := json.Unmarshal(rec.Body.Bytes(), &response)
+		assert.NoError(t, err)
+		assert.NotNil(t, response["errors"])
+	})
+
+	t.Run("should return status 400 and code INVALID_JSON_PAYLOAD when receive a invalid json payload", func(t *testing.T) {
+		ts := setupTestServer(t)
+		defer teardownTestServer(t, ts)
+
+		req := httptest.NewRequest(http.MethodPost, "/auth/login", bytes.NewBufferString("invalid json"))
+		req.Header.Set("Content-Type", "application/json")
+
+		rec := httptest.NewRecorder()
+		ts.Echo.ServeHTTP(rec, req)
+
+		var response map[string]any
+		err := json.Unmarshal(rec.Body.Bytes(), &response)
+		assert.NoError(t, err)
+		assert.Equal(t, response["code"], "INVALID_JSON_PAYLOAD")
+		assert.Equal(t, http.StatusBadRequest, rec.Code)
+	})
+}
+
+func TestLogout(t *testing.T) {
+	t.Run("should successfully logout and invalidate the session", func(t *testing.T) {
+		ts := setupTestServer(t)
+		defer teardownTestServer(t, ts)
+
+		user := createTestUser(t, ts, "marcelo@teste.com", "teste@123")
+
+		session := createTestSession(t, ts, user.ID)
+
+		req := httptest.NewRequest(http.MethodPost, "/auth/logout", nil)
+
+		req.AddCookie(&http.Cookie{
+			Name:  CookieSessionName,
+			Value: "tste",
+		})
+
+		rec := httptest.NewRecorder()
+		ts.Echo.ServeHTTP(rec, req)
+
+		assert.Equal(t, http.StatusOK, rec.Code)
+
+		var deletedSession domain.Session
+		result := ts.DB.Where("id = ?", session.ID).First(&deletedSession)
+		assert.Error(t, result.Error)
 	})
 }

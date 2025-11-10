@@ -10,6 +10,7 @@ import (
 	"github.com/g-villarinho/base-project/internal/server/middleware"
 	"github.com/g-villarinho/base-project/internal/service"
 	"github.com/g-villarinho/base-project/logger"
+	"github.com/g-villarinho/base-project/pkg/crypto"
 	"github.com/g-villarinho/base-project/pkg/injector"
 	"go.uber.org/dig"
 )
@@ -21,6 +22,7 @@ func ProvideDependencies() *dig.Container {
 	injector.Provide(container, config.NewConfig)
 	injector.Provide(container, sqlite.NewDbConnection)
 	injector.Provide(container, logger.NewLogger)
+	injector.Provide(container, NewSessionSigner, dig.Name("sessionSigner"))
 
 	// Client
 	injector.Provide(container, client.NewResendClient)
@@ -52,4 +54,8 @@ func ProvideDependencies() *dig.Container {
 	injector.Provide(container, NewServer)
 
 	return container
+}
+
+func NewSessionSigner(cfg *config.Config) crypto.Signer {
+	return crypto.NewSigner(cfg.Session.Secret)
 }

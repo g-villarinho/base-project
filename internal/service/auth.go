@@ -95,6 +95,7 @@ func (s *authService) Login(ctx context.Context, email, password, ipAddress, use
 		if errors.Is(err, repository.ErrUserNotFound) {
 			return nil, domain.ErrInvalidCredentials
 		}
+
 		return nil, fmt.Errorf("find user by email: %w", err)
 	}
 

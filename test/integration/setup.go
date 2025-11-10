@@ -2,6 +2,7 @@ package integration
 
 import (
 	"bytes"
+	"database/sql"
 	"encoding/json"
 	"io"
 	"log/slog"
@@ -18,12 +19,18 @@ import (
 	"github.com/g-villarinho/base-project/internal/server/handler"
 	"github.com/g-villarinho/base-project/internal/server/middleware"
 	"github.com/g-villarinho/base-project/internal/service"
+	"github.com/g-villarinho/base-project/pkg/hash"
+	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
 	"github.com/stretchr/testify/mock"
 	"go.uber.org/dig"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
 	gormLogger "gorm.io/gorm/logger"
+)
+
+const (
+	CookieSessionName = "test-session"
 )
 
 // testServer holds the test server and its dependencies
@@ -261,4 +268,48 @@ func makeRequest(t *testing.T, ts *testServer, method, path string, body any) *h
 	ts.Echo.ServeHTTP(rec, req)
 
 	return rec
+}
+
+func createTestUser(t *testing.T, ts *testServer, email, password string) *domain.User {
+	t.Helper()
+
+	hashedPassword, err := hash.HashPassword(password)
+	if err != nil {
+		t.Fatalf("Failed to hash password: %s", err)
+	}
+	user := &domain.User{
+		ID:               uuid.New(),
+		Name:             "Test User",
+		Email:            email,
+		PasswordHash:     hashedPassword,
+		Status:           domain.ActiveStatus,
+		CreatedAt:        time.Now().UTC(),
+		EmailConfirmedAt: sql.NullTime{Time: time.Now().UTC(), Valid: true},
+	}
+
+	result := ts.DB.Create(&user)
+	if result.Error != nil {
+		t.Fatalf("Failed to create test user: %v", result.Error)
+	}
+
+	return user
+}
+
+func createTestSession(t *testing.T, ts *testServer, userID uuid.UUID) *domain.Session {
+	t.Helper()
+
+	session := &domain.Session{
+		ID:        uuid.New(),
+		UserID:    userID,
+		Token:     uuid.NewString(),
+		CreatedAt: time.Now().UTC(),
+		ExpiresAt: time.Now().UTC().Add(168 * time.Hour),
+	}
+
+	result := ts.DB.Create(&session)
+	if result.Error != nil {
+		t.Fatalf("Failed to create test session: %v", result.Error)
+	}
+
+	return session
 }

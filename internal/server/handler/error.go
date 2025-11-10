@@ -100,6 +100,7 @@ func ValidationError(c echo.Context, err error) error {
 			"Your request is not valid.",
 			http.StatusUnprocessableEntity,
 			np.WithInstance(c.Request().URL.Path),
+			withCode("VALIDATION_ERROR"),
 			np.WithExtra("errors", validationErrors),
 		)
 
@@ -131,6 +132,7 @@ func InvalidBind(c echo.Context) error {
 		"https://developer.mozilla.org/pt-BR/docs/Web/HTTP/Reference/Status/400",
 		"Invalid Bind",
 		http.StatusBadRequest,
+		withCode("INVALID_JSON_PAYLOAD"),
 		np.WithDetail("Invalid request payload. please check the submitted data."),
 		np.WithInstance(c.Request().URL.Path),
 	)

@@ -1,22 +1,27 @@
 package handler
 
 import (
-	"crypto/hmac"
-	"crypto/sha256"
-	"encoding/hex"
 	"errors"
 	"net/http"
-	"strings"
 	"time"
 
 	"github.com/g-villarinho/base-project/config"
+	"github.com/g-villarinho/base-project/pkg/crypto"
 	"github.com/labstack/echo/v4"
+	"go.uber.org/dig"
 )
 
 var (
-	ErrCookieNotFoound  = errors.New("cookie not found in header")
+	ErrCookieNotFound   = errors.New("cookie not found in header")
 	ErrInvalidSignature = errors.New("invalid cookie signature")
 )
+
+type CookieHandlerParams struct {
+	dig.In
+
+	Config *config.Config
+	Signer crypto.Signer `name:"sessionSigner"`
+}
 
 type CookieHandler interface {
 	Get(ectx echo.Context) (*http.Cookie, error)
@@ -24,56 +29,53 @@ type CookieHandler interface {
 	Delete(ectx echo.Context)
 }
 
-type cookieHandler struct {
-	cookieName    string
-	isSecure      bool
-	sameSite      http.SameSite
-	sessionSecret string
+type CookieHandlerImpl struct {
+	cookieName string
+	isSecure   bool
+	sameSite   http.SameSite
+	signer     crypto.Signer
 }
 
-func NewCookieHandler(config *config.Config) CookieHandler {
+func NewCookieHandler(params CookieHandlerParams) CookieHandler {
 	sameSite := http.SameSiteStrictMode
-	switch config.Session.CookieSameSite {
+	switch params.Config.Session.CookieSameSite {
 	case "lax":
 		sameSite = http.SameSiteLaxMode
 	default:
 		sameSite = http.SameSiteStrictMode
 	}
 
-	return &cookieHandler{
-		cookieName:    config.Session.CookieName,
-		isSecure:      config.Session.CookieSecure,
-		sameSite:      sameSite,
-		sessionSecret: config.Session.Secret,
+	return &CookieHandlerImpl{
+		cookieName: params.Config.Session.CookieName,
+		isSecure:   params.Config.Session.CookieSecure,
+		sameSite:   sameSite,
+		signer:     params.Signer,
 	}
 }
 
-func (h *cookieHandler) Get(ectx echo.Context) (*http.Cookie, error) {
+func (h *CookieHandlerImpl) Get(ectx echo.Context) (*http.Cookie, error) {
 	cookie, err := ectx.Cookie(h.cookieName)
 	if err != nil || cookie == nil {
-		return nil, ErrCookieNotFoound
+		return nil, ErrCookieNotFound
 	}
 
 	if cookie.Value == "" {
-		return nil, ErrCookieNotFoound
+		return nil, ErrCookieNotFound
 	}
 
-	if !h.verifyCookie(cookie.Value) {
+	originalValue, err := h.signer.Verify(cookie.Value)
+	if err != nil {
 		return nil, ErrInvalidSignature
 	}
 
-	parts := strings.Split(cookie.Value, ".")
-	if len(parts) == 2 {
-		cookie.Value = parts[0]
-	}
-
+	cookie.Value = originalValue
 	return cookie, nil
 }
 
-func (h *cookieHandler) Set(ectx echo.Context, value string, expiresAt time.Time) {
+func (h *CookieHandlerImpl) Set(ectx echo.Context, value string, expiresAt time.Time) {
 	maxAge := int(time.Until(expiresAt).Seconds())
 
-	signedValue := h.signCookie(value)
+	signedValue := h.signer.Sign(value)
 
 	cookie := &http.Cookie{
 		Name:     h.cookieName,
@@ -88,7 +90,7 @@ func (h *cookieHandler) Set(ectx echo.Context, value string, expiresAt time.Time
 	ectx.SetCookie(cookie)
 }
 
-func (h *cookieHandler) Delete(ectx echo.Context) {
+func (h *CookieHandlerImpl) Delete(ectx echo.Context) {
 	cookie := &http.Cookie{
 		Name:     h.cookieName,
 		Value:    "",
@@ -100,24 +102,4 @@ func (h *cookieHandler) Delete(ectx echo.Context) {
 	}
 
 	ectx.SetCookie(cookie)
-}
-
-func (h *cookieHandler) signCookie(value string) string {
-	mac := hmac.New(sha256.New, []byte(h.sessionSecret))
-	mac.Write([]byte(value))
-	signature := hex.EncodeToString(mac.Sum(nil))
-	return value + "." + signature
-}
-
-func (h *cookieHandler) verifyCookie(signedValue string) bool {
-	parts := strings.Split(signedValue, ".")
-	if len(parts) != 2 {
-		return false
-	}
-
-	value, signature := parts[0], parts[1]
-	expectedSignature := h.signCookie(value)
-	expectedParts := strings.Split(expectedSignature, ".")
-
-	return len(expectedParts) == 2 && hmac.Equal([]byte(signature), []byte(expectedParts[1]))
 }
