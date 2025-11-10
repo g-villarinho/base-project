@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"io"
 	"log/slog"
+	"net/http"
 	"net/http/httptest"
 	"testing"
 	"time"
@@ -285,6 +286,32 @@ func makeRequest(t *testing.T, ts *testServer, method, path string, body any) *h
 	return rec
 }
 
+func makeAuthenticatedRequest(t *testing.T, ts *testServer, method, path, sessionToken string, body any) *httptest.ResponseRecorder {
+	t.Helper()
+
+	var reqBody io.Reader
+	if body != nil {
+		jsonBody, err := json.Marshal(body)
+		if err != nil {
+			t.Fatalf("Failed to marshal request body: %v", err)
+		}
+		reqBody = bytes.NewBuffer(jsonBody)
+	}
+
+	req := httptest.NewRequest(method, path, reqBody)
+	req.Header.Set("Content-Type", "application/json")
+	cookie := &http.Cookie{
+		Name:  CookieSessionName,
+		Value: sessionToken,
+	}
+	req.AddCookie(cookie)
+
+	rec := httptest.NewRecorder()
+	ts.Echo.ServeHTTP(rec, req)
+
+	return rec
+}
+
 func createTestUser(t *testing.T, ts *testServer, email, password string) *domain.User {
 	t.Helper()
 
@@ -327,4 +354,24 @@ func createTestSession(t *testing.T, ts *testServer, userID uuid.UUID) *domain.S
 	}
 
 	return session
+}
+
+func createTestVerification(t *testing.T, ts *testServer, userID uuid.UUID, flow domain.VerificationFlow) *domain.Verification {
+	t.Helper()
+
+	verification := &domain.Verification{
+		ID:        uuid.New(),
+		Flow:      flow,
+		Token:     uuid.NewString(),
+		CreatedAt: time.Now().UTC(),
+		ExpiresAt: time.Now().UTC().Add(10 * time.Minute),
+		UserID:    userID,
+	}
+
+	result := ts.DB.Create(&verification)
+	if result.Error != nil {
+		t.Fatalf("Failed to create test verification: %v", result.Error)
+	}
+
+	return verification
 }

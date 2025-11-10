@@ -575,3 +575,119 @@ func TestLogout(t *testing.T) {
 		assert.Error(t, result.Error)
 	})
 }
+
+func TestUpdatePassword(t *testing.T) {
+	t.Run("should successfully update password when current password is correct", func(t *testing.T) {
+		ts := setupTestServer(t)
+		defer teardownTestServer(t, ts)
+
+		user := createTestUser(t, ts, "marcelo@teste.com", "teste@123")
+
+		session := createTestSession(t, ts, user.ID)
+
+		updatePasswordPayload := map[string]any{
+			"current_password": "teste@123",
+			"new_password":     "newsecurepassword123",
+		}
+
+		rec := makeAuthenticatedRequest(t, ts, http.MethodPatch, "/auth/password", ts.signerSession.Sign(session.Token), updatePasswordPayload)
+
+		assert.Equal(t, http.StatusOK, rec.Code)
+	})
+
+	t.Run("sould return status 400 and code PASSWORD_MISMATCH when current password is incorrect", func(t *testing.T) {
+		ts := setupTestServer(t)
+		defer teardownTestServer(t, ts)
+
+		user := createTestUser(t, ts, "marcelo@teste.com", "teste@123")
+		session := createTestSession(t, ts, user.ID)
+
+		updatePasswordPayload := map[string]any{
+			"current_password": "wrongpassword",
+			"new_password":     "newsecurepassword123",
+		}
+
+		rec := makeAuthenticatedRequest(t, ts, http.MethodPatch, "/auth/password", ts.signerSession.Sign(session.Token), updatePasswordPayload)
+
+		assert.Equal(t, http.StatusBadRequest, rec.Code)
+		assert.Contains(t, rec.Body.String(), "PASSWORD_MISMATCH")
+	})
+}
+
+func TestForgotPassword(t *testing.T) {
+	t.Run("should return status 200 when email is valid", func(t *testing.T) {
+		ts := setupTestServer(t)
+		defer teardownTestServer(t, ts)
+
+		createTestUser(t, ts, "marcelo@teste.com", "teste@123")
+
+		payload := map[string]any{
+			"email": "marcelo@teste.com",
+		}
+
+		rec := makeRequest(t, ts, http.MethodPost, "/auth/forgot-password", payload)
+
+		assert.Equal(t, http.StatusOK, rec.Code)
+		assert.Empty(t, rec.Body.String())
+	})
+
+	t.Run("should return status 200 even when email does not exist", func(t *testing.T) {
+		ts := setupTestServer(t)
+		defer teardownTestServer(t, ts)
+
+		payload := map[string]any{
+			"email": "nonexistent@teste.com",
+		}
+
+		rec := makeRequest(t, ts, http.MethodPost, "/auth/forgot-password", payload)
+
+		assert.Equal(t, http.StatusOK, rec.Code)
+		assert.Empty(t, rec.Body.String())
+	})
+}
+
+func TestResetPassword(t *testing.T) {
+	t.Run("should return status 200 and session token in cookie when reset password is successful", func(t *testing.T) {
+		ts := setupTestServer(t)
+		defer teardownTestServer(t, ts)
+
+		user := createTestUser(t, ts, "marcelo@teste.com", "teste@123")
+
+		verification := createTestVerification(t, ts, user.ID, domain.ResetPasswordFlow)
+
+		payload := map[string]any{
+			"new_password": "newpassword123",
+			"token":        verification.Token,
+		}
+
+		rec := makeRequest(t, ts, http.MethodPost, "/auth/reset-password", payload)
+
+		assert.Equal(t, http.StatusOK, rec.Code)
+
+		cookies := rec.Result().Cookies()
+		assert.NotEmpty(t, cookies)
+
+		var sessionCookie *http.Cookie
+		for _, cookie := range cookies {
+			if cookie.Name == CookieSessionName {
+				sessionCookie = cookie
+				break
+			}
+		}
+
+		if assert.NotNil(t, sessionCookie, "session cookie should be set") {
+			assert.NotEmpty(t, sessionCookie.Value)
+		}
+
+		// Verify if verification token is deleted
+		var deletedVerification domain.Verification
+		result := ts.DB.Where("id = ?", verification.ID).First(&deletedVerification)
+		assert.Error(t, result.Error)
+
+		// Verify if password is updated
+		var updatedUser domain.User
+		result = ts.DB.Where("id = ?", user.ID).First(&updatedUser)
+		assert.NoError(t, result.Error)
+		assert.NotEqual(t, user.PasswordHash, updatedUser.PasswordHash)
+	})
+}

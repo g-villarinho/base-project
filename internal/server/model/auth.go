@@ -25,7 +25,7 @@ type ForgotPasswordPayload struct {
 }
 
 type ResetPasswordPayload struct {
-	Token       string `query:"token" validate:"required"`
+	Token       string `json:"token" validate:"required"`
 	NewPassword string `json:"new_password" validate:"required,min=8,max=255" example:"novasenha456"`
 }
 

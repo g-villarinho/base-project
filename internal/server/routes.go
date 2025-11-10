@@ -29,8 +29,8 @@ func registerAuthRoutes(e *echo.Echo, h *handler.AuthHandler, m *middleware.Auth
 	auth.POST("/login", h.Login)
 	auth.PATCH("/password", h.UpdatePassword, m.EnsuredAuthenticated)
 	auth.DELETE("/logout", h.Logout, m.EnsuredAuthenticated)
-	auth.POST("/reset-password", h.RequestResetPassword)
-	auth.POST("/reset-password/confirm", h.ConfirmResetPassword)
+	auth.POST("/forgot-password", h.ForgotPassword)
+	auth.POST("/reset-password", h.ResetPassword)
 	auth.POST("/change-email", h.RequestChangeEmail, m.EnsuredAuthenticated)
 	auth.GET("/change-email/confirm", h.ConfirmChangeEmail)
 }

@@ -234,7 +234,12 @@ func (s *authService) ResetPassword(ctx context.Context, token string, newPasswo
 		return nil, fmt.Errorf("update password for userId %s: %w", verification.UserID, err)
 	}
 
-	return nil, nil
+	session, err := s.sessionService.CreateSession(ctx, verification.UserID, "", "", "")
+	if err != nil {
+		return nil, fmt.Errorf("create user session: %w", err)
+	}
+
+	return session, nil
 }
 
 func (s *authService) Logout(ctx context.Context, userID, sessionID uuid.UUID) error {

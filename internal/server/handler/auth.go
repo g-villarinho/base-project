@@ -195,7 +195,7 @@ func (h *AuthHandler) UpdatePassword(c echo.Context) error {
 
 		if errors.Is(err, domain.ErrPasswordMismatch) {
 			logger.Warn("password mismatch", slog.Any("error", err))
-			return BadRequest(c, "PASSWORD_MISMATCH", "Current password is incorrect")
+			return BadRequest(c, "PASSWORD_MISMATCH", "Current password provided is incorrect.")
 		}
 
 		logger.Error("failed to update password",
@@ -207,9 +207,9 @@ func (h *AuthHandler) UpdatePassword(c echo.Context) error {
 	return c.NoContent(http.StatusOK)
 }
 
-func (h *AuthHandler) RequestResetPassword(c echo.Context) error {
+func (h *AuthHandler) ForgotPassword(c echo.Context) error {
 	logger := h.logger.With(
-		slog.String("method", "RequestResetPassword"),
+		slog.String("method", "ForgotPassword"),
 	)
 
 	var payload model.ForgotPasswordPayload
@@ -239,7 +239,7 @@ func (h *AuthHandler) RequestResetPassword(c echo.Context) error {
 	return c.NoContent(http.StatusOK)
 }
 
-func (h *AuthHandler) ConfirmResetPassword(c echo.Context) error {
+func (h *AuthHandler) ResetPassword(c echo.Context) error {
 	logger := h.logger.With(
 		slog.String("method", "ConfirmResetPassword"),
 	)
