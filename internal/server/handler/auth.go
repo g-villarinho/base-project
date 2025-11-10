@@ -85,12 +85,7 @@ func (h *AuthHandler) VerifyEmail(c echo.Context) error {
 
 	session, err := h.authService.VerifyEmail(c.Request().Context(), payload.Token, clientInfo.IPAddress, clientInfo.DeviceName, clientInfo.UserAgent)
 	if err != nil {
-		if errors.Is(err, domain.ErrVerificationNotFound) {
-			logger.Warn("verification not found", slog.Any("error", err))
-			return NotFound(c, "VERIFICATION_NOT_FOUND", "Verification token not found")
-		}
-
-		if errors.Is(err, domain.ErrInvalidVerification) {
+		if errors.Is(err, domain.ErrInvalidVerification) || errors.Is(err, domain.ErrVerificationNotFound) {
 			logger.Warn("invalid verification", slog.Any("error", err))
 			return BadRequest(c, "INVALID_TOKEN", "The verification token is invalid or has expired")
 		}
@@ -258,12 +253,7 @@ func (h *AuthHandler) ResetPassword(c echo.Context) error {
 
 	session, err := h.authService.ResetPassword(c.Request().Context(), payload.Token, payload.NewPassword)
 	if err != nil {
-		if errors.Is(err, domain.ErrVerificationNotFound) {
-			logger.Warn("verification not found", slog.Any("error", err))
-			return NotFound(c, "VERIFICATION_NOT_FOUND", "Verification token not found")
-		}
-
-		if errors.Is(err, domain.ErrInvalidVerification) {
+		if errors.Is(err, domain.ErrInvalidVerification) || errors.Is(err, domain.ErrVerificationNotFound) {
 			logger.Warn("invalid verification", slog.Any("error", err))
 			return BadRequest(c, "INVALID_TOKEN", "The verification token is invalid or has expired")
 		}
@@ -341,12 +331,7 @@ func (h *AuthHandler) ConfirmChangeEmail(c echo.Context) error {
 
 	err := h.authService.ChangeEmail(c.Request().Context(), payload.Token)
 	if err != nil {
-		if errors.Is(err, domain.ErrVerificationNotFound) {
-			logger.Warn("verification not found", slog.Any("error", err))
-			return NotFound(c, "EMAIL_VERIFICATION_NOT_FOUND", "Verification token not found")
-		}
-
-		if errors.Is(err, domain.ErrInvalidVerification) {
+		if errors.Is(err, domain.ErrVerificationNotFound) || errors.Is(err, domain.ErrInvalidVerification) {
 			logger.Warn("invalid verification", slog.Any("error", err))
 			return BadRequest(c, "INVALID_TOKEN", "The verification token is invalid or has expired.")
 		}

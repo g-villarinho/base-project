@@ -34,7 +34,7 @@ type RequestEmailChangePayload struct {
 }
 
 type ConfirmEmailChangePayload struct {
-	Token string `query:"token" validate:"required"`
+	Token string `json:"token" validate:"required"`
 }
 
 type LoginInput struct {

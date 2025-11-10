@@ -286,7 +286,7 @@ func makeRequest(t *testing.T, ts *testServer, method, path string, body any) *h
 	return rec
 }
 
-func makeAuthenticatedRequest(t *testing.T, ts *testServer, method, path, sessionToken string, body any) *httptest.ResponseRecorder {
+func makeAuthenticatedRequest(t *testing.T, ts *testServer, method, path, token string, body any) *httptest.ResponseRecorder {
 	t.Helper()
 
 	var reqBody io.Reader
@@ -302,7 +302,7 @@ func makeAuthenticatedRequest(t *testing.T, ts *testServer, method, path, sessio
 	req.Header.Set("Content-Type", "application/json")
 	cookie := &http.Cookie{
 		Name:  CookieSessionName,
-		Value: sessionToken,
+		Value: ts.signerSession.Sign(token),
 	}
 	req.AddCookie(cookie)
 

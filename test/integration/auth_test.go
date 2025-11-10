@@ -224,21 +224,21 @@ func TestVerifyEmail(t *testing.T) {
 		assert.NotEmpty(t, cookies)
 	})
 
-	t.Run("should return not found for non-existent token", func(t *testing.T) {
+	t.Run("should return status 400 and code INVALID_TOKEN for non-existent verification token", func(t *testing.T) {
 		ts := setupTestServer(t)
 		defer teardownTestServer(t, ts)
 
 		rec := makeRequest(t, ts, http.MethodGet, "/auth/verify-email?token=non-existent-token", nil)
 
-		assert.Equal(t, http.StatusNotFound, rec.Code)
+		assert.Equal(t, http.StatusBadRequest, rec.Code)
 
 		var response map[string]any
 		err := json.Unmarshal(rec.Body.Bytes(), &response)
 		assert.NoError(t, err)
-		assert.Contains(t, response["code"], "VERIFICATION_NOT_FOUND")
+		assert.Contains(t, response["code"], "INVALID_TOKEN")
 	})
 
-	t.Run("should return bad request for expired token", func(t *testing.T) {
+	t.Run("should return status 400 and code INVALID_TOKEN for expired verification token", func(t *testing.T) {
 		ts := setupTestServer(t)
 		defer teardownTestServer(t, ts)
 
@@ -274,45 +274,6 @@ func TestVerifyEmail(t *testing.T) {
 		assert.Contains(t, response["code"], "INVALID_TOKEN")
 	})
 
-	t.Run("should return not found for already used token", func(t *testing.T) {
-		ts := setupTestServer(t)
-		defer teardownTestServer(t, ts)
-
-		user := domain.User{
-			ID:           uuid.New(),
-			Name:         "Test User",
-			Email:        "used@example.com",
-			Status:       domain.PendingStatus,
-			PasswordHash: "hashedpassword",
-			CreatedAt:    time.Now().UTC(),
-		}
-		result := ts.DB.Create(&user)
-		assert.NoError(t, result.Error)
-
-		verification := domain.Verification{
-			ID:        uuid.New(),
-			Flow:      domain.VerificationEmailFlow,
-			Token:     "used-token-123",
-			CreatedAt: time.Now().UTC(),
-			ExpiresAt: time.Now().UTC().Add(10 * time.Minute),
-			UserID:    user.ID,
-		}
-		result = ts.DB.Create(&verification)
-		assert.NoError(t, result.Error)
-
-		result = ts.DB.Delete(&verification)
-		assert.NoError(t, result.Error)
-
-		rec := makeRequest(t, ts, http.MethodGet, "/auth/verify-email?token=used-token-123", nil)
-
-		assert.Equal(t, http.StatusNotFound, rec.Code)
-
-		var response map[string]any
-		err := json.Unmarshal(rec.Body.Bytes(), &response)
-		assert.NoError(t, err)
-		assert.Contains(t, response["code"], "VERIFICATION_NOT_FOUND")
-	})
-
 	t.Run("should return validation error when token is missing", func(t *testing.T) {
 		ts := setupTestServer(t)
 		defer teardownTestServer(t, ts)
@@ -327,7 +288,7 @@ func TestVerifyEmail(t *testing.T) {
 		assert.NotNil(t, response["errors"])
 	})
 
-	t.Run("should return bad request for wrong flow type", func(t *testing.T) {
+	t.Run("should return status 400 and code INVALID_TOKEN for wrong flow type", func(t *testing.T) {
 		ts := setupTestServer(t)
 		defer teardownTestServer(t, ts)
 
@@ -558,15 +519,7 @@ func TestLogout(t *testing.T) {
 
 		session := createTestSession(t, ts, user.ID)
 
-		req := httptest.NewRequest(http.MethodDelete, "/auth/logout", nil)
-
-		req.AddCookie(&http.Cookie{
-			Name:  CookieSessionName,
-			Value: ts.signerSession.Sign(session.Token),
-		})
-
-		rec := httptest.NewRecorder()
-		ts.Echo.ServeHTTP(rec, req)
+		rec := makeAuthenticatedRequest(t, ts, http.MethodDelete, "/auth/logout", session.Token, nil)
 
 		assert.Equal(t, http.StatusOK, rec.Code)
 
@@ -590,7 +543,7 @@ func TestUpdatePassword(t *testing.T) {
 			"new_password":     "newsecurepassword123",
 		}
 
-		rec := makeAuthenticatedRequest(t, ts, http.MethodPatch, "/auth/password", ts.signerSession.Sign(session.Token), updatePasswordPayload)
+		rec := makeAuthenticatedRequest(t, ts, http.MethodPatch, "/auth/password", session.Token, updatePasswordPayload)
 
 		assert.Equal(t, http.StatusOK, rec.Code)
 	})
@@ -607,7 +560,7 @@ func TestUpdatePassword(t *testing.T) {
 			"new_password":     "newsecurepassword123",
 		}
 
-		rec := makeAuthenticatedRequest(t, ts, http.MethodPatch, "/auth/password", ts.signerSession.Sign(session.Token), updatePasswordPayload)
+		rec := makeAuthenticatedRequest(t, ts, http.MethodPatch, "/auth/password", session.Token, updatePasswordPayload)
 
 		assert.Equal(t, http.StatusBadRequest, rec.Code)
 		assert.Contains(t, rec.Body.String(), "PASSWORD_MISMATCH")
@@ -689,5 +642,165 @@ func TestResetPassword(t *testing.T) {
 		result = ts.DB.Where("id = ?", user.ID).First(&updatedUser)
 		assert.NoError(t, result.Error)
 		assert.NotEqual(t, user.PasswordHash, updatedUser.PasswordHash)
+	})
+
+	t.Run("should return status 400 and status INVALID_TOKEN when verification token not found", func(t *testing.T) {
+		ts := setupTestServer(t)
+		defer teardownTestServer(t, ts)
+
+		payload := map[string]any{
+			"new_password": "newpassword123",
+			"token":        "non-existent-token",
+		}
+
+		rec := makeRequest(t, ts, http.MethodPost, "/auth/reset-password", payload)
+
+		assert.Equal(t, http.StatusBadRequest, rec.Code)
+		assert.Contains(t, rec.Body.String(), "INVALID_TOKEN")
+	})
+
+	t.Run("should return status 400 and status INVALID_TOKEN when verification token is expired", func(t *testing.T) {
+		ts := setupTestServer(t)
+		defer teardownTestServer(t, ts)
+
+		user := createTestUser(t, ts, "marcelo@teste.com", "teste@123")
+		verification := createTestVerification(t, ts, user.ID, domain.ResetPasswordFlow)
+
+		// Manually expire the token
+		expiredAt := time.Now().UTC().Add(-1 * time.Hour)
+		result := ts.DB.Model(&verification).Update("expires_at", expiredAt)
+		assert.NoError(t, result.Error)
+
+		payload := map[string]any{
+			"new_password": "newpassword123",
+			"token":        verification.Token,
+		}
+
+		rec := makeRequest(t, ts, http.MethodPost, "/auth/reset-password", payload)
+
+		assert.Equal(t, http.StatusBadRequest, rec.Code)
+		assert.Contains(t, rec.Body.String(), "INVALID_TOKEN")
+
+	})
+}
+
+func TestRequestChangeEmail(t *testing.T) {
+	t.Run("should return status 200 when request change email successfully", func(t *testing.T) {
+		ts := setupTestServer(t)
+		defer teardownTestServer(t, ts)
+
+		user := createTestUser(t, ts, "marcelo@teste.com", "teste@123")
+		session := createTestSession(t, ts, user.ID)
+
+		payload := map[string]any{
+			"new_email": "newemail@teste.com",
+		}
+
+		rec := makeAuthenticatedRequest(t, ts, http.MethodPost, "/auth/change-email", session.Token, payload)
+
+		assert.Equal(t, http.StatusOK, rec.Code)
+	})
+
+	t.Run("should return status 409 and code EMAIL_IN_USE when user send email that is already exists in db", func(t *testing.T) {
+		ts := setupTestServer(t)
+		defer teardownTestServer(t, ts)
+
+		user1 := createTestUser(t, ts, "marcelo@teste.com", "teste@123")
+		createTestUser(t, ts, "marcelo2@teste.com", "teste@123")
+
+		session := createTestSession(t, ts, user1.ID)
+
+		payload := map[string]any{
+			"new_email": "marcelo2@teste.com",
+		}
+
+		rec := makeAuthenticatedRequest(t, ts, http.MethodPost, "/auth/change-email", session.Token, payload)
+
+		assert.Equal(t, http.StatusConflict, rec.Code)
+		assert.Contains(t, rec.Body.String(), "EMAIL_IN_USE")
+	})
+
+	t.Run("should return status 400 and code INVALID_TOKEN when verification token is invalid", func(t *testing.T) {
+		ts := setupTestServer(t)
+		defer teardownTestServer(t, ts)
+
+		user := createTestUser(t, ts, "marcelo@teste.com", "teste@123")
+		session := createTestSession(t, ts, user.ID)
+
+		payload := map[string]any{
+			"new_email": "marcelo2@teste.com",
+			"token":     "invalid-token",
+		}
+
+		rec := makeAuthenticatedRequest(t, ts, http.MethodPost, "/auth/change-email", session.Token, payload)
+
+		assert.Equal(t, http.StatusBadRequest, rec.Code)
+		assert.Contains(t, rec.Body.String(), "INVALID_TOKEN")
+	})
+}
+
+func TestConfirmChangeEmail(t *testing.T) {
+	t.Run("should return status 200 and update user email when token is valid", func(t *testing.T) {
+		ts := setupTestServer(t)
+		defer teardownTestServer(t, ts)
+
+		user := createTestUser(t, ts, "marcelo@teste.com", "teste@123")
+		verification := createTestVerification(t, ts, user.ID, domain.ChangeEmailFlow)
+
+		updates := map[string]any{
+			"payload": "marcelo1@gmail.com",
+		}
+
+		result := ts.DB.Model(&verification).Updates(updates)
+		assert.NoError(t, result.Error)
+
+		payload := map[string]any{
+			"token": verification.Token,
+		}
+
+		rec := makeRequest(t, ts, http.MethodPost, "/auth/change-email/confirm", payload)
+
+		assert.Equal(t, http.StatusOK, rec.Code)
+
+		var updatedUser domain.User
+		result = ts.DB.Where("id = ?", user.ID).First(&updatedUser)
+		assert.NoError(t, result.Error)
+		assert.Equal(t, "marcelo1@gmail.com", updatedUser.Email)
+	})
+
+	t.Run("should return status 400 and code INVALID_TOKEN when token is invalid", func(t *testing.T) {
+		ts := setupTestServer(t)
+		defer teardownTestServer(t, ts)
+
+		payload := map[string]any{
+			"token": "invalid-token",
+		}
+
+		rec := makeRequest(t, ts, http.MethodPost, "/auth/change-email/confirm", payload)
+
+		assert.Equal(t, http.StatusBadRequest, rec.Code)
+		assert.Contains(t, rec.Body.String(), "INVALID_TOKEN")
+	})
+
+	t.Run("should return status 400 and code INVALID_TOKEN when token is expired", func(t *testing.T) {
+		ts := setupTestServer(t)
+		defer teardownTestServer(t, ts)
+
+		user := createTestUser(t, ts, "marcelo@teste.com", "teste@123")
+		verification := createTestVerification(t, ts, user.ID, domain.ChangeEmailFlow)
+
+		// Manually expire the token
+		expiredAt := time.Now().UTC().Add(-1 * time.Hour)
+		result := ts.DB.Model(&verification).Update("expires_at", expiredAt)
+		assert.NoError(t, result.Error)
+
+		payload := map[string]any{
+			"token": verification.Token,
+		}
+
+		rec := makeRequest(t, ts, http.MethodPost, "/auth/change-email/confirm", payload)
+
+		assert.Equal(t, http.StatusBadRequest, rec.Code)
+		assert.Contains(t, rec.Body.String(), "INVALID_TOKEN")
 	})
 }

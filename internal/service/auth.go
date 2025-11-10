@@ -164,17 +164,13 @@ func (s *authService) RequestChangeEmail(ctx context.Context, userID uuid.UUID, 
 		return domain.ErrEmailIsTheSame
 	}
 
-	exists, err := s.userRepository.ExistsByEmail(ctx, newEmail)
+	userExists, err := s.userRepository.ExistsByEmail(ctx, newEmail)
 	if err != nil {
 		return fmt.Errorf("check if email exists: %w", err)
 	}
 
-	if exists {
+	if userExists {
 		return domain.ErrEmailInUse
-	}
-
-	if _, err := s.verificationService.CreateVerification(ctx, userID, domain.ChangeEmailFlow, newEmail); err != nil {
-		return fmt.Errorf("create email change verification: %w", err)
 	}
 
 	if err := s.verificationService.SendVerificationEmail(ctx, user, domain.ChangeEmailFlow); err != nil {

@@ -32,7 +32,7 @@ func registerAuthRoutes(e *echo.Echo, h *handler.AuthHandler, m *middleware.Auth
 	auth.POST("/forgot-password", h.ForgotPassword)
 	auth.POST("/reset-password", h.ResetPassword)
 	auth.POST("/change-email", h.RequestChangeEmail, m.EnsuredAuthenticated)
-	auth.GET("/change-email/confirm", h.ConfirmChangeEmail)
+	auth.POST("/change-email/confirm", h.ConfirmChangeEmail)
 }
 
 func registerUserRoutes(e *echo.Echo, h *handler.UserHandler, m *middleware.AuthMiddleware) {
