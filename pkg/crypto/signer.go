@@ -17,21 +17,21 @@ type Signer interface {
 	Verify(signedValue string) (string, error)
 }
 
-type hmacSigner struct {
-	secret []byte
+type SignerImpl struct {
+	Secret []byte
 }
 
 func NewSigner(secret string) Signer {
-	return &hmacSigner{
-		secret: []byte(secret),
+	return &SignerImpl{
+		Secret: []byte(secret),
 	}
 }
 
-func (s *hmacSigner) Sign(value string) string {
-	return sign(value, s.secret)
+func (s *SignerImpl) Sign(value string) string {
+	return sign(value, s.Secret)
 }
 
-func (s *hmacSigner) Verify(signedValue string) (string, error) {
+func (s *SignerImpl) Verify(signedValue string) (string, error) {
 	parts := strings.Split(signedValue, ".")
 	if len(parts) != 2 {
 		return "", ErrInvalidSignature
@@ -39,7 +39,7 @@ func (s *hmacSigner) Verify(signedValue string) (string, error) {
 
 	value, signature := parts[0], parts[1]
 
-	expectedSignature := sign(value, s.secret)
+	expectedSignature := sign(value, s.Secret)
 	expectedParts := strings.Split(expectedSignature, ".")
 
 	if len(expectedParts) == 2 && hmac.Equal([]byte(signature), []byte(expectedParts[1])) {

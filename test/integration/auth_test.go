@@ -558,11 +558,11 @@ func TestLogout(t *testing.T) {
 
 		session := createTestSession(t, ts, user.ID)
 
-		req := httptest.NewRequest(http.MethodPost, "/auth/logout", nil)
+		req := httptest.NewRequest(http.MethodDelete, "/auth/logout", nil)
 
 		req.AddCookie(&http.Cookie{
 			Name:  CookieSessionName,
-			Value: "tste",
+			Value: ts.signerSession.Sign(session.Token),
 		})
 
 		rec := httptest.NewRecorder()

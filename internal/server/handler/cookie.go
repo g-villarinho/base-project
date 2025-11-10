@@ -29,7 +29,7 @@ type CookieHandler interface {
 	Delete(ectx echo.Context)
 }
 
-type CookieHandlerImpl struct {
+type cookieHandler struct {
 	cookieName string
 	isSecure   bool
 	sameSite   http.SameSite
@@ -45,7 +45,7 @@ func NewCookieHandler(params CookieHandlerParams) CookieHandler {
 		sameSite = http.SameSiteStrictMode
 	}
 
-	return &CookieHandlerImpl{
+	return &cookieHandler{
 		cookieName: params.Config.Session.CookieName,
 		isSecure:   params.Config.Session.CookieSecure,
 		sameSite:   sameSite,
@@ -53,7 +53,7 @@ func NewCookieHandler(params CookieHandlerParams) CookieHandler {
 	}
 }
 
-func (h *CookieHandlerImpl) Get(ectx echo.Context) (*http.Cookie, error) {
+func (h *cookieHandler) Get(ectx echo.Context) (*http.Cookie, error) {
 	cookie, err := ectx.Cookie(h.cookieName)
 	if err != nil || cookie == nil {
 		return nil, ErrCookieNotFound
@@ -72,7 +72,7 @@ func (h *CookieHandlerImpl) Get(ectx echo.Context) (*http.Cookie, error) {
 	return cookie, nil
 }
 
-func (h *CookieHandlerImpl) Set(ectx echo.Context, value string, expiresAt time.Time) {
+func (h *cookieHandler) Set(ectx echo.Context, value string, expiresAt time.Time) {
 	maxAge := int(time.Until(expiresAt).Seconds())
 
 	signedValue := h.signer.Sign(value)
@@ -90,7 +90,7 @@ func (h *CookieHandlerImpl) Set(ectx echo.Context, value string, expiresAt time.
 	ectx.SetCookie(cookie)
 }
 
-func (h *CookieHandlerImpl) Delete(ectx echo.Context) {
+func (h *cookieHandler) Delete(ectx echo.Context) {
 	cookie := &http.Cookie{
 		Name:     h.cookieName,
 		Value:    "",

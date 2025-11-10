@@ -19,7 +19,9 @@ import (
 	"github.com/g-villarinho/base-project/internal/server/handler"
 	"github.com/g-villarinho/base-project/internal/server/middleware"
 	"github.com/g-villarinho/base-project/internal/service"
+	"github.com/g-villarinho/base-project/pkg/crypto"
 	"github.com/g-villarinho/base-project/pkg/hash"
+	"github.com/g-villarinho/base-project/pkg/injector"
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
 	"github.com/stretchr/testify/mock"
@@ -35,8 +37,9 @@ const (
 
 // testServer holds the test server and its dependencies
 type testServer struct {
-	Echo *echo.Echo
-	DB   *gorm.DB
+	Echo          *echo.Echo
+	DB            *gorm.DB
+	signerSession crypto.SignerImpl
 }
 
 // setupTestServer creates a new test server with in-memory SQLite database
@@ -164,6 +167,11 @@ func setupTestServer(t *testing.T) *testServer {
 		t.Fatalf("Failed to provide verification repository: %v", err)
 	}
 
+	err = container.Provide(server.NewSessionSigner, dig.Name("sessionSigner"))
+	if err != nil {
+		t.Fatalf("Failed to provide session signer: %v", err)
+	}
+
 	// Provide services
 	err = container.Provide(service.NewVerificationService)
 	if err != nil {
@@ -218,6 +226,12 @@ func setupTestServer(t *testing.T) *testServer {
 		t.Fatalf("Failed to provide server: %v", err)
 	}
 
+	config := injector.Resolve[*config.Config](container)
+
+	signerSession := crypto.SignerImpl{
+		Secret: []byte(config.Session.Secret),
+	}
+
 	// Resolve server and database
 	var e *echo.Echo
 	var db *gorm.DB
@@ -231,8 +245,9 @@ func setupTestServer(t *testing.T) *testServer {
 	}
 
 	return &testServer{
-		Echo: e,
-		DB:   db,
+		Echo:          e,
+		DB:            db,
+		signerSession: signerSession,
 	}
 }
 
