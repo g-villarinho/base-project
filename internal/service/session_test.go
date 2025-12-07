@@ -15,347 +15,577 @@ import (
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
 )
 
 func setupSessionService(t *testing.T) (SessionService, *mocks.SessionRepositoryMock) {
 	t.Helper()
+
 	sessionRepoMock := mocks.NewSessionRepositoryMock(t)
 	logger := slog.New(slog.NewTextHandler(io.Discard, nil))
+
 	cfg := &config.Config{
 		Session: config.Session{
 			Duration: 24 * time.Hour,
 		},
 	}
+
 	service := NewSessionService(sessionRepoMock, cfg, logger)
 	return service, sessionRepoMock
 }
 
-func TestSessionService_CreateSession(t *testing.T) {
-	t.Run("should create session successfully when all parameters are valid", func(t *testing.T) {
+func TestCreateSession(t *testing.T) {
+	t.Run("should create session successfully with valid parameters", func(t *testing.T) {
+		// Arrange
 		service, sessionRepoMock := setupSessionService(t)
+
 		ctx := context.Background()
 		userID := uuid.New()
 		ipAddress := "192.168.1.1"
-		deviceName := "Chrome on Windows"
+		deviceName := "MacBook Pro"
 		userAgent := "Mozilla/5.0"
 
-		sessionRepoMock.On("Create", ctx, mock.AnythingOfType("*domain.Session")).Return(nil)
+		sessionRepoMock.On("Create", ctx, mock.AnythingOfType("*domain.Session")).
+			Return(nil)
 
+		// Act
 		session, err := service.CreateSession(ctx, userID, ipAddress, deviceName, userAgent)
 
-		assert.NoError(t, err)
+		// Assert
+		require.NoError(t, err)
 		assert.NotNil(t, session)
 		assert.Equal(t, userID, session.UserID)
 		assert.Equal(t, ipAddress, session.IPAddress)
 		assert.Equal(t, deviceName, session.DeviceName)
 		assert.Equal(t, userAgent, session.UserAgent)
 		assert.NotEmpty(t, session.Token)
+		assert.False(t, session.ExpiresAt.IsZero())
+		assert.True(t, session.ExpiresAt.After(time.Now().UTC()))
 		sessionRepoMock.AssertExpectations(t)
 	})
 
-	t.Run("should return error when repository fails to create session", func(t *testing.T) {
+	t.Run("should return error when repository create fails", func(t *testing.T) {
+		// Arrange
 		service, sessionRepoMock := setupSessionService(t)
+
 		ctx := context.Background()
 		userID := uuid.New()
-		repoErr := errors.New("database error")
+		ipAddress := "192.168.1.1"
+		deviceName := "MacBook Pro"
+		userAgent := "Mozilla/5.0"
 
-		sessionRepoMock.On("Create", ctx, mock.AnythingOfType("*domain.Session")).Return(repoErr)
+		expectedErr := errors.New("database error")
+		sessionRepoMock.On("Create", ctx, mock.AnythingOfType("*domain.Session")).
+			Return(expectedErr)
 
-		session, err := service.CreateSession(ctx, userID, "192.168.1.1", "Device", "UserAgent")
+		// Act
+		session, err := service.CreateSession(ctx, userID, ipAddress, deviceName, userAgent)
 
-		assert.Error(t, err)
+		// Assert
+		require.Error(t, err)
 		assert.Nil(t, session)
+		assert.Contains(t, err.Error(), "persist new session")
+		sessionRepoMock.AssertExpectations(t)
+	})
+
+	t.Run("should set correct expiration time based on config", func(t *testing.T) {
+		// Arrange
+		service, sessionRepoMock := setupSessionService(t)
+
+		ctx := context.Background()
+		userID := uuid.New()
+		ipAddress := "192.168.1.1"
+		deviceName := "MacBook Pro"
+		userAgent := "Mozilla/5.0"
+
+		var capturedSession *domain.Session
+		sessionRepoMock.On("Create", ctx, mock.AnythingOfType("*domain.Session")).
+			Run(func(args mock.Arguments) {
+				capturedSession = args.Get(1).(*domain.Session)
+			}).
+			Return(nil)
+
+		// Act
+		session, err := service.CreateSession(ctx, userID, ipAddress, deviceName, userAgent)
+
+		// Assert
+		require.NoError(t, err)
+		assert.NotNil(t, session)
+		assert.NotNil(t, capturedSession)
+
+		expectedExpiration := time.Now().UTC().Add(24 * time.Hour)
+		assert.WithinDuration(t, expectedExpiration, session.ExpiresAt, 5*time.Second)
 		sessionRepoMock.AssertExpectations(t)
 	})
 }
 
-func TestSessionService_FindSessionByToken(t *testing.T) {
-	t.Run("should return session when token is valid and not expired", func(t *testing.T) {
+func TestFindSessionByToken(t *testing.T) {
+	t.Run("should return session when valid token is provided", func(t *testing.T) {
+		// Arrange
 		service, sessionRepoMock := setupSessionService(t)
+
 		ctx := context.Background()
-		token := "valid-token"
+		token := "valid-token-123"
+		sessionID := uuid.New()
+		userID := uuid.New()
+
 		expectedSession := &domain.Session{
-			ID:         uuid.New(),
+			ID:         sessionID,
 			Token:      token,
-			UserID:     uuid.New(),
-			ExpiresAt:  time.Now().UTC().Add(1 * time.Hour),
+			UserID:     userID,
+			DeviceName: "MacBook Pro",
 			IPAddress:  "192.168.1.1",
-			DeviceName: "Device",
-			UserAgent:  "UserAgent",
+			UserAgent:  "Mozilla/5.0",
+			ExpiresAt:  time.Now().UTC().Add(24 * time.Hour),
+			CreatedAt:  time.Now().UTC(),
 		}
 
-		sessionRepoMock.On("FindByToken", ctx, token).Return(expectedSession, nil)
+		sessionRepoMock.On("FindByToken", ctx, token).
+			Return(expectedSession, nil)
 
+		// Act
 		session, err := service.FindSessionByToken(ctx, token)
 
-		assert.NoError(t, err)
-		assert.Equal(t, expectedSession, session)
+		// Assert
+		require.NoError(t, err)
+		assert.NotNil(t, session)
+		assert.Equal(t, expectedSession.ID, session.ID)
+		assert.Equal(t, expectedSession.Token, session.Token)
+		assert.Equal(t, expectedSession.UserID, session.UserID)
 		sessionRepoMock.AssertExpectations(t)
 	})
 
-	t.Run("should return domain error when session is not found", func(t *testing.T) {
+	t.Run("should return error when session is not found", func(t *testing.T) {
+		// Arrange
 		service, sessionRepoMock := setupSessionService(t)
+
 		ctx := context.Background()
-		token := "invalid-token"
+		token := "non-existent-token"
 
-		sessionRepoMock.On("FindByToken", ctx, token).Return(nil, repository.ErrSessionNotFound)
+		sessionRepoMock.On("FindByToken", ctx, token).
+			Return(nil, repository.ErrSessionNotFound)
 
+		// Act
 		session, err := service.FindSessionByToken(ctx, token)
 
-		assert.Error(t, err)
+		// Assert
+		require.Error(t, err)
 		assert.Nil(t, session)
 		assert.Equal(t, domain.ErrSessionNotFound, err)
 		sessionRepoMock.AssertExpectations(t)
 	})
 
-	t.Run("should return domain error when session is expired", func(t *testing.T) {
+	t.Run("should return error when session is expired", func(t *testing.T) {
+		// Arrange
 		service, sessionRepoMock := setupSessionService(t)
+
 		ctx := context.Background()
 		token := "expired-token"
+		sessionID := uuid.New()
+		userID := uuid.New()
+
 		expiredSession := &domain.Session{
-			ID:        uuid.New(),
-			Token:     token,
-			UserID:    uuid.New(),
-			ExpiresAt: time.Now().UTC().Add(-1 * time.Hour),
+			ID:         sessionID,
+			Token:      token,
+			UserID:     userID,
+			DeviceName: "MacBook Pro",
+			IPAddress:  "192.168.1.1",
+			UserAgent:  "Mozilla/5.0",
+			ExpiresAt:  time.Now().UTC().Add(-24 * time.Hour), // Expired
+			CreatedAt:  time.Now().UTC().Add(-48 * time.Hour),
 		}
 
-		sessionRepoMock.On("FindByToken", ctx, token).Return(expiredSession, nil)
+		sessionRepoMock.On("FindByToken", ctx, token).
+			Return(expiredSession, nil)
 
+		// Act
 		session, err := service.FindSessionByToken(ctx, token)
 
-		assert.Error(t, err)
+		// Assert
+		require.Error(t, err)
 		assert.Nil(t, session)
 		assert.Equal(t, domain.ErrSessionExpired, err)
 		sessionRepoMock.AssertExpectations(t)
 	})
 
 	t.Run("should return error when repository fails", func(t *testing.T) {
+		// Arrange
 		service, sessionRepoMock := setupSessionService(t)
+
 		ctx := context.Background()
-		token := "some-token"
-		repoErr := errors.New("database connection failed")
+		token := "valid-token"
 
-		sessionRepoMock.On("FindByToken", ctx, token).Return(nil, repoErr)
+		expectedErr := errors.New("database connection error")
+		sessionRepoMock.On("FindByToken", ctx, token).
+			Return(nil, expectedErr)
 
+		// Act
 		session, err := service.FindSessionByToken(ctx, token)
 
-		assert.Error(t, err)
+		// Assert
+		require.Error(t, err)
 		assert.Nil(t, session)
-		assert.NotEqual(t, domain.ErrSessionNotFound, err)
+		assert.Contains(t, err.Error(), "find session by token")
 		sessionRepoMock.AssertExpectations(t)
 	})
 }
 
-func TestSessionService_DeleteSessionByID(t *testing.T) {
-	t.Run("should delete session successfully when session belongs to user", func(t *testing.T) {
+func TestDeleteSessionByID(t *testing.T) {
+	t.Run("should delete session successfully when valid IDs are provided", func(t *testing.T) {
+		// Arrange
 		service, sessionRepoMock := setupSessionService(t)
+
 		ctx := context.Background()
 		userID := uuid.New()
 		sessionID := uuid.New()
-		session := &domain.Session{
-			ID:     sessionID,
-			UserID: userID,
+
+		existingSession := &domain.Session{
+			ID:         sessionID,
+			Token:      "valid-token",
+			UserID:     userID,
+			DeviceName: "MacBook Pro",
+			IPAddress:  "192.168.1.1",
+			UserAgent:  "Mozilla/5.0",
+			ExpiresAt:  time.Now().UTC().Add(24 * time.Hour),
+			CreatedAt:  time.Now().UTC(),
 		}
 
-		sessionRepoMock.On("FindByID", ctx, sessionID).Return(session, nil)
-		sessionRepoMock.On("DeleteByID", ctx, sessionID).Return(nil)
+		sessionRepoMock.On("FindByID", ctx, sessionID).
+			Return(existingSession, nil)
+		sessionRepoMock.On("DeleteByID", ctx, sessionID).
+			Return(nil)
 
+		// Act
 		err := service.DeleteSessionByID(ctx, userID, sessionID)
 
-		assert.NoError(t, err)
+		// Assert
+		require.NoError(t, err)
 		sessionRepoMock.AssertExpectations(t)
 	})
 
-	t.Run("should return domain error when session is not found", func(t *testing.T) {
+	t.Run("should return error when session is not found", func(t *testing.T) {
+		// Arrange
 		service, sessionRepoMock := setupSessionService(t)
+
 		ctx := context.Background()
 		userID := uuid.New()
 		sessionID := uuid.New()
 
-		sessionRepoMock.On("FindByID", ctx, sessionID).Return(nil, repository.ErrSessionNotFound)
+		sessionRepoMock.On("FindByID", ctx, sessionID).
+			Return(nil, repository.ErrSessionNotFound)
 
+		// Act
 		err := service.DeleteSessionByID(ctx, userID, sessionID)
 
-		assert.Error(t, err)
+		// Assert
+		require.Error(t, err)
 		assert.Equal(t, domain.ErrSessionNotFound, err)
 		sessionRepoMock.AssertExpectations(t)
 	})
 
-	t.Run("should return domain error when session does not belong to user", func(t *testing.T) {
+	t.Run("should return error when session does not belong to user", func(t *testing.T) {
+		// Arrange
 		service, sessionRepoMock := setupSessionService(t)
+
 		ctx := context.Background()
 		userID := uuid.New()
-		differentUserID := uuid.New()
+		otherUserID := uuid.New()
 		sessionID := uuid.New()
-		session := &domain.Session{
-			ID:     sessionID,
-			UserID: differentUserID,
+
+		existingSession := &domain.Session{
+			ID:         sessionID,
+			Token:      "valid-token",
+			UserID:     otherUserID, // Different user
+			DeviceName: "MacBook Pro",
+			IPAddress:  "192.168.1.1",
+			UserAgent:  "Mozilla/5.0",
+			ExpiresAt:  time.Now().UTC().Add(24 * time.Hour),
+			CreatedAt:  time.Now().UTC(),
 		}
 
-		sessionRepoMock.On("FindByID", ctx, sessionID).Return(session, nil)
+		sessionRepoMock.On("FindByID", ctx, sessionID).
+			Return(existingSession, nil)
 
+		// Act
 		err := service.DeleteSessionByID(ctx, userID, sessionID)
 
-		assert.Error(t, err)
+		// Assert
+		require.Error(t, err)
 		assert.Equal(t, domain.ErrSessionNotBelong, err)
 		sessionRepoMock.AssertExpectations(t)
 	})
 
-	t.Run("should return error when repository fails to find session", func(t *testing.T) {
+	t.Run("should return nil when session is already expired", func(t *testing.T) {
+		// Arrange
 		service, sessionRepoMock := setupSessionService(t)
+
 		ctx := context.Background()
 		userID := uuid.New()
 		sessionID := uuid.New()
-		repoErr := errors.New("database error")
 
-		sessionRepoMock.On("FindByID", ctx, sessionID).Return(nil, repoErr)
-
-		err := service.DeleteSessionByID(ctx, userID, sessionID)
-
-		assert.Error(t, err)
-		assert.NotEqual(t, domain.ErrSessionNotFound, err)
-		sessionRepoMock.AssertExpectations(t)
-	})
-
-	t.Run("should return error when repository fails to delete session", func(t *testing.T) {
-		service, sessionRepoMock := setupSessionService(t)
-		ctx := context.Background()
-		userID := uuid.New()
-		sessionID := uuid.New()
-		session := &domain.Session{
-			ID:     sessionID,
-			UserID: userID,
+		expiredSession := &domain.Session{
+			ID:         sessionID,
+			Token:      "expired-token",
+			UserID:     userID,
+			DeviceName: "MacBook Pro",
+			IPAddress:  "192.168.1.1",
+			UserAgent:  "Mozilla/5.0",
+			ExpiresAt:  time.Now().UTC().Add(-24 * time.Hour), // Expired
+			CreatedAt:  time.Now().UTC().Add(-48 * time.Hour),
 		}
-		repoErr := errors.New("delete failed")
 
-		sessionRepoMock.On("FindByID", ctx, sessionID).Return(session, nil)
-		sessionRepoMock.On("DeleteByID", ctx, sessionID).Return(repoErr)
+		sessionRepoMock.On("FindByID", ctx, sessionID).
+			Return(expiredSession, nil)
 
+		// Act
 		err := service.DeleteSessionByID(ctx, userID, sessionID)
 
-		assert.Error(t, err)
+		// Assert
+		require.NoError(t, err)
+		sessionRepoMock.AssertExpectations(t)
+	})
+
+	t.Run("should return error when repository find fails", func(t *testing.T) {
+		// Arrange
+		service, sessionRepoMock := setupSessionService(t)
+
+		ctx := context.Background()
+		userID := uuid.New()
+		sessionID := uuid.New()
+
+		expectedErr := errors.New("database error")
+		sessionRepoMock.On("FindByID", ctx, sessionID).
+			Return(nil, expectedErr)
+
+		// Act
+		err := service.DeleteSessionByID(ctx, userID, sessionID)
+
+		// Assert
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "find session by id")
+		sessionRepoMock.AssertExpectations(t)
+	})
+
+	t.Run("should return error when repository delete fails", func(t *testing.T) {
+		// Arrange
+		service, sessionRepoMock := setupSessionService(t)
+
+		ctx := context.Background()
+		userID := uuid.New()
+		sessionID := uuid.New()
+
+		existingSession := &domain.Session{
+			ID:         sessionID,
+			Token:      "valid-token",
+			UserID:     userID,
+			DeviceName: "MacBook Pro",
+			IPAddress:  "192.168.1.1",
+			UserAgent:  "Mozilla/5.0",
+			ExpiresAt:  time.Now().UTC().Add(24 * time.Hour),
+			CreatedAt:  time.Now().UTC(),
+		}
+
+		expectedErr := errors.New("database error")
+		sessionRepoMock.On("FindByID", ctx, sessionID).
+			Return(existingSession, nil)
+		sessionRepoMock.On("DeleteByID", ctx, sessionID).
+			Return(expectedErr)
+
+		// Act
+		err := service.DeleteSessionByID(ctx, userID, sessionID)
+
+		// Assert
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "delete session by id")
 		sessionRepoMock.AssertExpectations(t)
 	})
 }
 
-func TestSessionService_DeleteSessionsByUserID(t *testing.T) {
-	t.Run("should delete all sessions when current session is nil", func(t *testing.T) {
+func TestDeleteSessionsByUserID(t *testing.T) {
+	t.Run("should delete all sessions when currentSession is nil", func(t *testing.T) {
+		// Arrange
 		service, sessionRepoMock := setupSessionService(t)
+
 		ctx := context.Background()
 		userID := uuid.New()
 
-		sessionRepoMock.On("DeleteByUserID", ctx, userID).Return(nil)
+		sessionRepoMock.On("DeleteByUserID", ctx, userID).
+			Return(nil)
 
+		// Act
 		err := service.DeleteSessionsByUserID(ctx, userID, nil)
 
-		assert.NoError(t, err)
+		// Assert
+		require.NoError(t, err)
 		sessionRepoMock.AssertExpectations(t)
 	})
 
-	t.Run("should delete all sessions except current when current session is provided", func(t *testing.T) {
+	t.Run("should delete all sessions except current when currentSession is provided", func(t *testing.T) {
+		// Arrange
 		service, sessionRepoMock := setupSessionService(t)
+
 		ctx := context.Background()
 		userID := uuid.New()
 		currentSessionID := uuid.New()
 
-		sessionRepoMock.On("DeleteByUserExceptID", ctx, userID, currentSessionID).Return(nil)
+		sessionRepoMock.On("DeleteByUserExceptID", ctx, userID, currentSessionID).
+			Return(nil)
 
+		// Act
 		err := service.DeleteSessionsByUserID(ctx, userID, &currentSessionID)
 
-		assert.NoError(t, err)
+		// Assert
+		require.NoError(t, err)
 		sessionRepoMock.AssertExpectations(t)
 	})
 
-	t.Run("should return error when repository fails to delete all sessions", func(t *testing.T) {
+	t.Run("should return error when repository delete all fails", func(t *testing.T) {
+		// Arrange
 		service, sessionRepoMock := setupSessionService(t)
+
 		ctx := context.Background()
 		userID := uuid.New()
-		repoErr := errors.New("delete failed")
 
-		sessionRepoMock.On("DeleteByUserID", ctx, userID).Return(repoErr)
+		expectedErr := errors.New("database error")
+		sessionRepoMock.On("DeleteByUserID", ctx, userID).
+			Return(expectedErr)
 
+		// Act
 		err := service.DeleteSessionsByUserID(ctx, userID, nil)
 
-		assert.Error(t, err)
+		// Assert
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "delete all sessions by user id")
 		sessionRepoMock.AssertExpectations(t)
 	})
 
-	t.Run("should return error when repository fails to delete sessions except current", func(t *testing.T) {
+	t.Run("should return error when repository delete except fails", func(t *testing.T) {
+		// Arrange
 		service, sessionRepoMock := setupSessionService(t)
+
 		ctx := context.Background()
 		userID := uuid.New()
 		currentSessionID := uuid.New()
-		repoErr := errors.New("delete failed")
 
-		sessionRepoMock.On("DeleteByUserExceptID", ctx, userID, currentSessionID).Return(repoErr)
+		expectedErr := errors.New("database error")
+		sessionRepoMock.On("DeleteByUserExceptID", ctx, userID, currentSessionID).
+			Return(expectedErr)
 
+		// Act
 		err := service.DeleteSessionsByUserID(ctx, userID, &currentSessionID)
 
-		assert.Error(t, err)
+		// Assert
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "delete all sessions by user id")
 		sessionRepoMock.AssertExpectations(t)
 	})
 }
 
-func TestSessionService_GetSessionsByUserID(t *testing.T) {
-	t.Run("should return sessions when user has sessions", func(t *testing.T) {
+func TestGetSessionsByUserID(t *testing.T) {
+	t.Run("should return sessions when user has active sessions", func(t *testing.T) {
+		// Arrange
 		service, sessionRepoMock := setupSessionService(t)
+
 		ctx := context.Background()
 		userID := uuid.New()
+
 		expectedSessions := []domain.Session{
 			{
 				ID:         uuid.New(),
+				Token:      "token-1",
 				UserID:     userID,
-				Token:      "token1",
+				DeviceName: "MacBook Pro",
 				IPAddress:  "192.168.1.1",
-				DeviceName: "Device1",
-				UserAgent:  "UserAgent1",
+				UserAgent:  "Mozilla/5.0",
+				ExpiresAt:  time.Now().UTC().Add(24 * time.Hour),
+				CreatedAt:  time.Now().UTC(),
 			},
 			{
 				ID:         uuid.New(),
+				Token:      "token-2",
 				UserID:     userID,
-				Token:      "token2",
+				DeviceName: "iPhone",
 				IPAddress:  "192.168.1.2",
-				DeviceName: "Device2",
-				UserAgent:  "UserAgent2",
+				UserAgent:  "Mobile Safari",
+				ExpiresAt:  time.Now().UTC().Add(24 * time.Hour),
+				CreatedAt:  time.Now().UTC(),
 			},
 		}
 
-		sessionRepoMock.On("FindByUserID", ctx, userID).Return(expectedSessions, nil)
+		sessionRepoMock.On("FindByUserID", ctx, userID).
+			Return(expectedSessions, nil)
 
+		// Act
 		sessions, err := service.GetSessionsByUserID(ctx, userID)
 
-		assert.NoError(t, err)
-		assert.Equal(t, expectedSessions, sessions)
+		// Assert
+		require.NoError(t, err)
+		assert.NotNil(t, sessions)
 		assert.Len(t, sessions, 2)
+		assert.Equal(t, expectedSessions[0].ID, sessions[0].ID)
+		assert.Equal(t, expectedSessions[1].ID, sessions[1].ID)
 		sessionRepoMock.AssertExpectations(t)
 	})
 
-	t.Run("should return empty slice when no sessions are found", func(t *testing.T) {
+	t.Run("should return empty slice when user has no sessions", func(t *testing.T) {
+		// Arrange
 		service, sessionRepoMock := setupSessionService(t)
+
 		ctx := context.Background()
 		userID := uuid.New()
 
-		sessionRepoMock.On("FindByUserID", ctx, userID).Return(nil, repository.ErrSessionNotFound)
+		sessionRepoMock.On("FindByUserID", ctx, userID).
+			Return(nil, repository.ErrSessionNotFound)
 
+		// Act
 		sessions, err := service.GetSessionsByUserID(ctx, userID)
 
-		assert.NoError(t, err)
+		// Assert
+		require.NoError(t, err)
+		assert.NotNil(t, sessions)
 		assert.Empty(t, sessions)
 		sessionRepoMock.AssertExpectations(t)
 	})
 
 	t.Run("should return error when repository fails", func(t *testing.T) {
+		// Arrange
 		service, sessionRepoMock := setupSessionService(t)
+
 		ctx := context.Background()
 		userID := uuid.New()
-		repoErr := errors.New("database connection failed")
 
-		sessionRepoMock.On("FindByUserID", ctx, userID).Return(nil, repoErr)
+		expectedErr := errors.New("database connection error")
+		sessionRepoMock.On("FindByUserID", ctx, userID).
+			Return(nil, expectedErr)
 
+		// Act
 		sessions, err := service.GetSessionsByUserID(ctx, userID)
 
-		assert.Error(t, err)
+		// Assert
+		require.Error(t, err)
 		assert.Nil(t, sessions)
+		assert.Contains(t, err.Error(), "get user sessions")
+		sessionRepoMock.AssertExpectations(t)
+	})
+
+	t.Run("should return empty sessions list successfully", func(t *testing.T) {
+		// Arrange
+		service, sessionRepoMock := setupSessionService(t)
+
+		ctx := context.Background()
+		userID := uuid.New()
+
+		emptySessions := []domain.Session{}
+		sessionRepoMock.On("FindByUserID", ctx, userID).
+			Return(emptySessions, nil)
+
+		// Act
+		sessions, err := service.GetSessionsByUserID(ctx, userID)
+
+		// Assert
+		require.NoError(t, err)
+		assert.NotNil(t, sessions)
+		assert.Empty(t, sessions)
 		sessionRepoMock.AssertExpectations(t)
 	})
 }

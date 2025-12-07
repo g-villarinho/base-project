@@ -62,6 +62,108 @@ func TestLogin(t *testing.T) {
 }
 ```
 
+## Setup Helpers with `t.Helper()`
+
+### Purpose
+Setup helpers are utility functions that initialize test dependencies (mocks, services, configs) to reduce code duplication and improve test readability.
+
+### Rules for Setup Helpers
+
+1. **Always use `t.Helper()` as the first line**
+   - Marks the function as a test helper
+   - When tests fail, stack traces point to the test call site, not the helper itself
+   - Makes debugging easier
+
+2. **Naming Convention**
+   - Format: `setup[ComponentName](t *testing.T)`
+   - Examples: `setupUserService`, `setupSessionService`, `setupAuthHandler`
+
+3. **Return Pattern**
+   - Return the component being tested first
+   - Return mock dependencies after
+   - Example: `return service, mockRepo, mockOtherDep`
+
+4. **What to Include**
+   - Initialize all mocks needed for the component
+   - Create minimal configuration (use test-friendly values)
+   - Initialize loggers with `io.Discard` to avoid log noise
+   - Return everything needed for tests
+
+### Example: Service Setup Helper
+
+```go
+func setupUserService(t *testing.T) (UserService, *mocks.UserRepositoryMock) {
+    t.Helper()
+
+    // Initialize mocks
+    userRepoMock := mocks.NewUserRepositoryMock(t)
+
+    // Create test logger (discard output)
+    logger := slog.New(slog.NewTextHandler(io.Discard, nil))
+
+    // Initialize service with dependencies
+    service := NewUserService(userRepoMock, logger)
+
+    return service, userRepoMock
+}
+```
+
+### Example: Service with Configuration
+
+```go
+func setupSessionService(t *testing.T) (SessionService, *mocks.SessionRepositoryMock) {
+    t.Helper()
+
+    sessionRepoMock := mocks.NewSessionRepositoryMock(t)
+    logger := slog.New(slog.NewTextHandler(io.Discard, nil))
+
+    // Create minimal test config
+    cfg := &config.Config{
+        Session: config.Session{
+            Duration: 24 * time.Hour,
+        },
+    }
+
+    service := NewSessionService(sessionRepoMock, cfg, logger)
+    return service, sessionRepoMock
+}
+```
+
+### Usage in Tests
+
+```go
+func TestUserService_GetUser(t *testing.T) {
+    t.Run("should return user when user exists", func(t *testing.T) {
+        // Use setup helper - clean and simple
+        service, userRepoMock := setupUserService(t)
+
+        ctx := context.Background()
+        userID := uuid.New()
+        expectedUser := &domain.User{
+            ID:    userID,
+            Name:  "John Doe",
+            Email: "john@example.com",
+        }
+
+        userRepoMock.On("FindByID", ctx, userID).Return(expectedUser, nil)
+
+        user, err := service.GetUser(ctx, userID)
+
+        assert.NoError(t, err)
+        assert.Equal(t, expectedUser, user)
+        userRepoMock.AssertExpectations(t)
+    })
+}
+```
+
+### Benefits
+
+1. **DRY Principle**: Avoid repeating mock initialization in every test
+2. **Consistency**: All tests use the same setup pattern
+3. **Easy Updates**: Change setup in one place, affects all tests
+4. **Better Error Messages**: `t.Helper()` ensures stack traces point to actual test failures
+5. **Readability**: Tests focus on the scenario, not boilerplate
+
 ## Additional Best Practices
 
 ### 1. Test Organization (AAA Pattern)

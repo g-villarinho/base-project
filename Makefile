@@ -1,9 +1,9 @@
-setup: ## Instala bilbiotecas necessárias do projeto
-	@go install github.com/gotesttools/gotestfmt/v2/cmd/gotestfmt@v2.5.0
+setup: ## Instala bibliotecas necessárias do projeto
 	@go install github.com/vektra/mockery/v2@v2.53.4
-	@go install github.com/air-verse/air@latest
-	@go install github.com/swaggo/swag/cmd/swag@latest
-	@go install github.com/sqlc-dev/sqlc/cmd/sqlc@latest
+	@go install github.com/air-verse/air@v1.63.4
+	@go install github.com/swaggo/swag/cmd/swag@v1.16.4
+	@go install github.com/sqlc-dev/sqlc/cmd/sqlc@v1.30.0
+	@go install gotest.tools/gotestsum@v1.13.0
 
 run: build ## Roda o servidor com .env padrão
 	@./bin/api
@@ -12,10 +12,7 @@ build:
 	@go build -o bin/api cmd/api/main.go
 
 test: ## Executa todos os testes
-	@PATH=$(shell go env GOPATH)/bin:$(PATH) find . -name "*_test.go" -not -path "./vendor/*" -not -path "./.git/*" | \
-	sed 's|/[^/]*$$||' | sort -u | \
-	sed 's|^\./|github.com/g-villarinho/base-project/|' | \
-	xargs go test -json -v | "$(shell go env GOPATH)/bin/gotestfmt" -hide successful-tests -showteststatus
+	@gotestsum --format pkgname --format-hide-empty-pkg -- ./...
 
 mocks: ## Gera mock de services, repositories e commons
 	@mockery
