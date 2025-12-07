@@ -27,11 +27,11 @@ type API struct {
 type NewAPIParams struct {
 	dig.In
 
-	config         *config.Config
-	authHandler    *handler.AuthHandler
-	userHandler    *handler.UserHandler
-	sessionHandler *handler.SessionHandler
-	authMiddleware *middleware.AuthMiddleware
+	Config         *config.Config
+	AuthHandler    *handler.AuthHandler
+	UserHandler    *handler.UserHandler
+	SessionHandler *handler.SessionHandler
+	AuthMiddleware *middleware.AuthMiddleware
 }
 
 func NewAPI(params NewAPIParams) *API {
@@ -43,21 +43,21 @@ func NewAPI(params NewAPIParams) *API {
 
 	e.Use(echoMiddleware.Recover())
 	e.Use(echoMiddleware.BodyLimit("10M"))
-	e.Use(middleware.Cors(params.config))
-	e.Use(middleware.RateLimiter(params.config))
+	e.Use(middleware.Cors(params.Config))
+	e.Use(middleware.RateLimiter(params.Config))
 	e.Use(middleware.ClientInfo())
 
-	if params.config.IsDevelopment() {
-		registerDevRoutes(e, params.config)
+	if params.Config.IsDevelopment() {
+		registerDevRoutes(e, params.Config)
 	}
 
-	registerAuthRoutes(e, params.authHandler, params.authMiddleware)
-	registerUserRoutes(e, params.userHandler, params.authMiddleware)
-	registerSessionRoutes(e, params.sessionHandler, params.authMiddleware)
+	registerAuthRoutes(e, params.AuthHandler, params.AuthMiddleware)
+	registerUserRoutes(e, params.UserHandler, params.AuthMiddleware)
+	registerSessionRoutes(e, params.SessionHandler, params.AuthMiddleware)
 
 	return &API{
 		echo:            e,
-		port:            params.config.Server.Port,
+		port:            params.Config.Server.Port,
 		shutdownTimeout: 10 * time.Second,
 	}
 }

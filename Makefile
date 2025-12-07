@@ -5,10 +5,10 @@ setup: ## Instala bilbiotecas necessárias do projeto
 	@go install github.com/swaggo/swag/cmd/swag@latest
 
 run: build ## Roda o servidor com .env padrão
-	@./bin/server
+	@./bin/api
 
 build:
-	@go build -o bin/server cmd/server/main.go
+	@go build -o bin/api cmd/api/main.go
 
 test: ## Executa todos os testes
 	@PATH=$(shell go env GOPATH)/bin:$(PATH) find . -name "*_test.go" -not -path "./vendor/*" -not -path "./.git/*" | \

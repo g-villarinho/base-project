@@ -12,13 +12,13 @@ import (
 	"time"
 
 	"github.com/g-villarinho/base-project/config"
+	"github.com/g-villarinho/base-project/internal/api"
+	"github.com/g-villarinho/base-project/internal/api/handler"
+	"github.com/g-villarinho/base-project/internal/api/middleware"
 	"github.com/g-villarinho/base-project/internal/domain"
 	"github.com/g-villarinho/base-project/internal/infra/notification"
 	"github.com/g-villarinho/base-project/internal/mocks"
 	"github.com/g-villarinho/base-project/internal/repository"
-	"github.com/g-villarinho/base-project/internal/server"
-	"github.com/g-villarinho/base-project/internal/server/handler"
-	"github.com/g-villarinho/base-project/internal/server/middleware"
 	"github.com/g-villarinho/base-project/internal/service"
 	"github.com/g-villarinho/base-project/pkg/crypto"
 	"github.com/g-villarinho/base-project/pkg/hash"
@@ -168,7 +168,7 @@ func setupTestServer(t *testing.T) *testServer {
 		t.Fatalf("Failed to provide verification repository: %v", err)
 	}
 
-	err = container.Provide(server.NewSessionSigner, dig.Name("sessionSigner"))
+	err = container.Provide(api.NewSessionSigner, dig.Name("sessionSigner"))
 	if err != nil {
 		t.Fatalf("Failed to provide session signer: %v", err)
 	}
@@ -222,7 +222,7 @@ func setupTestServer(t *testing.T) *testServer {
 	}
 
 	// Provide server
-	err = container.Provide(server.NewServer)
+	err = container.Provide(api.NewAPI)
 	if err != nil {
 		t.Fatalf("Failed to provide server: %v", err)
 	}
