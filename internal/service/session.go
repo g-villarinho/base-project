@@ -42,11 +42,11 @@ func (s *sessionService) CreateSession(ctx context.Context, userID uuid.UUID, ip
 
 	session, err := domain.NewSession(userID, ipAddress, userAgent, deviceName, expiresAt)
 	if err != nil {
-		return nil, fmt.Errorf("sessionService.CreateSession: new session: %w", err)
+		return nil, fmt.Errorf("create new session: %w", err)
 	}
 
 	if err := s.sessionRepo.Create(ctx, session); err != nil {
-		return nil, fmt.Errorf("sessionService.CreateSession: %w", err)
+		return nil, fmt.Errorf("persist new session: %w", err)
 	}
 
 	return session, nil
