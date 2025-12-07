@@ -11,6 +11,7 @@ import (
 	"github.com/g-villarinho/base-project/internal/service"
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
+	"github.com/labstack/gommon/log"
 )
 
 type SessionHandler struct {
@@ -46,13 +47,16 @@ func (h *SessionHandler) RevokeSession(c echo.Context) error {
 
 	if err := h.sessionService.DeleteSessionByID(c.Request().Context(), echoctx.GetUserID(c), sessionId); err != nil {
 		if errors.Is(err, domain.ErrSessionNotFound) {
-			return echo.NewHTTPError(http.StatusNotFound, err.Error())
+			logger.Warn("cannot revoke session: not found", slog.String("session_id_param", sessionId.String()))
+			return NotFound(c, "SESSION_NOT_FOUND", err.Error())
 		}
 
 		if errors.Is(err, domain.ErrSessionNotBelong) {
-			return echo.NewHTTPError(http.StatusForbidden, err.Error())
+			logger.Warn("the session does not belong to the user", slog.String("session_id_param", sessionId.String()))
+			return Forbidden(c, "FORBIDDEN_SESSION", "you do not have permission to revoke this session")
 		}
 
+		log.Error("revoke session", slog.Any("error", err))
 		return echo.ErrInternalServerError
 	}
 
@@ -83,6 +87,7 @@ func (h *SessionHandler) RevokeAllSessions(c echo.Context) error {
 	}
 
 	if err := h.sessionService.DeleteSessionsByUserID(c.Request().Context(), echoctx.GetUserID(c), currentSessionId); err != nil {
+		log.Error("revoke all sessions", slog.Any("error", err))
 		return InternalServerError(c, "failed to revoke all sessions")
 	}
 

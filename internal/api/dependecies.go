@@ -35,6 +35,7 @@ func ProvideDependencies() *dig.Container {
 	injector.Provide(container, service.NewAuthService)
 	injector.Provide(container, service.NewSessionService)
 	injector.Provide(container, service.NewUserService)
+	injector.Provide(container, service.NewCookieService)
 
 	// Repository
 	injector.Provide(container, repository.NewUserRepository)

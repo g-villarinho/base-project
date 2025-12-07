@@ -6,22 +6,14 @@ import (
 	"time"
 
 	"github.com/g-villarinho/base-project/config"
-	"github.com/g-villarinho/base-project/pkg/crypto"
+	"github.com/g-villarinho/base-project/internal/service"
 	"github.com/labstack/echo/v4"
-	"go.uber.org/dig"
 )
 
 var (
 	ErrCookieNotFound   = errors.New("cookie not found in header")
 	ErrInvalidSignature = errors.New("invalid cookie signature")
 )
-
-type CookieHandlerParams struct {
-	dig.In
-
-	Config *config.Config
-	Signer crypto.Signer `name:"sessionSigner"`
-}
 
 type CookieHandler interface {
 	Get(ectx echo.Context) (*http.Cookie, error)
@@ -30,15 +22,15 @@ type CookieHandler interface {
 }
 
 type cookieHandler struct {
-	cookieName string
-	isSecure   bool
-	sameSite   http.SameSite
-	signer     crypto.Signer
+	cookieName    string
+	isSecure      bool
+	sameSite      http.SameSite
+	cookieService service.CookieService
 }
 
-func NewCookieHandler(params CookieHandlerParams) CookieHandler {
+func NewCookieHandler(config *config.Config, cookieService service.CookieService) CookieHandler {
 	sameSite := http.SameSiteStrictMode
-	switch params.Config.Session.CookieSameSite {
+	switch config.Session.CookieSameSite {
 	case "lax":
 		sameSite = http.SameSiteLaxMode
 	default:
@@ -46,10 +38,10 @@ func NewCookieHandler(params CookieHandlerParams) CookieHandler {
 	}
 
 	return &cookieHandler{
-		cookieName: params.Config.Session.CookieName,
-		isSecure:   params.Config.Session.CookieSecure,
-		sameSite:   sameSite,
-		signer:     params.Signer,
+		cookieName:    config.Session.CookieName,
+		isSecure:      config.Session.CookieSecure,
+		sameSite:      sameSite,
+		cookieService: cookieService,
 	}
 }
 
@@ -63,7 +55,7 @@ func (h *cookieHandler) Get(ectx echo.Context) (*http.Cookie, error) {
 		return nil, ErrCookieNotFound
 	}
 
-	originalValue, err := h.signer.Verify(cookie.Value)
+	originalValue, err := h.cookieService.Verify(ectx.Request().Context(), cookie.Value)
 	if err != nil {
 		return nil, ErrInvalidSignature
 	}
@@ -75,7 +67,7 @@ func (h *cookieHandler) Get(ectx echo.Context) (*http.Cookie, error) {
 func (h *cookieHandler) Set(ectx echo.Context, value string, expiresAt time.Time) {
 	maxAge := int(time.Until(expiresAt).Seconds())
 
-	signedValue := h.signer.Sign(value)
+	signedValue := h.cookieService.Sign(ectx.Request().Context(), value)
 
 	cookie := &http.Cookie{
 		Name:     h.cookieName,
