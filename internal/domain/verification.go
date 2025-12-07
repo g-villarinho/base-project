@@ -1,7 +1,6 @@
 package domain
 
 import (
-	"database/sql"
 	"errors"
 	"time"
 
@@ -29,7 +28,7 @@ type Verification struct {
 	Token     string
 	CreatedAt time.Time
 	ExpiresAt time.Time
-	Payload   sql.NullString
+	Payload   *string
 	UserID    uuid.UUID
 	User      User
 }
@@ -40,6 +39,11 @@ func NewVerification(userID uuid.UUID, flow VerificationFlow, expiresAt time.Tim
 		return nil, err
 	}
 
+	var payloadPtr *string
+	if payload != "" {
+		payloadPtr = &payload
+	}
+
 	return &Verification{
 		ID:        uuid.New(),
 		Flow:      flow,
@@ -47,7 +51,7 @@ func NewVerification(userID uuid.UUID, flow VerificationFlow, expiresAt time.Tim
 		CreatedAt: time.Now().UTC(),
 		ExpiresAt: expiresAt,
 		UserID:    userID,
-		Payload:   sql.NullString{String: payload, Valid: payload != ""},
+		Payload:   payloadPtr,
 	}, nil
 }
 

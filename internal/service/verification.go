@@ -167,7 +167,11 @@ func (s *verificationService) sendEmailAsync(user *domain.User, verificationURL 
 		case domain.ResetPasswordFlow:
 			err = s.emailNotification.SendResetPasswordEmail(context.Background(), user.Name, verificationURL, user.Email)
 		case domain.ChangeEmailFlow:
-			newEmail := verification.Payload.String
+			if verification.Payload == nil {
+				logger.Warn("missing payload for change email flow")
+				return
+			}
+			newEmail := *verification.Payload
 			err = s.emailNotification.SendChangeEmailNotification(context.Background(), user.Name, newEmail, verificationURL, user.Email)
 		default:
 			logger.Warn("unsupported email flow")

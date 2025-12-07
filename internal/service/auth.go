@@ -186,11 +186,11 @@ func (s *authService) ChangeEmail(ctx context.Context, token string) error {
 		return fmt.Errorf("consume verification token: %w", err)
 	}
 
-	if !verification.Payload.Valid {
+	if verification.Payload == nil {
 		return domain.ErrInvalidVerificationPayload
 	}
 
-	newEmail := verification.Payload.String
+	newEmail := *verification.Payload
 
 	if err := s.userRepository.UpdateEmail(ctx, verification.UserID, newEmail); err != nil {
 		return fmt.Errorf("update email: %w", err)

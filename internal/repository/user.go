@@ -46,9 +46,9 @@ func (r *userRepository) Create(ctx context.Context, user *domain.User) error {
 		Status:           string(user.Status),
 		PasswordHash:     user.PasswordHash,
 		CreatedAt:        user.CreatedAt,
-		UpdatedAt:        nullTimeToPointer(user.UpdatedAt),
-		EmailConfirmedAt: nullTimeToPointer(user.EmailConfirmedAt),
-		BlockedAt:        nullTimeToPointer(user.BlockedAt),
+		UpdatedAt:        user.UpdatedAt,
+		EmailConfirmedAt: user.EmailConfirmedAt,
+		BlockedAt:        user.BlockedAt,
 	})
 	if err != nil {
 		return fmt.Errorf("persist user: %w", err)
@@ -179,22 +179,8 @@ func (r *userRepository) toDomainUser(row sqlc.User) *domain.User {
 		Status:           domain.UserStatus(row.Status),
 		PasswordHash:     row.PasswordHash,
 		CreatedAt:        row.CreatedAt,
-		UpdatedAt:        pointerToNullTime(row.UpdatedAt),
-		EmailConfirmedAt: pointerToNullTime(row.EmailConfirmedAt),
-		BlockedAt:        pointerToNullTime(row.BlockedAt),
+		UpdatedAt:        row.UpdatedAt,
+		EmailConfirmedAt: row.EmailConfirmedAt,
+		BlockedAt:        row.BlockedAt,
 	}
-}
-
-func nullTimeToPointer(nt sql.NullTime) *time.Time {
-	if nt.Valid {
-		return &nt.Time
-	}
-	return nil
-}
-
-func pointerToNullTime(t *time.Time) sql.NullTime {
-	if t != nil {
-		return sql.NullTime{Time: *t, Valid: true}
-	}
-	return sql.NullTime{Valid: false}
 }

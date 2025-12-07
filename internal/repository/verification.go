@@ -36,18 +36,13 @@ func NewVerificationRepository(db *sql.DB) VerificationRepository {
 }
 
 func (r *verificationRepository) Create(ctx context.Context, verification *domain.Verification) error {
-	var payload *string
-	if verification.Payload.Valid {
-		payload = &verification.Payload.String
-	}
-
 	err := r.queries.CreateVerification(ctx, sqlc.CreateVerificationParams{
 		ID:        verification.ID.String(),
 		Flow:      string(verification.Flow),
 		Token:     verification.Token,
 		CreatedAt: verification.CreatedAt,
 		ExpiresAt: verification.ExpiresAt,
-		Payload:   payload,
+		Payload:   verification.Payload,
 		UserID:    verification.UserID.String(),
 	})
 	if err != nil {
@@ -128,18 +123,13 @@ func (r *verificationRepository) toDomainVerification(row sqlc.Verification) *do
 	id, _ := uuid.Parse(row.ID)
 	userID, _ := uuid.Parse(row.UserID)
 
-	var payload sql.NullString
-	if row.Payload != nil {
-		payload = sql.NullString{String: *row.Payload, Valid: true}
-	}
-
 	return &domain.Verification{
 		ID:        id,
 		Flow:      domain.VerificationFlow(row.Flow),
 		Token:     row.Token,
 		CreatedAt: row.CreatedAt,
 		ExpiresAt: row.ExpiresAt,
-		Payload:   payload,
+		Payload:   row.Payload,
 		UserID:    userID,
 	}
 }

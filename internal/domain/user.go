@@ -1,7 +1,6 @@
 package domain
 
 import (
-	"database/sql"
 	"errors"
 	"time"
 
@@ -35,9 +34,9 @@ type User struct {
 	Status           UserStatus
 	PasswordHash     string
 	CreatedAt        time.Time
-	UpdatedAt        sql.NullTime
-	EmailConfirmedAt sql.NullTime
-	BlockedAt        sql.NullTime
+	UpdatedAt        *time.Time
+	EmailConfirmedAt *time.Time
+	BlockedAt        *time.Time
 }
 
 func NewUser(name, email, passwordHash string) *User {
@@ -56,5 +55,5 @@ func (u *User) IsBlocked() bool {
 }
 
 func (u *User) IsEmailVerified() bool {
-	return u.EmailConfirmedAt.Valid
+	return u.EmailConfirmedAt != nil
 }
