@@ -3,6 +3,7 @@ setup: ## Instala bilbiotecas necessárias do projeto
 	@go install github.com/vektra/mockery/v2@v2.53.4
 	@go install github.com/air-verse/air@latest
 	@go install github.com/swaggo/swag/cmd/swag@latest
+	@go install github.com/sqlc-dev/sqlc/cmd/sqlc@latest
 
 run: build ## Roda o servidor com .env padrão
 	@./bin/api
@@ -18,3 +19,6 @@ test: ## Executa todos os testes
 
 mocks: ## Gera mock de services, repositories e commons
 	@mockery
+
+sqlc: ## Gera código SQLC a partir das queries SQL
+	@sqlc generate

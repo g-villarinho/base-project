@@ -2,14 +2,15 @@ package repository
 
 import (
 	"context"
+	"database/sql"
 	"errors"
 	"fmt"
 	"log/slog"
 	"time"
 
+	"github.com/g-villarinho/base-project/internal/database/sqlc"
 	"github.com/g-villarinho/base-project/internal/domain"
 	"github.com/google/uuid"
-	"gorm.io/gorm"
 )
 
 var (
@@ -28,17 +29,28 @@ type UserRepository interface {
 }
 
 type userRepository struct {
-	db *gorm.DB
+	queries *sqlc.Queries
 }
 
-func NewUserRepository(db *gorm.DB, logger *slog.Logger) UserRepository {
+func NewUserRepository(db *sql.DB, logger *slog.Logger) UserRepository {
 	return &userRepository{
-		db: db,
+		queries: sqlc.New(db),
 	}
 }
 
 func (r *userRepository) Create(ctx context.Context, user *domain.User) error {
-	if err := r.db.WithContext(ctx).Create(&user).Error; err != nil {
+	err := r.queries.CreateUser(ctx, sqlc.CreateUserParams{
+		ID:               user.ID.String(),
+		Name:             user.Name,
+		Email:            user.Email,
+		Status:           string(user.Status),
+		PasswordHash:     user.PasswordHash,
+		CreatedAt:        user.CreatedAt,
+		UpdatedAt:        nullTimeToPointer(user.UpdatedAt),
+		EmailConfirmedAt: nullTimeToPointer(user.EmailConfirmedAt),
+		BlockedAt:        nullTimeToPointer(user.BlockedAt),
+	})
+	if err != nil {
 		return fmt.Errorf("persist user: %w", err)
 	}
 
@@ -46,36 +58,28 @@ func (r *userRepository) Create(ctx context.Context, user *domain.User) error {
 }
 
 func (r *userRepository) ExistsByEmail(ctx context.Context, email string) (bool, error) {
-	var count int64
-	err := r.db.WithContext(ctx).Model(&domain.User{}).
-		Where("email = ?", email).
-		Count(&count).Error
-
+	exists, err := r.queries.ExistsByEmail(ctx, email)
 	if err != nil {
 		return false, fmt.Errorf("find user by email: %w", err)
 	}
 
-	return count > 0, nil
+	return exists, nil
 }
 
 func (r *userRepository) VerifyEmail(ctx context.Context, ID uuid.UUID) error {
 	now := time.Now().UTC()
 
-	updates := map[string]any{
-		"status":             domain.ActiveStatus,
-		"updated_at":         now,
-		"email_confirmed_at": now,
+	result, err := r.queries.VerifyUserEmail(ctx, sqlc.VerifyUserEmailParams{
+		UpdatedAt:        &now,
+		EmailConfirmedAt: &now,
+		ID:               ID.String(),
+	})
+	if err != nil {
+		return fmt.Errorf("update user email field: %w", err)
 	}
 
-	result := r.db.WithContext(ctx).Model(&domain.User{}).
-		Where("id = ?", ID).
-		Updates(updates)
-
-	if result.Error != nil {
-		return fmt.Errorf("update user email field: %w", result.Error)
-	}
-
-	if result.RowsAffected == 0 {
+	rows, _ := result.RowsAffected()
+	if rows == 0 {
 		return ErrUserNotFound
 	}
 
@@ -83,65 +87,63 @@ func (r *userRepository) VerifyEmail(ctx context.Context, ID uuid.UUID) error {
 }
 
 func (r *userRepository) FindByEmail(ctx context.Context, email string) (*domain.User, error) {
-	var user domain.User
-	err := r.db.WithContext(ctx).First(&user, "email = ?", email).Error
+	row, err := r.queries.FindUserByEmail(ctx, email)
 	if err != nil {
-		if err == gorm.ErrRecordNotFound {
+		if errors.Is(err, sql.ErrNoRows) {
 			return nil, ErrUserNotFound
 		}
-
 		return nil, fmt.Errorf("find user by email: %w", err)
 	}
 
-	return &user, nil
+	return r.toDomainUser(row), nil
 }
 
 func (r *userRepository) FindByID(ctx context.Context, ID uuid.UUID) (*domain.User, error) {
-	var user domain.User
-	err := r.db.WithContext(ctx).First(&user, "id = ?", ID).Error
+	row, err := r.queries.FindUserByID(ctx, ID.String())
 	if err != nil {
-		if err == gorm.ErrRecordNotFound {
+		if errors.Is(err, sql.ErrNoRows) {
 			return nil, ErrUserNotFound
 		}
-
 		return nil, fmt.Errorf("find user by id: %w", err)
 	}
 
-	return &user, nil
+	return r.toDomainUser(row), nil
 }
 
 func (r *userRepository) UpdatePassword(ctx context.Context, ID uuid.UUID, newPasswordHash string) error {
-	updates := map[string]any{
-		"password_hash": newPasswordHash,
-		"updated_at":    time.Now().UTC(),
+	now := time.Now().UTC()
+
+	result, err := r.queries.UpdateUserPassword(ctx, sqlc.UpdateUserPasswordParams{
+		PasswordHash: newPasswordHash,
+		UpdatedAt:    &now,
+		ID:           ID.String(),
+	})
+	if err != nil {
+		return fmt.Errorf("update password fields: %w", err)
 	}
 
-	result := r.db.WithContext(ctx).Model(&domain.User{}).
-		Where("id = ?", ID).
-		Updates(updates)
-
-	if result.Error != nil {
-		return fmt.Errorf("update password fields: %w", result.Error)
+	rows, _ := result.RowsAffected()
+	if rows == 0 {
+		return ErrUserNotFound
 	}
 
 	return nil
 }
 
 func (r *userRepository) UpdateEmail(ctx context.Context, ID uuid.UUID, newEmail string) error {
-	updates := map[string]any{
-		"email":      newEmail,
-		"updated_at": time.Now().UTC(),
+	now := time.Now().UTC()
+
+	result, err := r.queries.UpdateUserEmail(ctx, sqlc.UpdateUserEmailParams{
+		Email:     newEmail,
+		UpdatedAt: &now,
+		ID:        ID.String(),
+	})
+	if err != nil {
+		return fmt.Errorf("update user email: %w", err)
 	}
 
-	result := r.db.WithContext(ctx).Model(&domain.User{}).
-		Where("id = ?", ID).
-		Updates(updates)
-
-	if result.Error != nil {
-		return fmt.Errorf("update user email: %w", result.Error)
-	}
-
-	if result.RowsAffected == 0 {
+	rows, _ := result.RowsAffected()
+	if rows == 0 {
 		return ErrUserNotFound
 	}
 
@@ -149,22 +151,50 @@ func (r *userRepository) UpdateEmail(ctx context.Context, ID uuid.UUID, newEmail
 }
 
 func (r *userRepository) UpdateName(ctx context.Context, ID uuid.UUID, name string) error {
-	updates := map[string]any{
-		"name":       name,
-		"updated_at": time.Now().UTC(),
+	now := time.Now().UTC()
+
+	result, err := r.queries.UpdateUserName(ctx, sqlc.UpdateUserNameParams{
+		Name:      name,
+		UpdatedAt: &now,
+		ID:        ID.String(),
+	})
+	if err != nil {
+		return fmt.Errorf("update user name field: %w", err)
 	}
 
-	result := r.db.WithContext(ctx).Model(&domain.User{}).
-		Where("id = ?", ID).
-		Updates(updates)
-
-	if result.Error != nil {
-		return fmt.Errorf("update user name field: %w", result.Error)
-	}
-
-	if result.RowsAffected == 0 {
+	rows, _ := result.RowsAffected()
+	if rows == 0 {
 		return ErrUserNotFound
 	}
 
 	return nil
+}
+
+func (r *userRepository) toDomainUser(row sqlc.User) *domain.User {
+	id, _ := uuid.Parse(row.ID)
+	return &domain.User{
+		ID:               id,
+		Name:             row.Name,
+		Email:            row.Email,
+		Status:           domain.UserStatus(row.Status),
+		PasswordHash:     row.PasswordHash,
+		CreatedAt:        row.CreatedAt,
+		UpdatedAt:        pointerToNullTime(row.UpdatedAt),
+		EmailConfirmedAt: pointerToNullTime(row.EmailConfirmedAt),
+		BlockedAt:        pointerToNullTime(row.BlockedAt),
+	}
+}
+
+func nullTimeToPointer(nt sql.NullTime) *time.Time {
+	if nt.Valid {
+		return &nt.Time
+	}
+	return nil
+}
+
+func pointerToNullTime(t *time.Time) sql.NullTime {
+	if t != nil {
+		return sql.NullTime{Time: *t, Valid: true}
+	}
+	return sql.NullTime{Valid: false}
 }

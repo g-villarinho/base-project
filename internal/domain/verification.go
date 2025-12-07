@@ -24,15 +24,14 @@ const (
 )
 
 type Verification struct {
-	ID        uuid.UUID        `gorm:"type:varchar(36);primaryKey"`
-	Flow      VerificationFlow `gorm:"type:varchar(20);not null;check:flow IN ('RESET_PASSWORD','VERIFICATION_EMAIL', 'CHANGE_EMAIL')"`
-	Token     string           `gorm:"type:varchar(255);not null;uniqueIndex"`
-	CreatedAt time.Time        `gorm:"type:datetime;not null"`
-	ExpiresAt time.Time        `gorm:"type:datetime;not null;index"`
-	Payload   sql.NullString   `gorm:"type:text"`
-
-	UserID uuid.UUID `gorm:"type:uuid;not null"`
-	User   User      `gorm:"foreignKey:UserID;references:ID;constraint:OnDelete:CASCADE"`
+	ID        uuid.UUID
+	Flow      VerificationFlow
+	Token     string
+	CreatedAt time.Time
+	ExpiresAt time.Time
+	Payload   sql.NullString
+	UserID    uuid.UUID
+	User      User
 }
 
 func NewVerification(userID uuid.UUID, flow VerificationFlow, expiresAt time.Time, payload string) (*Verification, error) {

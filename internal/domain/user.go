@@ -29,15 +29,15 @@ var (
 )
 
 type User struct {
-	ID               uuid.UUID    `gorm:"type:varchar(36);primaryKey"`
-	Name             string       `gorm:"type:varchar(155);not null"`
-	Email            string       `gorm:"type:varchar(155);not null;unique;index"`
-	Status           UserStatus   `gorm:"type:varchar(20);not null;default:'PENDING';check:status IN ('PENDING','ACTIVE','BLOCKED')"`
-	PasswordHash     string       `gorm:"type:varchar(255);not null"`
-	CreatedAt        time.Time    `gorm:"type:datetime;not null"`
-	UpdatedAt        sql.NullTime `gorm:"type:datetime;null;default:null"`
-	EmailConfirmedAt sql.NullTime `gorm:"type:datetime;null;default:null"`
-	BlockedAt        sql.NullTime `gorm:"type:datetime;null;default:null"`
+	ID               uuid.UUID
+	Name             string
+	Email            string
+	Status           UserStatus
+	PasswordHash     string
+	CreatedAt        time.Time
+	UpdatedAt        sql.NullTime
+	EmailConfirmedAt sql.NullTime
+	BlockedAt        sql.NullTime
 }
 
 func NewUser(name, email, passwordHash string) *User {

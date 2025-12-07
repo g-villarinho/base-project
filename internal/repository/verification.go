@@ -2,13 +2,14 @@ package repository
 
 import (
 	"context"
+	"database/sql"
 	"errors"
 	"fmt"
 	"time"
 
+	"github.com/g-villarinho/base-project/internal/database/sqlc"
 	"github.com/g-villarinho/base-project/internal/domain"
 	"github.com/google/uuid"
-	"gorm.io/gorm"
 )
 
 var (
@@ -25,17 +26,31 @@ type VerificationRepository interface {
 }
 
 type verificationRepository struct {
-	db *gorm.DB
+	queries *sqlc.Queries
 }
 
-func NewVerificationRepository(db *gorm.DB) VerificationRepository {
+func NewVerificationRepository(db *sql.DB) VerificationRepository {
 	return &verificationRepository{
-		db: db,
+		queries: sqlc.New(db),
 	}
 }
 
 func (r *verificationRepository) Create(ctx context.Context, verification *domain.Verification) error {
-	if err := r.db.WithContext(ctx).Create(&verification).Error; err != nil {
+	var payload *string
+	if verification.Payload.Valid {
+		payload = &verification.Payload.String
+	}
+
+	err := r.queries.CreateVerification(ctx, sqlc.CreateVerificationParams{
+		ID:        verification.ID.String(),
+		Flow:      string(verification.Flow),
+		Token:     verification.Token,
+		CreatedAt: verification.CreatedAt,
+		ExpiresAt: verification.ExpiresAt,
+		Payload:   payload,
+		UserID:    verification.UserID.String(),
+	})
+	if err != nil {
 		return fmt.Errorf("persist verification: %w", err)
 	}
 
@@ -43,26 +58,25 @@ func (r *verificationRepository) Create(ctx context.Context, verification *domai
 }
 
 func (r *verificationRepository) FindByID(ctx context.Context, ID uuid.UUID) (*domain.Verification, error) {
-	var verification domain.Verification
-	err := r.db.WithContext(ctx).First(&verification, "id = ?", ID).Error
+	row, err := r.queries.FindVerificationByID(ctx, ID.String())
 	if err != nil {
-		if err == gorm.ErrRecordNotFound {
+		if errors.Is(err, sql.ErrNoRows) {
 			return nil, ErrVerificationNotFound
 		}
-
 		return nil, fmt.Errorf("find verification by id: %w", err)
 	}
 
-	return &verification, nil
+	return r.toDomainVerification(row), nil
 }
 
 func (r *verificationRepository) Delete(ctx context.Context, ID uuid.UUID) error {
-	result := r.db.WithContext(ctx).Delete(&domain.Verification{}, "id = ?", ID)
-	if result.Error != nil {
-		return fmt.Errorf("delete verification: %w", result.Error)
+	result, err := r.queries.DeleteVerification(ctx, ID.String())
+	if err != nil {
+		return fmt.Errorf("delete verification: %w", err)
 	}
 
-	if result.RowsAffected == 0 {
+	rows, _ := result.RowsAffected()
+	if rows == 0 {
 		return ErrVerificationNotFound
 	}
 
@@ -70,46 +84,62 @@ func (r *verificationRepository) Delete(ctx context.Context, ID uuid.UUID) error
 }
 
 func (r *verificationRepository) FindValidByUserIDAndFlow(ctx context.Context, userID uuid.UUID, flow domain.VerificationFlow) (*domain.Verification, error) {
-	var verification domain.Verification
-
-	err := r.db.WithContext(ctx).
-		Where("user_id = ? AND flow = ? AND expires_at > ?", userID, flow, time.Now().UTC()).
-		Order("created_at DESC").
-		First(&verification).Error
-
+	row, err := r.queries.FindValidVerificationByUserIDAndFlow(ctx, sqlc.FindValidVerificationByUserIDAndFlowParams{
+		UserID:    userID.String(),
+		Flow:      string(flow),
+		ExpiresAt: time.Now().UTC(),
+	})
 	if err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
+		if errors.Is(err, sql.ErrNoRows) {
 			return nil, ErrVerificationNotFound
 		}
-
 		return nil, fmt.Errorf("find valid verification by user ID and flow: %w", err)
 	}
 
-	return &verification, nil
+	return r.toDomainVerification(row), nil
 }
 
 func (r *verificationRepository) DeleteByUserIDAndFlow(ctx context.Context, userID uuid.UUID, flow domain.VerificationFlow) error {
-	result := r.db.WithContext(ctx).
-		Where("user_id = ? AND flow = ? AND expires_at > ?", userID, flow, time.Now().UTC()).
-		Delete(&domain.Verification{})
-
-	if result.Error != nil {
-		return fmt.Errorf("delete by user ID and flow: %w", result.Error)
+	err := r.queries.DeleteVerificationsByUserIDAndFlow(ctx, sqlc.DeleteVerificationsByUserIDAndFlowParams{
+		UserID:    userID.String(),
+		Flow:      string(flow),
+		ExpiresAt: time.Now().UTC(),
+	})
+	if err != nil {
+		return fmt.Errorf("delete by user ID and flow: %w", err)
 	}
 
 	return nil
 }
 
 func (r *verificationRepository) FindByToken(ctx context.Context, token string) (*domain.Verification, error) {
-	var verification domain.Verification
-	err := r.db.WithContext(ctx).First(&verification, "token = ?", token).Error
+	row, err := r.queries.FindVerificationByToken(ctx, token)
 	if err != nil {
-		if err == gorm.ErrRecordNotFound {
+		if errors.Is(err, sql.ErrNoRows) {
 			return nil, ErrVerificationNotFound
 		}
-
 		return nil, fmt.Errorf("find verification by token: %w", err)
 	}
 
-	return &verification, nil
+	return r.toDomainVerification(row), nil
+}
+
+func (r *verificationRepository) toDomainVerification(row sqlc.Verification) *domain.Verification {
+	id, _ := uuid.Parse(row.ID)
+	userID, _ := uuid.Parse(row.UserID)
+
+	var payload sql.NullString
+	if row.Payload != nil {
+		payload = sql.NullString{String: *row.Payload, Valid: true}
+	}
+
+	return &domain.Verification{
+		ID:        id,
+		Flow:      domain.VerificationFlow(row.Flow),
+		Token:     row.Token,
+		CreatedAt: row.CreatedAt,
+		ExpiresAt: row.ExpiresAt,
+		Payload:   payload,
+		UserID:    userID,
+	}
 }

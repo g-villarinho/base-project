@@ -2,14 +2,15 @@ package repository
 
 import (
 	"context"
+	"database/sql"
 	"errors"
 	"fmt"
 	"log/slog"
 	"time"
 
+	"github.com/g-villarinho/base-project/internal/database/sqlc"
 	"github.com/g-villarinho/base-project/internal/domain"
 	"github.com/google/uuid"
-	"gorm.io/gorm"
 )
 
 var (
@@ -27,17 +28,27 @@ type SessionRepository interface {
 }
 
 type sessionRepository struct {
-	db *gorm.DB
+	queries *sqlc.Queries
 }
 
-func NewSessionRepository(db *gorm.DB, logger *slog.Logger) SessionRepository {
+func NewSessionRepository(db *sql.DB, logger *slog.Logger) SessionRepository {
 	return &sessionRepository{
-		db: db,
+		queries: sqlc.New(db),
 	}
 }
 
 func (r *sessionRepository) Create(ctx context.Context, session *domain.Session) error {
-	if err := r.db.WithContext(ctx).Create(&session).Error; err != nil {
+	err := r.queries.CreateSession(ctx, sqlc.CreateSessionParams{
+		ID:         session.ID.String(),
+		Token:      session.Token,
+		DeviceName: session.DeviceName,
+		IpAddress:  session.IPAddress,
+		UserAgent:  session.UserAgent,
+		ExpiresAt:  session.ExpiresAt,
+		CreatedAt:  session.CreatedAt,
+		UserID:     session.UserID.String(),
+	})
+	if err != nil {
 		return fmt.Errorf("persist session: %w", err)
 	}
 
@@ -45,40 +56,37 @@ func (r *sessionRepository) Create(ctx context.Context, session *domain.Session)
 }
 
 func (r *sessionRepository) FindByID(ctx context.Context, ID uuid.UUID) (*domain.Session, error) {
-	var session domain.Session
-
-	if err := r.db.WithContext(ctx).First(&session, "id = ?", ID).Error; err != nil {
-		if err == gorm.ErrRecordNotFound {
+	row, err := r.queries.FindSessionByID(ctx, ID.String())
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
 			return nil, ErrSessionNotFound
 		}
-
 		return nil, fmt.Errorf("find session by id: %w", err)
 	}
 
-	return &session, nil
+	return r.toDomainSession(row), nil
 }
 
 func (r *sessionRepository) FindByToken(ctx context.Context, token string) (*domain.Session, error) {
-	var session domain.Session
-
-	if err := r.db.WithContext(ctx).First(&session, "token = ?", token).Error; err != nil {
-		if err == gorm.ErrRecordNotFound {
+	row, err := r.queries.FindSessionByToken(ctx, token)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
 			return nil, ErrSessionNotFound
 		}
-
 		return nil, fmt.Errorf("find session by token: %w", err)
 	}
 
-	return &session, nil
+	return r.toDomainSession(row), nil
 }
 
 func (r *sessionRepository) DeleteByID(ctx context.Context, ID uuid.UUID) error {
-	result := r.db.WithContext(ctx).Delete(&domain.Session{}, ID)
-	if result.Error != nil {
-		return fmt.Errorf("delete session by id: %w", result.Error)
+	result, err := r.queries.DeleteSessionByID(ctx, ID.String())
+	if err != nil {
+		return fmt.Errorf("delete session by id: %w", err)
 	}
 
-	if result.RowsAffected == 0 {
+	rows, _ := result.RowsAffected()
+	if rows == 0 {
 		return ErrSessionNotFound
 	}
 
@@ -86,15 +94,13 @@ func (r *sessionRepository) DeleteByID(ctx context.Context, ID uuid.UUID) error 
 }
 
 func (r *sessionRepository) DeleteByUserID(ctx context.Context, userID uuid.UUID) error {
-	result := r.db.WithContext(ctx).
-		Where("user_id = ?", userID).
-		Delete(&domain.Session{})
-
-	if result.Error != nil {
-		return fmt.Errorf("delete sessions by user id: %w", result.Error)
+	result, err := r.queries.DeleteSessionsByUserID(ctx, userID.String())
+	if err != nil {
+		return fmt.Errorf("delete sessions by user id: %w", err)
 	}
 
-	if result.RowsAffected == 0 {
+	rows, _ := result.RowsAffected()
+	if rows == 0 {
 		return ErrSessionNotFound
 	}
 
@@ -102,15 +108,16 @@ func (r *sessionRepository) DeleteByUserID(ctx context.Context, userID uuid.UUID
 }
 
 func (r *sessionRepository) DeleteByUserExceptID(ctx context.Context, userID, exceptID uuid.UUID) error {
-	result := r.db.WithContext(ctx).
-		Where("user_id = ? AND id != ?", userID, exceptID).
-		Delete(&domain.Session{})
-
-	if result.Error != nil {
-		return fmt.Errorf("delete sessions by user except id: %w", result.Error)
+	result, err := r.queries.DeleteSessionsByUserExceptID(ctx, sqlc.DeleteSessionsByUserExceptIDParams{
+		UserID: userID.String(),
+		ID:     exceptID.String(),
+	})
+	if err != nil {
+		return fmt.Errorf("delete sessions by user except id: %w", err)
 	}
 
-	if result.RowsAffected == 0 {
+	rows, _ := result.RowsAffected()
+	if rows == 0 {
 		return ErrSessionNotFound
 	}
 
@@ -118,15 +125,34 @@ func (r *sessionRepository) DeleteByUserExceptID(ctx context.Context, userID, ex
 }
 
 func (r *sessionRepository) FindByUserID(ctx context.Context, userID uuid.UUID) ([]domain.Session, error) {
-	var sessions []domain.Session
-
-	err := r.db.WithContext(ctx).
-		Where("user_id = ? AND expires_at > ?", userID, time.Now().UTC()).
-		Find(&sessions).Error
-
+	rows, err := r.queries.FindSessionsByUserID(ctx, sqlc.FindSessionsByUserIDParams{
+		UserID:    userID.String(),
+		ExpiresAt: time.Now().UTC(),
+	})
 	if err != nil {
 		return nil, fmt.Errorf("find sessions by user id: %w", err)
 	}
 
+	sessions := make([]domain.Session, 0, len(rows))
+	for _, row := range rows {
+		sessions = append(sessions, *r.toDomainSession(row))
+	}
+
 	return sessions, nil
+}
+
+func (r *sessionRepository) toDomainSession(row sqlc.Session) *domain.Session {
+	id, _ := uuid.Parse(row.ID)
+	userID, _ := uuid.Parse(row.UserID)
+
+	return &domain.Session{
+		ID:         id,
+		Token:      row.Token,
+		DeviceName: row.DeviceName,
+		IPAddress:  row.IpAddress,
+		UserAgent:  row.UserAgent,
+		ExpiresAt:  row.ExpiresAt,
+		CreatedAt:  row.CreatedAt,
+		UserID:     userID,
+	}
 }

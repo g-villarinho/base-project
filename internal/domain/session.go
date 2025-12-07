@@ -19,16 +19,15 @@ const (
 )
 
 type Session struct {
-	ID         uuid.UUID `gorm:"type:varchar(36);primaryKey"`
-	Token      string    `gorm:"type:varchar(255);not null;uniqueIndex"`
-	DeviceName string    `gorm:"type:varchar(255);not null"`
-	IPAddress  string    `gorm:"type:varchar(45);not null"`
-	UserAgent  string    `gorm:"type:text;not null"`
-	ExpiresAt  time.Time `gorm:"type:datetime;not null;index"`
-	CreatedAt  time.Time `gorm:"type:datetime;not null"`
-
-	UserID uuid.UUID `gorm:"type:uuid;not null"`
-	User   User      `gorm:"foreignKey:UserID;references:ID;constraint:OnDelete:CASCADE"`
+	ID         uuid.UUID
+	Token      string
+	DeviceName string
+	IPAddress  string
+	UserAgent  string
+	ExpiresAt  time.Time
+	CreatedAt  time.Time
+	UserID     uuid.UUID
+	User       User
 }
 
 func NewSession(userID uuid.UUID, ipAddress, userAgent, deviceName string, expiresAt time.Time) (*Session, error) {

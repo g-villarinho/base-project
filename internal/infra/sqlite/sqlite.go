@@ -1,39 +1,48 @@
 package sqlite
 
 import (
+	"database/sql"
 	"fmt"
 
 	"github.com/g-villarinho/base-project/config"
-	"github.com/g-villarinho/base-project/internal/domain"
-	"gorm.io/driver/sqlite"
-	"gorm.io/gorm"
-	"gorm.io/gorm/logger"
+	_ "github.com/mattn/go-sqlite3"
+	migrate "github.com/rubenv/sql-migrate"
 )
 
-func NewDbConnection(config *config.Config) (*gorm.DB, error) {
-	var gormConfig = &gorm.Config{}
-	gormConfig.Logger = logger.Default.LogMode(logger.Silent)
-	if config.ShowSQLLogs {
-		gormConfig.Logger = logger.Default.LogMode(logger.Info)
-	}
-
-	db, err := gorm.Open(sqlite.Open(config.SqlLite.DatabaseName), gormConfig)
+func NewDbConnection(config *config.Config) (*sql.DB, error) {
+	db, err := sql.Open("sqlite3", config.SqlLite.DatabaseName)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("open database: %w", err)
 	}
 
-	sqlDB, err := db.DB()
-	if err != nil {
-		return nil, fmt.Errorf("get sql connection: %w", err)
+	db.SetMaxIdleConns(config.SqlLite.MaxIdle)
+	db.SetMaxOpenConns(config.SqlLite.MaxConn)
+	db.SetConnMaxLifetime(config.SqlLite.MaxLifeTime)
+
+	if err := db.Ping(); err != nil {
+		return nil, fmt.Errorf("ping database: %w", err)
 	}
 
-	sqlDB.SetMaxIdleConns(config.SqlLite.MaxIdle)
-	sqlDB.SetMaxOpenConns(config.SqlLite.MaxConn)
-	sqlDB.SetConnMaxLifetime(config.SqlLite.MaxLifeTime)
-
-	if err := db.AutoMigrate(&domain.User{}, &domain.Verification{}, &domain.Session{}); err != nil {
-		return nil, fmt.Errorf("migrate tables: %w", err)
+	if err := runMigrations(db); err != nil {
+		return nil, fmt.Errorf("run migrations: %w", err)
 	}
 
 	return db, nil
+}
+
+func runMigrations(db *sql.DB) error {
+	migrations := &migrate.FileMigrationSource{
+		Dir: "internal/database/migrations",
+	}
+
+	n, err := migrate.Exec(db, "sqlite3", migrations, migrate.Up)
+	if err != nil {
+		return fmt.Errorf("apply migrations: %w", err)
+	}
+
+	if n > 0 {
+		fmt.Printf("Applied %d migrations\n", n)
+	}
+
+	return nil
 }
