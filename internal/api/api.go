@@ -38,7 +38,7 @@ func NewAPI(params NewAPIParams) *API {
 	e := echo.New()
 
 	e.Validator = validation.NewValidator()
-	e.JSONSerializer = serializer.NewSerializer()
+	e.JSONSerializer = serializer.NewJSONSerializer()
 	e.IPExtractor = echo.ExtractIPFromXFFHeader()
 
 	e.Use(echoMiddleware.Recover())

@@ -5,13 +5,13 @@ import (
 	"github.com/labstack/echo/v4"
 )
 
-type Serializer struct{}
+type JSONSerializer struct{}
 
-func NewSerializer() *Serializer {
-	return &Serializer{}
+func NewJSONSerializer() *JSONSerializer {
+	return &JSONSerializer{}
 }
 
-func (s *Serializer) Serialize(c echo.Context, v any, indent string) error {
+func (s *JSONSerializer) Serialize(c echo.Context, v any, indent string) error {
 	enc := jsoniter.NewEncoder(c.Response())
 	if indent != "" {
 		enc.SetIndent("", indent)
@@ -19,6 +19,6 @@ func (s *Serializer) Serialize(c echo.Context, v any, indent string) error {
 	return enc.Encode(v)
 }
 
-func (s *Serializer) Deserialize(c echo.Context, v any) error {
+func (s *JSONSerializer) Deserialize(c echo.Context, v any) error {
 	return jsoniter.NewDecoder(c.Request().Body).Decode(v)
 }
