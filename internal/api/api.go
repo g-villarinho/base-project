@@ -62,7 +62,7 @@ func NewAPI(params NewAPIParams) *API {
 	}
 }
 
-func (s *API) Start() error {
+func (s *API) Start() {
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, os.Interrupt, syscall.SIGTERM)
 
@@ -80,9 +80,8 @@ func (s *API) Start() error {
 	defer cancel()
 
 	if err := s.echo.Shutdown(ctx); err != nil {
-		return fmt.Errorf("server forced to shutdown: %w", err)
+		s.echo.Logger.Error("server forced to shutdown", err)
 	}
 
 	s.echo.Logger.Info("Server exited gracefully")
-	return nil
 }
