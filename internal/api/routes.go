@@ -1,11 +1,11 @@
-package server
+package api
 
 import (
 	"net/http"
 
 	"github.com/g-villarinho/base-project/config"
-	"github.com/g-villarinho/base-project/internal/server/handler"
-	"github.com/g-villarinho/base-project/internal/server/middleware"
+	"github.com/g-villarinho/base-project/internal/api/handler"
+	"github.com/g-villarinho/base-project/internal/api/middleware"
 	"github.com/labstack/echo/v4"
 )
 

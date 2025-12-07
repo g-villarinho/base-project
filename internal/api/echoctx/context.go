@@ -1,7 +1,7 @@
 package echoctx
 
 import (
-	"github.com/g-villarinho/base-project/internal/server/model"
+	"github.com/g-villarinho/base-project/internal/api/model"
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
 )

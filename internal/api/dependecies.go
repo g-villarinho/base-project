@@ -1,13 +1,13 @@
-package server
+package api
 
 import (
 	"github.com/g-villarinho/base-project/config"
+	"github.com/g-villarinho/base-project/internal/api/handler"
+	"github.com/g-villarinho/base-project/internal/api/middleware"
 	"github.com/g-villarinho/base-project/internal/infra/client"
 	"github.com/g-villarinho/base-project/internal/infra/notification"
 	"github.com/g-villarinho/base-project/internal/infra/sqlite"
 	"github.com/g-villarinho/base-project/internal/repository"
-	"github.com/g-villarinho/base-project/internal/server/handler"
-	"github.com/g-villarinho/base-project/internal/server/middleware"
 	"github.com/g-villarinho/base-project/internal/service"
 	"github.com/g-villarinho/base-project/logger"
 	"github.com/g-villarinho/base-project/pkg/crypto"
@@ -51,7 +51,7 @@ func ProvideDependencies() *dig.Container {
 	injector.Provide(container, middleware.NewAuthMiddleware)
 
 	//Server
-	injector.Provide(container, NewServer)
+	injector.Provide(container, NewAPI)
 
 	return container
 }

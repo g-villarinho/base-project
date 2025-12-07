@@ -1,13 +1,7 @@
 package domain
 
-import (
-	"time"
+import "errors"
 
-	"github.com/google/uuid"
+var (
+	ErrInvalidSignature = errors.New("invalid signature")
 )
-
-type LoginResult struct {
-	SessionToken     string
-	SessionExpiresAt time.Time
-	UserID           uuid.UUID
-}
