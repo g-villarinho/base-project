@@ -28,37 +28,25 @@ func NewUserService(userRepo repository.UserRepository, logger *slog.Logger) Use
 }
 
 func (s *userService) UpdateUser(ctx context.Context, userID uuid.UUID, name string) error {
-	logger := s.logger.With(
-		slog.String("method", "UpdateUser"),
-		slog.String("user_id", userID.String()),
-	)
-
 	if err := s.userRepo.UpdateName(ctx, userID, name); err != nil {
 		if err == repository.ErrUserNotFound {
-			logger.Warn("user not found to proceed")
 			return domain.ErrUserNotFound
 		}
 
-		return fmt.Errorf("update name for userId %s: %w", userID.String(), err)
+		return fmt.Errorf("update name: %w", err)
 	}
 
 	return nil
 }
 
 func (s *userService) GetUser(ctx context.Context, userID uuid.UUID) (*domain.User, error) {
-	logger := s.logger.With(
-		slog.String("method", "GetUser"),
-		slog.String("user_id", userID.String()),
-	)
-
 	user, err := s.userRepo.FindByID(ctx, userID)
 	if err != nil {
 		if err == repository.ErrUserNotFound {
-			logger.Warn("user not found to proceed")
 			return nil, domain.ErrUserNotFound
 		}
 
-		return nil, fmt.Errorf("find user by id %s: %w", userID.String(), err)
+		return nil, fmt.Errorf("find user by id: %w", err)
 	}
 
 	return user, nil

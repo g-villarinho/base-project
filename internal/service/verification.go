@@ -38,13 +38,11 @@ func NewVerificationService(
 	verificationRepo repository.VerificationRepository,
 	emailNotification notification.EmailNotification,
 	config *config.Config,
-	logger *slog.Logger,
 ) VerificationService {
 	return &verificationService{
 		verificationRepo:  verificationRepo,
 		emailNotification: emailNotification,
 		URLConfig:         config.URL,
-		logger:            logger.With(slog.String("service", "verification")),
 	}
 }
 
