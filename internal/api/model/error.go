@@ -1,6 +1,7 @@
 package model
 
 // ProblemJSON represents RFC 7807 Problem Details for HTTP APIs
+// @name ProblemJSON
 type ProblemJSON struct {
 	Type     string                 `json:"type" example:"https://developer.mozilla.org/pt-BR/docs/Web/HTTP/Reference/Status/400"`
 	Title    string                 `json:"title" example:"Bad Request"`

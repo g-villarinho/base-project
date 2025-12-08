@@ -10,6 +10,7 @@ run: build ## Roda o servidor com .env padrão
 
 swagger: ## Generate Swagger/OpenAPI documentation
 	@swag init -g cmd/api/main.go -o docs --parseDependency --parseInternal
+	@sed -i '' 's/github_com_g-villarinho_base-project_internal_api_model\.//g' docs/swagger.json
 
 docs: swagger ## Alias for swagger generation
 
