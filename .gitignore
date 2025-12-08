@@ -9,3 +9,7 @@ config.*.yaml
 *.db
 
 /bin
+
+# Swagger generated documentation
+/docs/*
+!/docs/.gitkeep

@@ -31,6 +31,7 @@ type NewAPIParams struct {
 	AuthHandler    *handler.AuthHandler
 	UserHandler    *handler.UserHandler
 	SessionHandler *handler.SessionHandler
+	SwaggerHandler *handler.SwaggerHandler
 	AuthMiddleware *middleware.AuthMiddleware
 }
 
@@ -49,6 +50,7 @@ func NewAPI(params NewAPIParams) *API {
 
 	if params.Config.IsDevelopment() {
 		registerDevRoutes(e, params.Config)
+		registerSwaggerRoutes(e, params.SwaggerHandler)
 	}
 
 	registerAuthRoutes(e, params.AuthHandler, params.AuthMiddleware)

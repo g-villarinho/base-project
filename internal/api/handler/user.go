@@ -21,6 +21,20 @@ func NewUserHandler(userService service.UserService) *UserHandler {
 	}
 }
 
+// UpdateProfile godoc
+// @Summary      Update user profile
+// @Description  Updates the authenticated user's profile information
+// @Tags         User
+// @Accept       json
+// @Produce      json
+// @Security     CookieAuth
+// @Param        payload  body      model.UpdateProfilePayload  true  "Profile update details"
+// @Success      200  "Profile updated successfully"
+// @Failure      401  {object}  model.ProblemJSON  "Unauthorized - authentication required"
+// @Failure      404  {object}  model.ProblemJSON  "User not found"
+// @Failure      422  {object}  model.ProblemJSON  "Validation error"
+// @Failure      500  {object}  model.ProblemJSON  "Internal server error"
+// @Router       /user/profile [patch]
 func (h *UserHandler) UpdateProfile(c echo.Context) error {
 	var payload model.UpdateProfilePayload
 	if err := c.Bind(&payload); err != nil {
@@ -42,6 +56,18 @@ func (h *UserHandler) UpdateProfile(c echo.Context) error {
 	return c.NoContent(http.StatusOK)
 }
 
+// GetProfile godoc
+// @Summary      Get user profile
+// @Description  Retrieves the authenticated user's profile information
+// @Tags         User
+// @Accept       json
+// @Produce      json
+// @Security     CookieAuth
+// @Success      200  {object}  model.ProfileResponse  "Profile retrieved successfully"
+// @Failure      401  {object}  model.ProblemJSON  "Unauthorized - authentication required"
+// @Failure      404  {object}  model.ProblemJSON  "User not found"
+// @Failure      500  {object}  model.ProblemJSON  "Internal server error"
+// @Router       /user/profile [get]
 func (h *UserHandler) GetProfile(c echo.Context) error {
 	user, err := h.userService.GetUser(c.Request().Context(), echoctx.GetUserID(c))
 	if err != nil {

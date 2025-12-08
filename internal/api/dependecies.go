@@ -47,6 +47,7 @@ func ProvideDependencies() *dig.Container {
 	injector.Provide(container, handler.NewAuthHandler)
 	injector.Provide(container, handler.NewUserHandler)
 	injector.Provide(container, handler.NewSessionHandler)
+	injector.Provide(container, handler.NewSwaggerHandler)
 
 	//Middleware
 	injector.Provide(container, middleware.NewAuthMiddleware)

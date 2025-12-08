@@ -32,6 +32,21 @@ func NewSessionHandler(
 	}
 }
 
+// RevokeSession godoc
+// @Summary      Revoke specific session
+// @Description  Revokes a specific session by ID (must belong to authenticated user)
+// @Tags         Sessions
+// @Accept       json
+// @Produce      json
+// @Security     CookieAuth
+// @Param        session_id  path      string  true  "Session ID (UUID)"
+// @Success      204  "Session revoked successfully"
+// @Failure      400  {object}  model.ProblemJSON  "Invalid session ID format"
+// @Failure      401  {object}  model.ProblemJSON  "Unauthorized - authentication required"
+// @Failure      403  {object}  model.ProblemJSON  "Session does not belong to user"
+// @Failure      404  {object}  model.ProblemJSON  "Session not found"
+// @Failure      500  {object}  model.ProblemJSON  "Internal server error"
+// @Router       /sessions/{session_id} [delete]
 func (h *SessionHandler) RevokeSession(c echo.Context) error {
 	logger := h.logger.With(
 		slog.String("func", "RevokeSession"),
@@ -67,6 +82,18 @@ func (h *SessionHandler) RevokeSession(c echo.Context) error {
 	return c.NoContent(http.StatusNoContent)
 }
 
+// RevokeAllSessions godoc
+// @Summary      Revoke all sessions
+// @Description  Revokes all sessions for the authenticated user (optionally including current session)
+// @Tags         Sessions
+// @Accept       json
+// @Produce      json
+// @Security     CookieAuth
+// @Param        payload  body      model.RevokeAllSessionsPayload  true  "Include current session flag"
+// @Success      204  "All sessions revoked successfully"
+// @Failure      401  {object}  model.ProblemJSON  "Unauthorized - authentication required"
+// @Failure      500  {object}  model.ProblemJSON  "Internal server error"
+// @Router       /sessions [delete]
 func (h *SessionHandler) RevokeAllSessions(c echo.Context) error {
 	logger := h.logger.With(
 		slog.String("func", "RevokeAllSessions"),

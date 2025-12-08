@@ -1,40 +1,48 @@
 package model
 
+// RegisterAccountPayload represents the request body for account registration
 type RegisterAccountPayload struct {
 	Name     string `json:"name" validate:"required,max=255" example:"João Silva"`
 	Email    string `json:"email" validate:"required,email,max=255" example:"joao.silva@email.com"`
 	Password string `json:"password" validate:"min=8,max=255" example:"minhasenha123"`
 }
 
+// VerifyEmailPayload represents the query parameters for email verification
 type VerifyEmailPayload struct {
-	Token string `query:"token" validate:"required"`
+	Token string `query:"token" validate:"required" example:"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."`
 }
 
+// LoginPayload represents the request body for user login
 type LoginPayload struct {
 	Email    string `json:"email" validate:"required,email,max=255" example:"joao.silva@email.com"`
 	Password string `json:"password" validate:"min=8,max=255" example:"minhasenha123"`
 }
 
+// UpdatePasswordPayload represents the request body for updating user password
 type UpdatePasswordPayload struct {
 	CurrentPassword string `json:"current_password" validate:"required,min=8,max=255" example:"minhasenha123"`
 	NewPassword     string `json:"new_password" validate:"required,min=8,max=255" example:"novasenha456"`
 }
 
+// ForgotPasswordPayload represents the request body for password reset request
 type ForgotPasswordPayload struct {
-	Email string `json:"email" validate:"required,email,max=255"`
+	Email string `json:"email" validate:"required,email,max=255" example:"joao.silva@email.com"`
 }
 
+// ResetPasswordPayload represents the request body for confirming password reset
 type ResetPasswordPayload struct {
-	Token       string `json:"token" validate:"required"`
+	Token       string `json:"token" validate:"required" example:"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."`
 	NewPassword string `json:"new_password" validate:"required,min=8,max=255" example:"novasenha456"`
 }
 
+// RequestEmailChangePayload represents the request body for requesting email change
 type RequestEmailChangePayload struct {
-	NewEmail string `json:"new_email" validate:"required,email,max=255"`
+	NewEmail string `json:"new_email" validate:"required,email,max=255" example:"newemail@example.com"`
 }
 
+// ConfirmEmailChangePayload represents the request body for confirming email change
 type ConfirmEmailChangePayload struct {
-	Token string `json:"token" validate:"required"`
+	Token string `json:"token" validate:"required" example:"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."`
 }
 
 type LoginInput struct {

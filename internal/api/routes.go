@@ -48,3 +48,10 @@ func registerSessionRoutes(e *echo.Echo, h *handler.SessionHandler, m *middlewar
 	session.DELETE("/:session_id", h.RevokeSession)
 	session.DELETE("", h.RevokeAllSessions)
 }
+
+func registerSwaggerRoutes(e *echo.Echo, h *handler.SwaggerHandler) {
+	swagger := e.Group("/swagger")
+	swagger.GET("/doc.json", h.ServeSwaggerJSON)
+
+	e.GET("/docs", h.ServeScalarUI)
+}

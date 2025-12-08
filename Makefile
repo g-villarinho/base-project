@@ -8,7 +8,12 @@ setup: ## Instala bibliotecas necessárias do projeto
 run: build ## Roda o servidor com .env padrão
 	@./bin/api
 
-build:
+swagger: ## Generate Swagger/OpenAPI documentation
+	@swag init -g cmd/api/main.go -o docs --parseDependency --parseInternal
+
+docs: swagger ## Alias for swagger generation
+
+build: swagger ## Build includes swagger generation
 	@go build -o bin/api cmd/api/main.go
 
 test: ## Executa todos os testes

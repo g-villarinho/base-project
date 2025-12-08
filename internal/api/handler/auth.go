@@ -30,6 +30,19 @@ func NewAuthHandler(
 	}
 }
 
+// RegisterAccount godoc
+// @Summary      Register a new user account
+// @Description  Creates a new user account and sends a verification email
+// @Tags         Auth
+// @Accept       json
+// @Produce      json
+// @Param        payload  body      model.RegisterAccountPayload  true  "Registration details"
+// @Success      201  "Account created successfully, verification email sent"
+// @Failure      400  {object}  model.ProblemJSON  "Invalid request payload"
+// @Failure      409  {object}  model.ProblemJSON  "Email already exists"
+// @Failure      422  {object}  model.ProblemJSON  "Validation error"
+// @Failure      500  {object}  model.ProblemJSON  "Internal server error"
+// @Router       /auth/register [post]
 func (h *AuthHandler) RegisterAccount(c echo.Context) error {
 	logger := h.logger.With(
 		slog.String("method", "RegisterAccount"),
@@ -64,6 +77,18 @@ func (h *AuthHandler) RegisterAccount(c echo.Context) error {
 	return c.NoContent(http.StatusCreated)
 }
 
+// VerifyEmail godoc
+// @Summary      Verify email address
+// @Description  Verifies user email using token from verification email
+// @Tags         Auth
+// @Accept       json
+// @Produce      json
+// @Param        token  query     string  true  "Verification token from email"
+// @Success      200  "Email verified successfully, session cookie set"
+// @Failure      400  {object}  model.ProblemJSON  "Invalid or expired token"
+// @Failure      422  {object}  model.ProblemJSON  "Validation error"
+// @Failure      500  {object}  model.ProblemJSON  "Internal server error"
+// @Router       /auth/verify-email [get]
 func (h *AuthHandler) VerifyEmail(c echo.Context) error {
 	logger := h.logger.With(
 		slog.String("method", "VerifyEmail"),
@@ -100,6 +125,20 @@ func (h *AuthHandler) VerifyEmail(c echo.Context) error {
 	return c.NoContent(http.StatusOK)
 }
 
+// Login godoc
+// @Summary      User login
+// @Description  Authenticates user and creates a new session
+// @Tags         Auth
+// @Accept       json
+// @Produce      json
+// @Param        payload  body      model.LoginPayload  true  "Login credentials"
+// @Success      200  "Login successful, session cookie set"
+// @Failure      401  {object}  model.ProblemJSON  "Invalid credentials"
+// @Failure      403  {object}  model.ProblemJSON  "User account blocked"
+// @Failure      409  {object}  model.ProblemJSON  "Email not verified"
+// @Failure      422  {object}  model.ProblemJSON  "Validation error"
+// @Failure      500  {object}  model.ProblemJSON  "Internal server error"
+// @Router       /auth/login [post]
 func (h *AuthHandler) Login(c echo.Context) error {
 	logger := h.logger.With(
 		slog.String("method", "Login"),
@@ -145,6 +184,17 @@ func (h *AuthHandler) Login(c echo.Context) error {
 	return c.NoContent(http.StatusOK)
 }
 
+// Logout godoc
+// @Summary      Logout current session
+// @Description  Revokes the current session and clears the session cookie
+// @Tags         Auth
+// @Accept       json
+// @Produce      json
+// @Security     CookieAuth
+// @Success      200  "Logout successful"
+// @Failure      401  {object}  model.ProblemJSON  "Unauthorized - authentication required"
+// @Failure      500  {object}  model.ProblemJSON  "Internal server error"
+// @Router       /auth/logout [delete]
 func (h *AuthHandler) Logout(c echo.Context) error {
 	logger := h.logger.With(
 		slog.String("method", "Logout"),
@@ -163,6 +213,20 @@ func (h *AuthHandler) Logout(c echo.Context) error {
 	return c.NoContent(http.StatusOK)
 }
 
+// UpdatePassword godoc
+// @Summary      Update user password
+// @Description  Changes the authenticated user's password
+// @Tags         Auth
+// @Accept       json
+// @Produce      json
+// @Security     CookieAuth
+// @Param        payload  body      model.UpdatePasswordPayload  true  "Password update details"
+// @Success      200  "Password updated successfully"
+// @Failure      400  {object}  model.ProblemJSON  "Current password incorrect"
+// @Failure      401  {object}  model.ProblemJSON  "Unauthorized - authentication required"
+// @Failure      422  {object}  model.ProblemJSON  "Validation error"
+// @Failure      500  {object}  model.ProblemJSON  "Internal server error"
+// @Router       /auth/password [patch]
 func (h *AuthHandler) UpdatePassword(c echo.Context) error {
 	logger := h.logger.With(
 		slog.String("method", "UpdatePassword"),
@@ -202,6 +266,17 @@ func (h *AuthHandler) UpdatePassword(c echo.Context) error {
 	return c.NoContent(http.StatusOK)
 }
 
+// ForgotPassword godoc
+// @Summary      Request password reset
+// @Description  Sends a password reset email to the user's registered email address
+// @Tags         Auth
+// @Accept       json
+// @Produce      json
+// @Param        payload  body      model.ForgotPasswordPayload  true  "Email address"
+// @Success      200  "Password reset email sent (or email not found - no enumeration)"
+// @Failure      422  {object}  model.ProblemJSON  "Validation error"
+// @Failure      500  {object}  model.ProblemJSON  "Internal server error"
+// @Router       /auth/forgot-password [post]
 func (h *AuthHandler) ForgotPassword(c echo.Context) error {
 	logger := h.logger.With(
 		slog.String("method", "ForgotPassword"),
@@ -234,6 +309,18 @@ func (h *AuthHandler) ForgotPassword(c echo.Context) error {
 	return c.NoContent(http.StatusOK)
 }
 
+// ResetPassword godoc
+// @Summary      Reset password with token
+// @Description  Resets user password using token from reset email and creates new session
+// @Tags         Auth
+// @Accept       json
+// @Produce      json
+// @Param        payload  body      model.ResetPasswordPayload  true  "Reset token and new password"
+// @Success      200  "Password reset successful, session cookie set"
+// @Failure      400  {object}  model.ProblemJSON  "Invalid or expired token"
+// @Failure      422  {object}  model.ProblemJSON  "Validation error"
+// @Failure      500  {object}  model.ProblemJSON  "Internal server error"
+// @Router       /auth/reset-password [post]
 func (h *AuthHandler) ResetPassword(c echo.Context) error {
 	logger := h.logger.With(
 		slog.String("method", "ConfirmResetPassword"),
@@ -268,6 +355,21 @@ func (h *AuthHandler) ResetPassword(c echo.Context) error {
 	return c.NoContent(http.StatusOK)
 }
 
+// RequestChangeEmail godoc
+// @Summary      Request email change
+// @Description  Initiates email change process by sending verification to new email
+// @Tags         Auth
+// @Accept       json
+// @Produce      json
+// @Security     CookieAuth
+// @Param        payload  body      model.RequestEmailChangePayload  true  "New email address"
+// @Success      200  "Email change verification sent"
+// @Failure      400  {object}  model.ProblemJSON  "New email same as current"
+// @Failure      401  {object}  model.ProblemJSON  "Unauthorized - authentication required"
+// @Failure      409  {object}  model.ProblemJSON  "Email already in use"
+// @Failure      422  {object}  model.ProblemJSON  "Validation error"
+// @Failure      500  {object}  model.ProblemJSON  "Internal server error"
+// @Router       /auth/change-email [post]
 func (h *AuthHandler) RequestChangeEmail(c echo.Context) error {
 	logger := h.logger.With(
 		slog.String("method", "RequestChangeEmail"),
@@ -312,6 +414,18 @@ func (h *AuthHandler) RequestChangeEmail(c echo.Context) error {
 	return c.NoContent(http.StatusOK)
 }
 
+// ConfirmChangeEmail godoc
+// @Summary      Confirm email change
+// @Description  Confirms email change using token from verification email
+// @Tags         Auth
+// @Accept       json
+// @Produce      json
+// @Param        payload  body      model.ConfirmEmailChangePayload  true  "Verification token"
+// @Success      200  "Email changed successfully"
+// @Failure      400  {object}  model.ProblemJSON  "Invalid or expired token"
+// @Failure      422  {object}  model.ProblemJSON  "Validation error"
+// @Failure      500  {object}  model.ProblemJSON  "Internal server error"
+// @Router       /auth/change-email/confirm [post]
 func (h *AuthHandler) ConfirmChangeEmail(c echo.Context) error {
 	logger := h.logger.With(
 		slog.String("method", "ConfirmChangeEmail"),
