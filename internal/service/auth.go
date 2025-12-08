@@ -218,7 +218,7 @@ func (s *authService) RequestPasswordReset(ctx context.Context, email string) er
 func (s *authService) ResetPassword(ctx context.Context, token string, newPassword string) (*domain.Session, error) {
 	verification, err := s.verificationService.ConsumeVerificationToken(ctx, token, domain.ResetPasswordFlow)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("consume verification: %w", err)
 	}
 
 	newPasswordHash, err := hash.HashPassword(newPassword)
@@ -227,7 +227,7 @@ func (s *authService) ResetPassword(ctx context.Context, token string, newPasswo
 	}
 
 	if err := s.userRepository.UpdatePassword(ctx, verification.UserID, newPasswordHash); err != nil {
-		return nil, fmt.Errorf("update password for userId %s: %w", verification.UserID, err)
+		return nil, fmt.Errorf("update password: %w", err)
 	}
 
 	session, err := s.sessionService.CreateSession(ctx, verification.UserID, "", "", "")
@@ -242,5 +242,6 @@ func (s *authService) Logout(ctx context.Context, userID, sessionID uuid.UUID) e
 	if err := s.sessionService.DeleteSessionByID(ctx, userID, sessionID); err != nil {
 		return fmt.Errorf("delete session: %w", err)
 	}
+
 	return nil
 }
